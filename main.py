@@ -52,8 +52,8 @@ def plot_structure(df, filename="chart", title="Market Structure"):
     
     chart.time_scale(time_visible=is_intraday, seconds_visible=False)
     
-    # Enable OHLC legend for every candle on hover
-    chart.legend(visible=True, ohlc=True, percent=True)
+    # Enable OHLC legend with increased font size for clear visibility on hover
+    chart.legend(visible=True, ohlc=True, percent=True, font_size=5)
     
     # Convert time column to datetime64[ns] so lightweight_charts converts it to accurate Unix timestamp seconds
     df_plot['time'] = pd.to_datetime(df_plot['time']).astype('datetime64[ns]')
@@ -138,6 +138,9 @@ def plot_structure(df, filename="chart", title="Market Structure"):
     chart.load()
     
     feedback_ui = """
+    <style>
+    .legend { font-size: 20px !important; font-weight: 600 !important; }
+    </style>
     <div id="feedback-panel" style="position:fixed; bottom:20px; right:20px; z-index:10000; background:#1e222d; color:#d1d4dc; padding:15px; border-radius:8px; border: 1px solid #434651; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-family: sans-serif; width: 300px;">
        <h3 style="margin-top:0; color:#fff;">Correction Feedback</h3>
        <p style="font-size:12px; margin-bottom:10px;">Use the toolbox to draw lines/boxes, then describe the mistake below to send to the AI.</p>
@@ -145,14 +148,55 @@ def plot_structure(df, filename="chart", title="Market Structure"):
        <button onclick="sendFeedback()" style="width:100%; background:#2962ff; color:#fff; border:none; padding:8px; border-radius:4px; cursor:pointer; font-weight:bold;">Send Feedback</button>
     </div>
     <script>
+    window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            try {
+                for (let key in window) {
+                    if (key.startsWith('chart_') && window[key].chart) {
+                        const handler = window[key];
+                        const legendText = handler.legend.text;
+                        legendText.style.marginRight = "15px";
+                        legendText.style.fontWeight = "bold";
+                        legendText.style.color = "#2962ff";
+                        
+                        handler.chart.subscribeCrosshairMove(function(param) {
+                            if (param && param.time) {
+                                let dateStr = "";
+                                if (typeof param.time === 'number') {
+                                    const d = new Date(param.time * 1000);
+                                    const y = d.getUTCFullYear();
+                                    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                                    const day = String(d.getUTCDate()).padStart(2, '0');
+                                    const hh = String(d.getUTCHours()).padStart(2, '0');
+                                    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+                                    dateStr = `${y}-${m}-${day} ${hh}:${mm}`.replace(' 00:00', '');
+                                } else if (typeof param.time === 'object') {
+                                    const y = param.time.year;
+                                    const m = String(param.time.month).padStart(2, '0');
+                                    const day = String(param.time.day).padStart(2, '0');
+                                    dateStr = `${y}-${m}-${day}`;
+                                } else {
+                                    dateStr = String(param.time);
+                                }
+                                legendText.innerText = dateStr;
+                            } else {
+                                legendText.innerText = "";
+                            }
+                        });
+                    }
+                }
+            } catch(e) {
+                console.error("Error attaching legend date listener:", e);
+            }
+        }, 500);
+    });
+
     function sendFeedback() {
         const text = document.getElementById('feedback-text').value;
         const btn = document.querySelector('button[onclick="sendFeedback()"]');
         
-        // Try to capture any drawings from local storage if available
         let drawings = null;
         try {
-            // Lightweight charts python saves under a specific key if toolbox is used
             for (let i = 0; i < localStorage.length; i++) {
                 let key = localStorage.key(i);
                 if (key.includes('drawings')) {

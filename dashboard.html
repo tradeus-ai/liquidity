@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquidity Finder & Market Structure Dashboard</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --bg-color: #131722;
+            --header-bg: #1e222d;
+            --border-color: #363c4e;
+            --text-color: #d1d4dc;
+            --accent-color: #2962ff;
+            --accent-hover: #1e4bd8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header Control Bar */
+        header {
+            height: 55px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .title-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #848e9c;
+        }
+
+        select {
+            background: #131722;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .tf-buttons {
+            display: flex;
+            gap: 4px;
+            background: #131722;
+            padding: 3px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tf-btn {
+            background: transparent;
+            color: #848e9c;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tf-btn:hover {
+            color: #fff;
+        }
+
+        .tf-btn.active {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: rgba(8, 153, 129, 0.2);
+            color: #089981;
+            display: none;
+        }
+
+        /* Chart Area */
+        #chart-container {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Large Hover OHLC Legend */
+        #hover-legend {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            font-family: monospace;
+            color: #ffffff;
+            pointer-events: none;
+            background: rgba(19, 23, 34, 0.7);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .legend-title {
+            font-size: 16px;
+            color: #848e9c;
+            margin-bottom: 4px;
+        }
+
+        .legend-val {
+            margin-right: 12px;
+        }
+
+        /* Correction Feedback Panel */
+        #feedback-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: #1e222d;
+            color: #d1d4dc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #434651;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            width: 320px;
+        }
+
+        #feedback-panel h3 {
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        #feedback-panel p {
+            font-size: 12px;
+            color: #848e9c;
+            margin-bottom: 8px;
+        }
+
+        #feedback-text {
+            width: 100%;
+            background: #131722;
+            color: #fff;
+            border: 1px solid #434651;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 12px;
+            resize: vertical;
+            margin-bottom: 8px;
+            outline: none;
+        }
+
+        #feedback-btn {
+            width: 100%;
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        #feedback-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Loading Spinner */
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            background: rgba(19, 23, 34, 0.85);
+            padding: 20px 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .spinner {
+            width: 35px;
+            height: 35px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title-section">
+            📊 Liquidity Finder
+        </div>
+
+        <div class="controls-group">
+            <label for="symbol-select">Symbol:</label>
+            <select id="symbol-select">
+                <option value="AMBUJACEM">Loading symbols...</option>
+            </select>
+        </div>
+
+        <div class="controls-group">
+            <label>Timeframe:</label>
+            <div class="tf-buttons">
+                <button class="tf-btn active" data-tf="1d">1D</button>
+                <button class="tf-btn" data-tf="1h">1H</button>
+                <button class="tf-btn" data-tf="15m">15m</button>
+                <button class="tf-btn" data-tf="5m">5m</button>
+            </div>
+        </div>
+
+        <div id="status-badge" class="status-badge">Loaded</div>
+    </header>
+
+    <div id="chart-container">
+        <div id="hover-legend">
+            <div class="legend-title" id="legend-symbol">AMBUJACEM - 1D</div>
+            <div>
+                <span>O: <span id="leg-o" class="legend-val">-</span></span>
+                <span>H: <span id="leg-h" class="legend-val">-</span></span>
+                <span>L: <span id="leg-l" class="legend-val">-</span></span>
+                <span>C: <span id="leg-c" class="legend-val">-</span></span>
+            </div>
+        </div>
+
+        <div id="loader">
+            <div class="spinner"></div>
+            <span style="font-size: 13px; font-weight: 500;">Computing SMC Structure...</span>
+        </div>
+    </div>
+
+    <!-- Correction Feedback Panel -->
+    <div id="feedback-panel">
+        <h3>Correction Feedback</h3>
+        <p>Spot a mistake? Describe it below to save locally as AI feedback.</p>
+        <textarea id="feedback-text" rows="3" placeholder="E.g., Swing high at 2026-04-20 should be at 465.50..."></textarea>
+        <button id="feedback-btn" onclick="sendFeedback()">Send Feedback</button>
+    </div>
+
+    <script>
+        let chart = null;
+        let candleSeries = null;
+        let pullbackLine = null;
+        let boxPrimitives = [];
+
+        let currentSymbol = 'AMBUJACEM';
+        let currentTimeframe = '1d';
+
+        // Initialize Chart
+        function initChart() {
+            const container = document.getElementById('chart-container');
+            chart = LightweightCharts.createChart(container, {
+                layout: {
+                    backgroundColor: '#131722',
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                    horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                timeScale: {
+                    borderColor: '#363c4e',
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+                rightPriceScale: {
+                    borderColor: '#363c4e',
+                }
+            });
+
+            // Solid White Candle Styling
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#ffffff',
+                downColor: '#ffffff',
+                borderUpColor: '#ffffff',
+                borderDownColor: '#ffffff',
+                wickUpColor: '#ffffff',
+                wickDownColor: '#ffffff',
+            });
+
+            // Bold Orange Structure Pullback Line
+            pullbackLine = chart.addLineSeries({
+                color: '#ff9800',
+                lineWidth: 3,
+                crosshairMarkerVisible: false,
+            });
+
+            // Hover Legend Handler
+            chart.subscribeCrosshairMove(param => {
+                if (!param || !param.time || !param.seriesPrices) return;
+                const price = param.seriesPrices.get(candleSeries);
+                if (price) {
+                    document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(2) : '-';
+                    document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(2) : '-';
+                    document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(2) : '-';
+                    document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(2) : '-';
+                }
+            });
+
+            // Window resize handler
+            window.addEventListener('resize', () => {
+                chart.resize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // Load Symbol List
+        async function loadSymbols() {
+            try {
+                const res = await fetch('/api/symbols');
+                const symbols = await res.json();
+                const select = document.getElementById('symbol-select');
+                select.innerHTML = '';
+                symbols.forEach(sym => {
+                    const opt = document.createElement('option');
+                    opt.value = sym;
+                    opt.textContent = sym;
+                    if (sym === currentSymbol) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Error loading symbols:", err);
+            }
+        }
+
+        // Fetch & Update Chart Data
+        async function updateChart() {
+            document.getElementById('loader').style.display = 'flex';
+            document.getElementById('legend-symbol').innerText = `${currentSymbol} - ${currentTimeframe.toUpperCase()}`;
+
+            try {
+                const res = await fetch(`/api/data?symbol=${encodeURIComponent(currentSymbol)}&timeframe=${encodeURIComponent(currentTimeframe)}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    document.getElementById('loader').style.display = 'none';
+                    return;
+                }
+
+                // Set Candle Data
+                candleSeries.setData(data.candles);
+
+                // Set Pullback Line Data
+                pullbackLine.setData(data.pullback_points);
+
+                // Update Legend to last bar
+                if (data.candles.length > 0) {
+                    const lastBar = data.candles[data.candles.length - 1];
+                    document.getElementById('leg-o').innerText = lastBar.open.toFixed(2);
+                    document.getElementById('leg-h').innerText = lastBar.high.toFixed(2);
+                    document.getElementById('leg-l').innerText = lastBar.low.toFixed(2);
+                    document.getElementById('leg-c').innerText = lastBar.close.toFixed(2);
+                }
+
+                // Fit Content
+                chart.timeScale().fitContent();
+
+            } catch (err) {
+                console.error("Error updating chart:", err);
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        // Send Correction Feedback
+        async function sendFeedback() {
+            const text = document.getElementById('feedback-text').value;
+            const btn = document.getElementById('feedback-btn');
+
+            if (!text.trim()) {
+                alert("Please type a description of the mistake.");
+                return;
+            }
+
+            const payload = {
+                symbol: currentSymbol,
+                timeframe: currentTimeframe,
+                timestamp: new Date().toISOString(),
+                description: text
+            };
+
+            btn.innerText = "Sending...";
+            try {
+                const res = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    btn.innerText = "✅ Sent!";
+                    btn.style.background = "#089981";
+                    document.getElementById('feedback-text').value = '';
+                    setTimeout(() => {
+                        btn.innerText = "Send Feedback";
+                        btn.style.background = "#2962ff";
+                    }, 2000);
+                } else {
+                    alert("Error saving feedback.");
+                    btn.innerText = "Send Feedback";
+                }
+            } catch (err) {
+                alert("Connection failed.");
+                btn.innerText = "Send Feedback";
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', async () => {
+            initChart();
+            await loadSymbols();
+
+            // Symbol Select Change
+            document.getElementById('symbol-select').addEventListener('change', (e) => {
+                currentSymbol = e.target.value;
+                updateChart();
+            });
+
+            // Timeframe Button Clicks
+            document.querySelectorAll('.tf-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentTimeframe = e.target.getAttribute('data-tf');
+                    updateChart();
+                });
+            });
+
+            // Initial chart load
+            updateChart();
+        });
+    </script>
+</body>
+</html>

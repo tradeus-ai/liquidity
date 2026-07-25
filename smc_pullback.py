@@ -8,28 +8,21 @@ swing highs and swing lows on OHLC candlestick data.
 Concept
 -------
 A "pullback" in SMC is a candle-by-candle structure that determines the 
-directional flow of the market by ALWAYS comparing the current candle against
-the IMMEDIATELY PREVIOUS candle (no Mother Bar logic).
+directional flow of the market by comparing against reference Mother Bars.
 
 Rules
 -----
-1. HIGH BROKEN (curr_high > prev_high):
+1. HIGH BROKEN (curr_high > ref_high OR curr_open > ref_high):
    - Market direction is UP.
    - If previously DOWN, a swing LOW is confirmed at the lowest point of the DOWN leg.
 
-2. LOW BROKEN (curr_low < prev_low):
+2. LOW BROKEN (curr_low < ref_low OR curr_open < ref_low):
    - Market direction is DOWN.
    - If previously UP, a swing HIGH is confirmed at the highest point of the UP leg.
 
-3. OUTSIDE BAR (curr_high > prev_high AND curr_low < prev_low):
-   - We use the 15m timeframe (if available) to see which was broken FIRST.
-   - If 15m isn't available, we use the opening price trick:
-     distance_to_high = abs(curr_open - prev_high)
-     distance_to_low  = abs(curr_open - prev_low)
-     Whichever is smaller was taken FIRST.
-   - Once we know what was broken first, we process the outside bar as TWO 
-     SEQUENTIAL breaks. 
-     Example: If HIGH was taken first, we process the HIGH break, then the LOW break.
+3. OUTSIDE BAR (curr_high > ref_high AND curr_low < ref_low):
+   - If curr_open > ref_high or curr_open < ref_low, the open price itself broke that side FIRST.
+   - Otherwise, we use LTF data (15m/5m) to see which side was broken FIRST.
 """
 
 import logging
@@ -54,7 +47,7 @@ def find_swings(df, ltf_df=None):
     swing_low_val = df['low'].iloc[0]
     
     logger.info("=" * 80)
-    logger.info("SMC PULLBACK SWING DETECTION STARTED (Previous Candle Logic)")
+    logger.info("SMC PULLBACK SWING DETECTION STARTED (Mother Bar & Open Break Logic)")
     logger.info("=" * 80)
     
     def process_up_break(i, high_val):
@@ -105,14 +98,38 @@ def find_swings(df, ltf_df=None):
         curr_high = df['high'].iloc[i]
         curr_low = df['low'].iloc[i]
         
-        broke_high = curr_high > ref_high
-        broke_low = curr_low < ref_low
+        # Check if open or high/low broke the reference Mother Bar
+        open_broke_high = curr_open > ref_high
+        open_broke_low = curr_open < ref_low
+        
+        broke_high = (curr_high > ref_high) or open_broke_high
+        broke_low = (curr_low < ref_low) or open_broke_low
         
         if broke_high and broke_low:
             logger.info(f"[{date}] OUTSIDE BAR | Prev {ref_date} H={ref_high:.2f} L={ref_low:.2f}")
             
             taken_first = None
-            if ltf_df is not None and not ltf_df.empty:
+            
+            # Rule: If open price itself gaps above ref_high or below ref_low, that side was broken first at open!
+            if open_broke_high:
+                taken_first = 'HIGH'
+                logger.info(f"  🔍 Open gap break: Open={curr_open:.2f} > ref_H={ref_high:.2f} -> HIGH taken first at open")
+            elif open_broke_low:
+                taken_first = 'LOW'
+                logger.info(f"  🔍 Open gap break: Open={curr_open:.2f} < ref_L={ref_low:.2f} -> LOW taken first at open")
+                
+            # Rule 2: Open price proximity logic (|curr_open - ref_high| vs |curr_open - ref_low|)
+            if not taken_first:
+                dist_to_high = abs(curr_open - ref_high)
+                dist_to_low = abs(curr_open - ref_low)
+                if dist_to_low < dist_to_high:
+                    taken_first = 'LOW'
+                    logger.info(f"  🔍 Open proximity: dist_L={dist_to_low:.2f} < dist_H={dist_to_high:.2f} -> LOW taken first (Open={curr_open:.2f})")
+                elif dist_to_high < dist_to_low:
+                    taken_first = 'HIGH'
+                    logger.info(f"  🔍 Open proximity: dist_H={dist_to_high:.2f} < dist_L={dist_to_low:.2f} -> HIGH taken first (Open={curr_open:.2f})")
+                    
+            if not taken_first and ltf_df is not None and not ltf_df.empty:
                 next_date = df.index[i + 1] if i + 1 < len(df) else None
                 mask = (ltf_df.index >= date) & (ltf_df.index < next_date) if next_date else (ltf_df.index >= date)
                 ltf_candles = ltf_df.loc[mask]
@@ -120,7 +137,12 @@ def find_swings(df, ltf_df=None):
                     h_break = row['high'] > ref_high
                     l_break = row['low'] < ref_low
                     if h_break and l_break:
-                        taken_first = 'HIGH' if row['close'] >= row['open'] else 'LOW'
+                        if row['open'] > ref_high:
+                            taken_first = 'HIGH'
+                        elif row['open'] < ref_low:
+                            taken_first = 'LOW'
+                        else:
+                            taken_first = 'HIGH' if row['close'] >= row['open'] else 'LOW'
                         logger.info(f"  🔍 LTF resolved (15m outside bar): {taken_first} taken first at {row.name}")
                         break
                     elif h_break:
@@ -156,13 +178,15 @@ def find_swings(df, ltf_df=None):
             if current_dir == 1:
                 # In an UP trend, we look for the low to be broken to form a swing high
                 if broke_low:
-                    logger.debug(f"[{date}] LOW BROKEN (Trend Reverse) | Prev {ref_date}")
+                    reason = "OPEN GAP LOW" if open_broke_low else "LOW BROKEN"
+                    logger.debug(f"[{date}] {reason} (Trend Reverse) | Prev {ref_date}")
                     process_down_break(i, curr_low)
                     ref_high = curr_high
                     ref_low = curr_low
                     ref_date = date
                 elif broke_high:
-                    logger.debug(f"[{date}] HIGH BROKEN (Trend Continue) | Prev {ref_date}")
+                    reason = "OPEN GAP HIGH" if open_broke_high else "HIGH BROKEN"
+                    logger.debug(f"[{date}] {reason} (Trend Continue) | Prev {ref_date}")
                     process_up_break(i, curr_high)
                     ref_high = curr_high
                     ref_low = curr_low
@@ -173,13 +197,15 @@ def find_swings(df, ltf_df=None):
             elif current_dir == -1:
                 # In a DOWN trend, we look for the high to be broken to form a swing low
                 if broke_high:
-                    logger.debug(f"[{date}] HIGH BROKEN (Trend Reverse) | Prev {ref_date}")
+                    reason = "OPEN GAP HIGH" if open_broke_high else "HIGH BROKEN"
+                    logger.debug(f"[{date}] {reason} (Trend Reverse) | Prev {ref_date}")
                     process_up_break(i, curr_high)
                     ref_high = curr_high
                     ref_low = curr_low
                     ref_date = date
                 elif broke_low:
-                    logger.debug(f"[{date}] LOW BROKEN (Trend Continue) | Prev {ref_date}")
+                    reason = "OPEN GAP LOW" if open_broke_low else "LOW BROKEN"
+                    logger.debug(f"[{date}] {reason} (Trend Continue) | Prev {ref_date}")
                     process_down_break(i, curr_low)
                     ref_high = curr_high
                     ref_low = curr_low
@@ -190,13 +216,11 @@ def find_swings(df, ltf_df=None):
             else:
                 # Neutral (start of chart)
                 if broke_high:
-                    logger.debug(f"[{date}] HIGH BROKEN | Prev {ref_date}")
                     process_up_break(i, curr_high)
                     ref_high = curr_high
                     ref_low = curr_low
                     ref_date = date
                 elif broke_low:
-                    logger.debug(f"[{date}] LOW BROKEN | Prev {ref_date}")
                     process_down_break(i, curr_low)
                     ref_high = curr_high
                     ref_low = curr_low
