@@ -95,21 +95,21 @@ def find_swings(df, ltf_df=None):
             swing_low_idx = i
             swing_low_val = low_val
     
+    ref_high = df['high'].iloc[0]
+    ref_low = df['low'].iloc[0]
+    ref_date = df.index[0]
+    
     for i in range(1, len(df)):
         date = df.index[i]
         curr_open = df['open'].iloc[i]
         curr_high = df['high'].iloc[i]
         curr_low = df['low'].iloc[i]
         
-        prev_high = df['high'].iloc[i-1]
-        prev_low = df['low'].iloc[i-1]
-        prev_date = df.index[i-1]
-        
-        broke_high = curr_high > prev_high
-        broke_low = curr_low < prev_low
+        broke_high = curr_high > ref_high
+        broke_low = curr_low < ref_low
         
         if broke_high and broke_low:
-            logger.info(f"[{date}] OUTSIDE BAR | Prev {prev_date} H={prev_high:.2f} L={prev_low:.2f}")
+            logger.info(f"[{date}] OUTSIDE BAR | Prev {ref_date} H={ref_high:.2f} L={ref_low:.2f}")
             
             taken_first = None
             if ltf_df is not None and not ltf_df.empty:
@@ -117,24 +117,25 @@ def find_swings(df, ltf_df=None):
                 mask = (ltf_df.index >= date) & (ltf_df.index < next_date) if next_date else (ltf_df.index >= date)
                 ltf_candles = ltf_df.loc[mask]
                 for _, row in ltf_candles.iterrows():
-                    if row['high'] > prev_high:
+                    h_break = row['high'] > ref_high
+                    l_break = row['low'] < ref_low
+                    if h_break and l_break:
+                        taken_first = 'HIGH' if row['close'] >= row['open'] else 'LOW'
+                        logger.info(f"  🔍 LTF resolved (15m outside bar): {taken_first} taken first at {row.name}")
+                        break
+                    elif h_break:
                         taken_first = 'HIGH'
                         logger.info(f"  🔍 LTF resolved: HIGH taken first at {row.name}")
                         break
-                    if row['low'] < prev_low:
+                    elif l_break:
                         taken_first = 'LOW'
                         logger.info(f"  🔍 LTF resolved: LOW taken first at {row.name}")
                         break
             
             if not taken_first:
-                dist_to_high = abs(curr_open - prev_high)
-                dist_to_low = abs(curr_open - prev_low)
-                if dist_to_high <= dist_to_low:
-                    taken_first = 'HIGH'
-                    logger.info(f"  🔍 Open trick: dist_H={dist_to_high:.2f} <= dist_L={dist_to_low:.2f} -> HIGH first")
-                else:
-                    taken_first = 'LOW'
-                    logger.info(f"  🔍 Open trick: dist_L={dist_to_low:.2f} < dist_H={dist_to_high:.2f} -> LOW first")
+                # Fallback if LTF not available or no break found: align with active trend
+                taken_first = 'HIGH' if current_dir == 1 else 'LOW'
+                logger.info(f"  🔍 Trend fallback: {taken_first} first based on active trend ({current_dir})")
             
             if taken_first == 'HIGH':
                 # Process HIGH break, then LOW break
@@ -145,16 +146,63 @@ def find_swings(df, ltf_df=None):
                 process_down_break(i, curr_low)
                 process_up_break(i, curr_high)
                 
-        elif broke_high:
-            logger.debug(f"[{date}] HIGH BROKEN | Prev {prev_date}")
-            process_up_break(i, curr_high)
-                
-        elif broke_low:
-            logger.debug(f"[{date}] LOW BROKEN | Prev {prev_date}")
-            process_down_break(i, curr_low)
+            # Update reference candle
+            ref_high = curr_high
+            ref_low = curr_low
+            ref_date = date
                 
         else:
-            logger.debug(f"[{date}] INSIDE BAR | Prev {prev_date}")
+            # Normal logic: explicitly branch on trend direction
+            if current_dir == 1:
+                # In an UP trend, we look for the low to be broken to form a swing high
+                if broke_low:
+                    logger.debug(f"[{date}] LOW BROKEN (Trend Reverse) | Prev {ref_date}")
+                    process_down_break(i, curr_low)
+                    ref_high = curr_high
+                    ref_low = curr_low
+                    ref_date = date
+                elif broke_high:
+                    logger.debug(f"[{date}] HIGH BROKEN (Trend Continue) | Prev {ref_date}")
+                    process_up_break(i, curr_high)
+                    ref_high = curr_high
+                    ref_low = curr_low
+                    ref_date = date
+                else:
+                    logger.debug(f"[{date}] INSIDE BAR | Prev {ref_date}")
+                    
+            elif current_dir == -1:
+                # In a DOWN trend, we look for the high to be broken to form a swing low
+                if broke_high:
+                    logger.debug(f"[{date}] HIGH BROKEN (Trend Reverse) | Prev {ref_date}")
+                    process_up_break(i, curr_high)
+                    ref_high = curr_high
+                    ref_low = curr_low
+                    ref_date = date
+                elif broke_low:
+                    logger.debug(f"[{date}] LOW BROKEN (Trend Continue) | Prev {ref_date}")
+                    process_down_break(i, curr_low)
+                    ref_high = curr_high
+                    ref_low = curr_low
+                    ref_date = date
+                else:
+                    logger.debug(f"[{date}] INSIDE BAR | Prev {ref_date}")
+                    
+            else:
+                # Neutral (start of chart)
+                if broke_high:
+                    logger.debug(f"[{date}] HIGH BROKEN | Prev {ref_date}")
+                    process_up_break(i, curr_high)
+                    ref_high = curr_high
+                    ref_low = curr_low
+                    ref_date = date
+                elif broke_low:
+                    logger.debug(f"[{date}] LOW BROKEN | Prev {ref_date}")
+                    process_down_break(i, curr_low)
+                    ref_high = curr_high
+                    ref_low = curr_low
+                    ref_date = date
+                else:
+                    logger.debug(f"[{date}] INSIDE BAR | Prev {ref_date}")
             
     total_highs = df['is_swing_high'].sum()
     total_lows = df['is_swing_low'].sum()
