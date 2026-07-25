@@ -91,23 +91,20 @@ def plot_structure(df, filename="chart", title="Market Structure"):
         line = chart.create_line(color='#ff9800', width=3)
         line.set(line_df)
             
-    # Add structure events (BOS, CHOCH)
-    events = df.dropna(subset=['structure_event'])
-    min_date = df.index[0]
-    for idx, row in events.iterrows():
-        if pd.notna(row.get('event_start_idx')):
-            start_date = pd.to_datetime(row['event_start_idx']).strftime(time_format)
-            end_date = pd.to_datetime(row['event_end_idx']).strftime(time_format)
-            start_val = row['event_start_val']
-            end_val = row['event_end_val']
-            
-            if start_date < min_date:
-                start_date = min_date
-                
+    # Add Higher Timeframe Structure Events (#, IS, BOS, ChoCH)
+    if not is_intraday:
+        from bos_choch_inducement import analyze_htf_structure
+        htf_events = analyze_htf_structure(df)
+        min_date = df.index[0]
+        for ev in htf_events:
+            st_date = pd.to_datetime(ev['start_time']).strftime(time_format)
+            et_date = pd.to_datetime(ev['end_time']).strftime(time_format)
+            if st_date < min_date:
+                st_date = min_date
             chart.trend_line(
-                start_time=start_date, start_value=start_val,
-                end_time=end_date, end_value=end_val,
-                line_color='blue', width=2, style='dashed'
+                start_time=st_date, start_value=ev['start_val'],
+                end_time=et_date, end_value=ev['end_val'],
+                line_color=ev['color'], width=2, style='solid'
             )
             
     # Add zones

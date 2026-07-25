@@ -263,6 +263,18 @@
             </div>
         </div>
 
+        <div class="controls-group" style="margin-left: 15px; display: flex; gap: 10px; align-items: center;">
+            <label style="cursor:pointer; color:#00e676; font-weight:700; font-size:13px; background:#131722; padding:4px 8px; border-radius:4px; border:1px solid #363c4e;">
+                <input type="checkbox" id="toggle-master" checked onchange="toggleMaster(this.checked)"> Master SMC Structure
+            </label>
+            <span style="color:#363c4e;">|</span>
+            <label style="cursor:pointer; color:#ff9800; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-pullbacks" checked onchange="toggleLayers()"> Pullbacks</label>
+            <label style="cursor:pointer; color:#ffb300; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-idm" checked onchange="toggleLayers()"> # (IDM)</label>
+            <label style="cursor:pointer; color:#00e5ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-is" checked onchange="toggleLayers()"> IS</label>
+            <label style="cursor:pointer; color:#2962ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-bos" checked onchange="toggleLayers()"> BOS</label>
+            <label style="cursor:pointer; color:#e91e63; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-choch" checked onchange="toggleLayers()"> ChoCH</label>
+        </div>
+
         <div id="status-badge" class="status-badge">Loaded</div>
     </header>
 
@@ -450,6 +462,9 @@
                     document.getElementById('leg-c').innerText = lastBar.close.toFixed(2);
                 }
 
+                window.lastData = data;
+                toggleLayers();
+
                 // Fit Content
                 chart.timeScale().fitContent();
 
@@ -457,6 +472,92 @@
                 console.error("Error updating chart:", err);
             } finally {
                 document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        let structureLines = [];
+
+        function toggleMaster(isChecked) {
+            document.querySelectorAll('.layer-toggle').forEach(cb => {
+                cb.checked = isChecked;
+            });
+            toggleLayers();
+        }
+
+        function toggleLayers() {
+            if (!window.lastData) return;
+            const data = window.lastData;
+
+            const showPullback = document.getElementById('toggle-pullbacks').checked;
+            const showIDM = document.getElementById('toggle-idm').checked;
+            const showIS = document.getElementById('toggle-is').checked;
+            const showBOS = document.getElementById('toggle-bos').checked;
+            const showChoCH = document.getElementById('toggle-choch').checked;
+
+            pullbackLine.applyOptions({ visible: showPullback });
+
+            // Clear old structure line series
+            structureLines.forEach(l => {
+                try { chart.removeSeries(l); } catch(e) {}
+            });
+            structureLines = [];
+
+            if (data.htf_events && data.htf_events.length > 0) {
+                const markers = [];
+                const candles = data.candles || [];
+
+                data.htf_events.forEach(ev => {
+                    if (ev.type === 'IDM' && !showIDM) return;
+                    if (ev.type === 'IS' && !showIS) return;
+                    if (ev.type === 'BOS' && !showBOS) return;
+                    if (ev.type === 'CHOCH' && !showChoCH) return;
+
+                    // Ensure bounds are strictly clamped
+                    const sTime = ev.start_time;
+                    const eTime = ev.end_time > sTime ? ev.end_time : sTime;
+
+                    // Find midpoint timestamp for text in middle of line
+                    let midTime = eTime;
+                    if (candles.length > 0) {
+                        let iStart = candles.findIndex(c => c.time >= sTime);
+                        let iEnd = candles.findIndex(c => c.time >= eTime);
+                        if (iStart === -1) iStart = 0;
+                        if (iEnd === -1) iEnd = candles.length - 1;
+                        const iMid = Math.floor((iStart + iEnd) / 2);
+                        midTime = candles[iMid] ? candles[iMid].time : eTime;
+                    }
+
+                    let position = 'aboveBar';
+                    if (ev.type === 'CHOCH' || ev.type === 'IDM') {
+                        position = 'belowBar';
+                    }
+
+                    markers.push({
+                        time: midTime,
+                        position: position,
+                        color: ev.color,
+                        shape: 'circle',
+                        text: ev.label
+                    });
+
+                    // Draw solid straight line from start_time to end_time
+                    const line = chart.addLineSeries({
+                        color: ev.color,
+                        lineWidth: 2,
+                        lineStyle: LightweightCharts.LineStyle.Solid,
+                        crosshairMarkerVisible: false,
+                        lastValueVisible: false,
+                        priceLineVisible: false
+                    });
+                    line.setData([
+                        { time: sTime, value: ev.start_val },
+                        { time: eTime, value: ev.end_val }
+                    ]);
+                    structureLines.push(line);
+                });
+                candleSeries.setMarkers(markers);
+            } else {
+                candleSeries.setMarkers([]);
             }
         }
 

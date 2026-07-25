@@ -27,6 +27,19 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(symbols).encode('utf-8'))
             return
 
+        # 1b. API: Get Chart Structure Data
+        elif path == '/api/data':
+            from structure_service import get_chart_data
+            symbol = query.get('symbol', ['AMBUJACEM'])[0]
+            timeframe = query.get('timeframe', ['1d'])[0]
+            chart_data = get_chart_data(symbol, timeframe)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(chart_data).encode('utf-8'))
+            return
+
         # 2. Serve Dynamic Interactive Dashboard with Symbol & Timeframe controls
         elif path in ['/', '/index.html', '/dashboard.html']:
             symbol = query.get('symbol', ['AMBUJACEM'])[0]

@@ -6,6 +6,7 @@ from tvDatafeed import Interval
 from data_fetcher import DataFetcher
 from market_structure import MarketStructureAnalyzer
 from inside_bars import identify_inside_bar_zones
+from bos_choch_inducement import analyze_htf_structure
 
 fetcher = DataFetcher(data_dir="data")
 CACHE_DIR = "data/structure_cache"
@@ -131,7 +132,23 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         })
         
     zones = []
+    htf_events = []
     if tf == '1d':
+        # Analyze Higher Timeframe Market Structure (BOS, ChoCH, Inducement)
+        raw_events = analyze_htf_structure(df_struct)
+        for ev in raw_events:
+            st_ts = int(pd.to_datetime(ev['start_time']).timestamp())
+            et_ts = int(pd.to_datetime(ev['end_time']).timestamp())
+            htf_events.append({
+                'type': ev['type'],
+                'label': ev['label'],
+                'start_time': st_ts,
+                'start_val': float(ev['start_val']),
+                'end_time': et_ts,
+                'end_val': float(ev['end_val']),
+                'color': ev['color']
+            })
+
         zones_df = df_struct.dropna(subset=['zone_type'])
         end_ts = int(pd.to_datetime(df_struct.index[-1]).timestamp())
         for idx, row in zones_df.iterrows():
@@ -151,7 +168,8 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         'candles': candles,
         'pullback_points': pullback_points,
         'inside_zones': inside_zones,
-        'zones': zones
+        'zones': zones,
+        'htf_events': htf_events
     }
     
     # Write to cache

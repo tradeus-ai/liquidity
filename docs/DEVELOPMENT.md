@@ -1,29 +1,43 @@
-<!-- generated-by: gsd-doc-writer -->
 # Development
 
 ## Local Setup
-To set up the project for development:
 1. Ensure Python 3.8+ is installed.
 2. Clone the repository.
-3. Create a virtual environment (`python -m venv .venv`).
-4. Activate the environment and install dependencies (`pip install pandas numpy mplfinance tvDatafeed pyarrow`).
+3. Create a virtual environment: `python -m venv .venv`
+4. Activate: `source .venv/bin/activate`
+5. Install dependencies: `pip install pandas numpy tvDatafeed pyarrow lightweight-charts`
 
-## Build Commands
-This project consists of Python scripts and does not have a formal build step or `package.json`. 
+## Commands
 
 | Command | Description |
 |---|---|
-| `python main.py` | Runs the main data fetcher and structure analysis script, outputting PNG charts. |
-| `python test_fetch.py` | Runs the test fetching script to verify API connectivity. |
+| `python app.py` | Start the web dashboard at `http://127.0.0.1:8080` |
+| `python main.py` | Generate static `chart_1d.html` and `chart_15m.html` with all SMC overlays |
+| `python test_fetch.py` | Verify TradingView API connectivity |
+
+## Web Dashboard Features
+- **Multi-Symbol Dropdown**: 215+ NSE Futures symbols loaded from `Futures.csv`
+- **Timeframe Switching**: 1D, 1H, 15m, 5m — instant switch via topbar buttons
+- **SMC Overlays**: Pullbacks, Inducement (#), Inducement Shift (IS), BOS, ChoCH
+- **Master Toggle**: Single checkbox to show/hide all SMC structure overlays
+- **Individual Toggles**: Fine-tune visibility of each overlay type
+- **Interactive Toolbox**: Draw lines, boxes, and annotations directly on the chart
+- **Correction Feedback**: Submit chart corrections via the feedback panel
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Render the interactive dashboard |
+| `/api/data?symbol=X&timeframe=Y` | GET | Return chart data as JSON (candles, pullback points, HTF events, zones) |
+| `/api/symbols` | GET | Return the list of available symbols |
+| `/api/feedback` | POST | Save chart correction feedback to `chart_feedback.json` |
 
 ## Code Style
-There are currently no enforced linters or formatters (like `black` or `flake8`) configured in the repository. Standard PEP-8 conventions are recommended.
-
-## Branch Conventions
-No convention documented.
+Standard PEP-8 conventions are recommended. No enforced linters are currently configured.
 
 ## PR Process
-1. Fork the repository and create your branch from `main`.
-2. Ensure your code does not break the logic in `market_structure.py`.
-3. Test your changes by running `python main.py` and reviewing the output charts.
+1. Create your branch from `main`.
+2. Test with `python main.py` (static charts) and `python app.py` (web dashboard).
+3. Verify the date scale is visible at the bottom of the chart.
 4. Open a pull request describing your changes.

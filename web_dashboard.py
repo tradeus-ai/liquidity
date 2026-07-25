@@ -39,6 +39,17 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d"):
         line = chart.create_line(color='#ff9800', width=3)
         line.set(line_df)
         
+    # HTF Structure Events (#, IS, BOS, ChoCH) - ONLY for Daily - 1D
+    if tf == '1d':
+        for ev in data.get('htf_events', []):
+            st_date = pd.to_datetime(ev['start_time'], unit='s').strftime('%Y-%m-%d')
+            et_date = pd.to_datetime(ev['end_time'], unit='s').strftime('%Y-%m-%d')
+            chart.trend_line(
+                start_time=st_date, start_value=ev['start_val'],
+                end_time=et_date, end_value=ev['end_val'],
+                line_color=ev['color'], width=2, style='solid'
+            )
+
     # Demand/Supply zones (ONLY for Daily - 1D)
     for z in data.get('zones', []):
         st_date = pd.to_datetime(z['start_time'], unit='s').strftime('%Y-%m-%d')
@@ -78,14 +89,18 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d"):
         overflow: hidden;
         background-color: #131722;
     }}
+    body {{
+        padding-top: 50px !important;
+    }}
     
     .legend {{ font-size: 20px !important; font-weight: 600 !important; }}
     
     .custom-topbar {{
-        position: relative;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
+        width: 100%;
         height: 50px;
         background-color: #1e222d;
         border-bottom: 1px solid #363c4e;
@@ -156,6 +171,17 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d"):
             <button class="tf-btn {'active' if tf=='1h' else ''}" onclick="changeTF('1h')">1H</button>
             <button class="tf-btn {'active' if tf=='15m' else ''}" onclick="changeTF('15m')">15m</button>
             <button class="tf-btn {'active' if tf=='5m' else ''}" onclick="changeTF('5m')">5m</button>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-left:10px;">
+            <label style="cursor:pointer; color:#00e676; font-weight:700; font-size:12px; background:#131722; padding:3px 6px; border-radius:4px; border:1px solid #363c4e;">
+                <input type="checkbox" id="toggle-master" checked onchange="toggleMaster(this.checked)"> Master SMC Structure
+            </label>
+            <span style="color:#363c4e;">|</span>
+            <label style="cursor:pointer; color:#ff9800; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-pullbacks" checked onchange="toggleLayers()"> Pullbacks</label>
+            <label style="cursor:pointer; color:#ffb300; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-idm" checked onchange="toggleLayers()"> # (IDM)</label>
+            <label style="cursor:pointer; color:#00e5ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-is" checked onchange="toggleLayers()"> IS</label>
+            <label style="cursor:pointer; color:#2962ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-bos" checked onchange="toggleLayers()"> BOS</label>
+            <label style="cursor:pointer; color:#e91e63; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-choch" checked onchange="toggleLayers()"> ChoCH</label>
         </div>
     </div>
 
