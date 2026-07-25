@@ -1,66 +1,19 @@
 import os
 import pandas as pd
-from tvDatafeed import Interval
-from data_fetcher import DataFetcher
-from market_structure import MarketStructureAnalyzer
-from smc_pullback import find_swings
-from inside_bars import identify_inside_bar_zones
 from symbol_loader import get_symbol_list
+from structure_service import get_chart_data
 from lightweight_charts.widgets import StaticLWC
-
-fetcher = DataFetcher(data_dir="data")
-
-TIMEFRAME_MAP = {
-    '1d': (Interval.in_daily, '1d'),
-    '1h': (Interval.in_1_hour, '1h'),
-    '15m': (Interval.in_15_minute, '15m'),
-    '5m': (Interval.in_5_minute, '5m')
-}
-
-LTF_MAP = {
-    '1d': '15m',
-    '1h': '5m',
-    '15m': '5m',
-    '5m': None
-}
 
 def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d"):
     tf = timeframe_raw.lower()
-    if tf not in TIMEFRAME_MAP:
-        tf = '1d'
+    data = get_chart_data(symbol_raw, tf)
+    
+    if 'error' in data:
+        return f"<h1>Error: {data['error']}</h1>"
         
-    tv_symbol = f"{symbol_raw}1!" if not symbol_raw.endswith('1!') else symbol_raw
-    exchange = 'NSE'
+    is_intraday = data.get('is_intraday', False)
     
-    interval_enum, interval_name = TIMEFRAME_MAP[tf]
-    
-    # LTF for outside bar resolution
-    ltf_name = LTF_MAP.get(tf)
-    ltf_df = None
-    if ltf_name and ltf_name in TIMEFRAME_MAP:
-        ltf_enum, ltf_str = TIMEFRAME_MAP[ltf_name]
-        ltf_df = fetcher.fetch_data(tv_symbol, exchange, ltf_enum, ltf_str, n_bars_initial=2000, n_bars_update=300)
-        
-    df = fetcher.fetch_data(tv_symbol, exchange, interval_enum, interval_name, n_bars_initial=3000, n_bars_update=500)
-    
-    if df is None or df.empty:
-        return f"<h1>Error: Failed to fetch data for {tv_symbol} ({tf})</h1>"
-        
-    analyzer = MarketStructureAnalyzer(df, timeframe=tf, ltf_df=ltf_df)
-    df_struct = analyzer.identify_structure()
-    
-    is_intraday = tf in ['1h', '15m', '5m']
-    time_format = '%Y-%m-%d %H:%M:%S' if is_intraday else '%Y-%m-%d'
-    
-    if pd.api.types.is_datetime64_any_dtype(df_struct.index):
-        df_struct.index = df_struct.index.strftime(time_format)
-        
-    df_plot = df_struct.copy()
-    if df_plot.index.name != 'time':
-        df_plot = df_plot.reset_index()
-        df_plot.rename(columns={df_plot.columns[0]: 'time'}, inplace=True)
-    df_plot.columns = [c.lower() for c in df_plot.columns]
-    
+    # Create StaticLWC chart
     chart = StaticLWC(toolbox=True)
     chart.layout(background_color='#131722', text_color='#d1d4dc')
     chart.candle_style(
@@ -74,75 +27,38 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d"):
     chart.time_scale(time_visible=is_intraday, seconds_visible=False)
     chart.legend(visible=True, ohlc=True, percent=True, font_size=20)
     
-    df_plot['time'] = pd.to_datetime(df_plot['time']).astype('datetime64[ns]')
-    chart.set(df_plot[['time', 'open', 'high', 'low', 'close']])
+    # Format candle dataframe for lightweight-charts
+    candles_df = pd.DataFrame(data['candles'])
+    candles_df['time'] = pd.to_datetime(candles_df['time'], unit='s').astype('datetime64[ns]')
+    chart.set(candles_df[['time', 'open', 'high', 'low', 'close']])
     
-    # Pullback line
-    pullback_points = []
-    last_swing = None
-    for idx, row in df_struct.iterrows():
-        is_high = row.get('is_swing_high', False)
-        is_low = row.get('is_swing_low', False)
-        if is_high and is_low:
-            if last_swing == 'HIGH':
-                pullback_points.append({'time': idx, 'value': row['low']})
-                pullback_points.append({'time': idx, 'value': row['high']})
-                last_swing = 'HIGH'
-            else:
-                pullback_points.append({'time': idx, 'value': row['high']})
-                pullback_points.append({'time': idx, 'value': row['low']})
-                last_swing = 'LOW'
-        elif is_high:
-            pullback_points.append({'time': idx, 'value': row['high']})
-            last_swing = 'HIGH'
-        elif is_low:
-            pullback_points.append({'time': idx, 'value': row['low']})
-            last_swing = 'LOW'
-            
-    if len(pullback_points) > 1:
-        line_df = pd.DataFrame(pullback_points)
-        line_df['time'] = pd.to_datetime(line_df['time']).astype('datetime64[ns]')
+    # Add pullback line
+    if len(data.get('pullback_points', [])) > 1:
+        line_df = pd.DataFrame(data['pullback_points'])
+        line_df['time'] = pd.to_datetime(line_df['time'], unit='s').astype('datetime64[ns]')
         line = chart.create_line(color='#ff9800', width=3)
         line.set(line_df)
         
-    # Structure events (BOS, CHOCH) - ONLY for Higher Timeframe Daily (1D)
-    if tf == '1d':
-        events = df_struct.dropna(subset=['structure_event'])
-        min_date = df_struct.index[0]
-        for idx, row in events.iterrows():
-            if pd.notna(row.get('event_start_idx')):
-                start_date = pd.to_datetime(row['event_start_idx']).strftime(time_format)
-                end_date = pd.to_datetime(row['event_end_idx']).strftime(time_format)
-                start_val = row['event_start_val']
-                end_val = row['event_end_val']
-                if start_date < min_date:
-                    start_date = min_date
-                chart.trend_line(
-                    start_time=start_date, start_value=start_val,
-                    end_time=end_date, end_value=end_val,
-                    line_color='blue', width=2, style='dashed'
-                )
-                
-        # Demand/Supply zones - ONLY for Higher Timeframe Daily (1D)
-        zones = df_struct.dropna(subset=['zone_type'])
-        end_date = df_struct.index[-1]
-        for idx, row in zones.iterrows():
-            color = 'rgba(0, 255, 0, 0.2)' if row['zone_type'] == 'DEMAND' else 'rgba(255, 0, 0, 0.2)'
-            line_color = 'green' if row['zone_type'] == 'DEMAND' else 'red'
-            chart.box(
-                start_time=idx, start_value=row['zone_high'],
-                end_time=end_date, end_value=row['zone_low'],
-                color=line_color, fill_color=color, width=1
-            )
+    # Demand/Supply zones (ONLY for Daily - 1D)
+    for z in data.get('zones', []):
+        st_date = pd.to_datetime(z['start_time'], unit='s').strftime('%Y-%m-%d')
+        et_date = pd.to_datetime(z['end_time'], unit='s').strftime('%Y-%m-%d')
+        color = 'rgba(0, 255, 0, 0.2)' if z['type'] == 'DEMAND' else 'rgba(255, 0, 0, 0.2)'
+        line_color = 'green' if z['type'] == 'DEMAND' else 'red'
+        chart.box(
+            start_time=st_date, start_value=z['high'],
+            end_time=et_date, end_value=z['low'],
+            color=line_color, fill_color=color, width=1
+        )
         
     # Inside bar zones (pink rectangle)
-    inside_zones = identify_inside_bar_zones(df_struct)
-    for z in inside_zones:
-        start_date = pd.to_datetime(z['start_time']).strftime(time_format)
-        end_date = pd.to_datetime(z['end_time']).strftime(time_format)
+    time_fmt = '%Y-%m-%d %H:%M:%S' if is_intraday else '%Y-%m-%d'
+    for z in data.get('inside_zones', []):
+        st_date = pd.to_datetime(z['start_time'], unit='s').strftime(time_fmt)
+        et_date = pd.to_datetime(z['end_time'], unit='s').strftime(time_fmt)
         chart.box(
-            start_time=start_date, start_value=z['high'],
-            end_time=end_date, end_value=z['low'],
+            start_time=st_date, start_value=z['high'],
+            end_time=et_date, end_value=z['low'],
             color='pink', fill_color='rgba(255, 105, 180, 0.2)', width=1
         )
         

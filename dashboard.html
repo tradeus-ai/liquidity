@@ -268,7 +268,10 @@
 
     <div id="chart-container">
         <div id="hover-legend">
-            <div class="legend-title" id="legend-symbol">AMBUJACEM - 1D</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 4px;">
+                <span class="legend-title" id="legend-symbol">AMBUJACEM - 1D</span>
+                <span id="leg-date" style="color: #2962ff; font-weight: bold; font-size: 16px;">-</span>
+            </div>
             <div>
                 <span>O: <span id="leg-o" class="legend-val">-</span></span>
                 <span>H: <span id="leg-h" class="legend-val">-</span></span>
@@ -304,6 +307,8 @@
         function initChart() {
             const container = document.getElementById('chart-container');
             chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth,
+                height: container.clientHeight,
                 layout: {
                     backgroundColor: '#131722',
                     textColor: '#d1d4dc',
@@ -317,6 +322,7 @@
                 },
                 timeScale: {
                     borderColor: '#363c4e',
+                    visible: true,
                     timeVisible: true,
                     secondsVisible: false,
                 },
@@ -342,15 +348,48 @@
                 crosshairMarkerVisible: false,
             });
 
-            // Hover Legend Handler
+            // Hover Legend & Date/Time Handler
             chart.subscribeCrosshairMove(param => {
-                if (!param || !param.time || !param.seriesPrices) return;
-                const price = param.seriesPrices.get(candleSeries);
-                if (price) {
-                    document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(2) : '-';
-                    document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(2) : '-';
-                    document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(2) : '-';
-                    document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(2) : '-';
+                if (!param || !param.time) {
+                    document.getElementById('leg-date').innerText = '-';
+                    document.getElementById('leg-o').innerText = '-';
+                    document.getElementById('leg-h').innerText = '-';
+                    document.getElementById('leg-l').innerText = '-';
+                    document.getElementById('leg-c').innerText = '-';
+                    return;
+                }
+
+                let dateStr = "";
+                if (typeof param.time === 'number') {
+                    const d = new Date(param.time * 1000);
+                    const y = d.getUTCFullYear();
+                    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(d.getUTCDate()).padStart(2, '0');
+                    const hh = String(d.getUTCHours()).padStart(2, '0');
+                    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+                    if (currentTimeframe === '1d') {
+                        dateStr = `${y}-${m}-${day}`;
+                    } else {
+                        dateStr = `${y}-${m}-${day} ${hh}:${mm}`;
+                    }
+                } else if (typeof param.time === 'object') {
+                    const y = param.time.year;
+                    const m = String(param.time.month).padStart(2, '0');
+                    const day = String(param.time.day).padStart(2, '0');
+                    dateStr = `${y}-${m}-${day}`;
+                } else {
+                    dateStr = String(param.time);
+                }
+                document.getElementById('leg-date').innerText = dateStr;
+
+                if (param.seriesPrices) {
+                    const price = param.seriesPrices.get(candleSeries);
+                    if (price) {
+                        document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(2) : '-';
+                        document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(2) : '-';
+                        document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(2) : '-';
+                        document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(2) : '-';
+                    }
                 }
             });
 
@@ -358,6 +397,8 @@
             window.addEventListener('resize', () => {
                 chart.resize(container.clientWidth, container.clientHeight);
             });
+            
+            chart.resize(container.clientWidth, container.clientHeight);
         }
 
         // Load Symbol List

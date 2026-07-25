@@ -1,3 +1,5 @@
+import os
+import json
 import pandas as pd
 import numpy as np
 from tvDatafeed import Interval
@@ -6,6 +8,8 @@ from market_structure import MarketStructureAnalyzer
 from inside_bars import identify_inside_bar_zones
 
 fetcher = DataFetcher(data_dir="data")
+CACHE_DIR = "data/structure_cache"
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 TIMEFRAME_MAP = {
     '1d': (Interval.in_daily, '1d'),
@@ -31,6 +35,31 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
     
     interval_enum, interval_name = TIMEFRAME_MAP[tf]
     
+    # Fetch main candle data
+    df = fetcher.fetch_data(tv_symbol, exchange, interval_enum, interval_name, n_bars_initial=3000, n_bars_update=500)
+    
+    if df is None or df.empty:
+        return {'error': f'Failed to fetch data for {tv_symbol}'}
+
+    clean_sym = tv_symbol.replace('!', '_')
+    cache_path = os.path.join(CACHE_DIR, f"{clean_sym}_{tf}.json")
+    
+    last_candle_time = int(pd.to_datetime(df.index[-1]).timestamp())
+    total_candles = len(df)
+    
+    # Check structure cache
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                cached_data = json.load(f)
+            if cached_data.get('last_timestamp') == last_candle_time and cached_data.get('total_candles') == total_candles:
+                print(f"⚡ Cache Hit: Loaded structure for {tv_symbol} ({tf}) instantly!")
+                return cached_data['payload']
+        except Exception as e:
+            print(f"⚠️ Cache read failed for {tv_symbol} ({tf}): {e}")
+
+    print(f"🔄 Cache Miss: Computing SMC Structure & Pullbacks for {tv_symbol} ({tf})...")
+
     # Check if we need LTF data for outside bar resolution
     ltf_name = LTF_MAP.get(tf)
     ltf_df = None
@@ -38,15 +67,9 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         ltf_enum, ltf_str = TIMEFRAME_MAP[ltf_name]
         ltf_df = fetcher.fetch_data(tv_symbol, exchange, ltf_enum, ltf_str, n_bars_initial=2000, n_bars_update=300)
         
-    df = fetcher.fetch_data(tv_symbol, exchange, interval_enum, interval_name, n_bars_initial=3000, n_bars_update=500)
-    
-    if df is None or df.empty:
-        return {'error': f'Failed to fetch data for {tv_symbol}'}
-        
     analyzer = MarketStructureAnalyzer(df, timeframe=tf, ltf_df=ltf_df)
     df_struct = analyzer.identify_structure()
     
-    # Format time column for JS
     is_intraday = tf in ['1h', '15m', '5m']
     time_format = '%Y-%m-%d %H:%M:%S' if is_intraday else '%Y-%m-%d'
     
@@ -60,10 +83,8 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         
     df_plot.columns = [c.lower() for c in df_plot.columns]
     
-    # Convert timestamps to nanoseconds datetime for unix seconds conversion
     candles = []
     for _, row in df_plot.iterrows():
-        # Unix timestamp in seconds
         ts = int(pd.to_datetime(row['time']).timestamp())
         candles.append({
             'time': ts,
@@ -73,7 +94,6 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
             'close': float(row['close'])
         })
         
-    # Extract pullback lines
     pullback_points = []
     last_swing = None
     for idx, row in df_struct.iterrows():
@@ -98,7 +118,6 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
             pullback_points.append({'time': ts, 'value': float(row['low'])})
             last_swing = 'LOW'
             
-    # Extract inside bar boxes
     inside_zones_raw = identify_inside_bar_zones(df_struct)
     inside_zones = []
     for z in inside_zones_raw:
@@ -111,7 +130,6 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
             'low': float(z['low'])
         })
         
-    # Extract demand/supply zones (ONLY for Higher Timeframe Daily - 1D)
     zones = []
     if tf == '1d':
         zones_df = df_struct.dropna(subset=['zone_type'])
@@ -126,7 +144,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
                 'low': float(row['zone_low'])
             })
         
-    return {
+    payload = {
         'symbol': symbol_raw,
         'timeframe': tf,
         'is_intraday': is_intraday,
@@ -135,3 +153,18 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         'inside_zones': inside_zones,
         'zones': zones
     }
+    
+    # Write to cache
+    try:
+        cache_entry = {
+            'last_timestamp': last_candle_time,
+            'total_candles': total_candles,
+            'payload': payload
+        }
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(cache_entry, f)
+        print(f"💾 Structure cached to {cache_path}")
+    except Exception as e:
+        print(f"⚠️ Failed to write cache for {tv_symbol} ({tf}): {e}")
+        
+    return payload
