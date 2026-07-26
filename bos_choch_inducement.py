@@ -3,11 +3,13 @@ BOS, ChoCH and Inducement Module for Higher Timeframe (Daily 1D)
 ===============================================================
 
 This module implements Smart Money Concepts (SMC) Market Structure:
-1. Inducement (#): First pullback low broken in uptrend (first pullback high in downtrend), located PRIOR TO / LEFT OF the peak high / low.
+1. Inducement (#): First pullback low broken in uptrend (first pullback high in downtrend), located PRIOR TO / LEFT OF the peak high / low but WITHIN the current structure cycle.
 2. Proper High / Low: Confirmed once Inducement occurs.
 3. Break of Structure (BOS): Candle CLOSE above Proper High (or below Proper Low). Wicks are ignored until candle closes above wick high.
 4. Inducement Shift (IS): Subsequent inducement prior to candle closure above proper high.
 5. Change of Character (ChoCH): Major structural high/low break that flips trend.
+
+RULE: BOS can NEVER occur without a preceding Inducement in the same cycle.
 """
 
 import pandas as pd
@@ -49,6 +51,10 @@ def analyze_htf_structure(df):
     choch_idx = min_low_idx
     choch_val = min_low_val
     
+    # Track cycle start — the candle where the current trend cycle began
+    # Inducement levels must only come from swing points AFTER this boundary
+    cycle_start_idx = min_low_idx
+    
     for i in range(min_low_i, len(df)):
         idx = df.index[i]
         c_high = float(df['high'].iloc[i])
@@ -65,12 +71,13 @@ def analyze_htf_structure(df):
                 continue
                 
             if not inducement_done:
-                # Update peak high and find last swing low PRIOR TO this peak high
+                # Update peak high and find last swing low WITHIN current cycle and PRIOR TO this peak
                 if c_high >= proper_high_val:
                     proper_high_idx = idx
                     proper_high_val = c_high
                     
-                    sub_df = df.loc[:proper_high_idx]
+                    # Only look for swing lows AFTER cycle_start_idx
+                    sub_df = df.loc[cycle_start_idx:proper_high_idx]
                     sl_rows = sub_df[sub_df['is_swing_low'] == True]
                     if len(sl_rows) > 0:
                         active_pb_low_idx = sl_rows.index[-1]
@@ -79,7 +86,7 @@ def analyze_htf_structure(df):
                         active_pb_low_idx = None
                         active_pb_low_val = None
                         
-                # Check Inducement (#): Low breaks valid pullback low prior to proper high
+                # Check Inducement (#): Low breaks valid pullback low within current cycle
                 if active_pb_low_val is not None and c_low < active_pb_low_val:
                     inducement_done = True
                     label = "IS" if wick_high_val is not None else "#"
@@ -118,11 +125,15 @@ def analyze_htf_structure(df):
                     wick_high_val = None
                     proper_high_idx = idx
                     proper_high_val = c_high
+                    # Reset active pullback for the new leg
+                    active_pb_low_idx = None
+                    active_pb_low_val = None
                     
                 # Wick break: High > target but Close <= target
                 elif c_high > target_high and c_close <= target_high:
                     wick_high_val = c_high
-                    sub_df = df.loc[:idx]
+                    # Find last swing low within cycle for potential IS
+                    sub_df = df.loc[cycle_start_idx:idx]
                     sl_rows = sub_df[sub_df['is_swing_low'] == True]
                     if len(sl_rows) > 0:
                         active_pb_low_idx = sl_rows.index[-1]
@@ -146,6 +157,12 @@ def analyze_htf_structure(df):
                 wick_high_val = None
                 choch_idx = proper_high_idx
                 choch_val = proper_high_val
+                # New cycle starts here — reset pullback tracking
+                cycle_start_idx = idx
+                active_pb_low_idx = None
+                active_pb_low_val = None
+                active_pb_high_idx = None
+                active_pb_high_val = None
 
         elif current_trend == -1:
             if proper_low_val is None:
@@ -155,12 +172,13 @@ def analyze_htf_structure(df):
                 continue
                 
             if not inducement_done:
-                # Update peak low and find last swing high PRIOR TO this peak low
+                # Update peak low and find last swing high WITHIN current cycle and PRIOR TO this peak
                 if c_low <= proper_low_val:
                     proper_low_idx = idx
                     proper_low_val = c_low
                     
-                    sub_df = df.loc[:proper_low_idx]
+                    # Only look for swing highs AFTER cycle_start_idx
+                    sub_df = df.loc[cycle_start_idx:proper_low_idx]
                     sh_rows = sub_df[sub_df['is_swing_high'] == True]
                     if len(sh_rows) > 0:
                         active_pb_high_idx = sh_rows.index[-1]
@@ -169,7 +187,7 @@ def analyze_htf_structure(df):
                         active_pb_high_idx = None
                         active_pb_high_val = None
                         
-                # Check Inducement (#): High breaks valid pullback high prior to proper low
+                # Check Inducement (#): High breaks valid pullback high within current cycle
                 if active_pb_high_val is not None and c_high > active_pb_high_val:
                     inducement_done = True
                     label = "IS" if wick_low_val is not None else "#"
@@ -208,11 +226,15 @@ def analyze_htf_structure(df):
                     wick_low_val = None
                     proper_low_idx = idx
                     proper_low_val = c_low
+                    # Reset active pullback for the new leg
+                    active_pb_high_idx = None
+                    active_pb_high_val = None
                     
                 # Wick break: Low < target but Close >= target
                 elif c_low < target_low and c_close >= target_low:
                     wick_low_val = c_low
-                    sub_df = df.loc[:idx]
+                    # Find last swing high within cycle for potential IS
+                    sub_df = df.loc[cycle_start_idx:idx]
                     sh_rows = sub_df[sub_df['is_swing_high'] == True]
                     if len(sh_rows) > 0:
                         active_pb_high_idx = sh_rows.index[-1]
@@ -236,5 +258,11 @@ def analyze_htf_structure(df):
                 wick_low_val = None
                 choch_idx = proper_low_idx
                 choch_val = proper_low_val
+                # New cycle starts here — reset pullback tracking
+                cycle_start_idx = idx
+                active_pb_low_idx = None
+                active_pb_low_val = None
+                active_pb_high_idx = None
+                active_pb_high_val = None
 
     return structure_events
