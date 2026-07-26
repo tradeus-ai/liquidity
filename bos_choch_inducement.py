@@ -14,6 +14,9 @@ RULE: BOS can NEVER occur without a preceding Inducement in the same cycle.
 
 import pandas as pd
 import numpy as np
+from smc_zones import extract_demand_zones, extract_supply_zones, mitigate_zones, finalize_zones, add_zone
+
+
 
 def analyze_htf_structure(df):
     """
@@ -23,8 +26,11 @@ def analyze_htf_structure(df):
     df = df.copy()
     if len(df) < 5:
         return []
-
     structure_events = []
+    active_demand_zones = []
+    active_supply_zones = []
+    historical_zones = []
+
     
     # 1 = UPTREND, -1 = DOWNTREND
     current_trend = 1
@@ -63,121 +69,125 @@ def analyze_htf_structure(df):
         is_sh = df['is_swing_high'].iloc[i]
         is_sl = df['is_swing_low'].iloc[i]
         
-        if current_trend == 1:
-            if proper_high_val is None:
-                if is_sh:
-                    proper_high_idx = idx
-                    proper_high_val = c_high
-                continue
-                
-            if not inducement_done:
-                # Update peak high and find last swing low WITHIN current cycle and PRIOR TO this peak
-                if c_high >= proper_high_val:
-                    proper_high_idx = idx
-                    proper_high_val = c_high
-                    
-                    # Only look for swing lows AFTER cycle_start_idx
-                    sub_df = df.loc[cycle_start_idx:proper_high_idx]
-                    sl_rows = sub_df[sub_df['is_swing_low'] == True]
-                    if len(sl_rows) > 0:
-                        active_pb_low_idx = sl_rows.index[-1]
-                        active_pb_low_val = float(sl_rows['low'].iloc[-1])
+        # We loop up to 2 times to allow a ChoCH on this candle to immediately 
+        # trigger the new trend's Inducement/BOS logic on the same candle.
+        trends_processed = 0
+        while trends_processed < 2:
+            prev_trend = current_trend
+            
+            if current_trend == 1:
+                if proper_high_val is None:
+                    if is_sh:
+                        proper_high_idx = idx
+                        proper_high_val = c_high
+                    # Don't break here, we still need to check choch
+                else:
+                    if not inducement_done:
+                        # Update peak high and find last swing low WITHIN current cycle and PRIOR TO this peak
+                        if c_high >= proper_high_val:
+                            proper_high_idx = idx
+                            proper_high_val = c_high
+                            
+                            # Only look for swing lows AFTER cycle_start_idx
+                            sub_df = df.loc[cycle_start_idx:proper_high_idx]
+                            sl_rows = sub_df[sub_df['is_swing_low'] == True]
+                            if len(sl_rows) > 0:
+                                active_pb_low_idx = sl_rows.index[-1]
+                                active_pb_low_val = float(sl_rows['low'].iloc[-1])
+                            else:
+                                active_pb_low_idx = None
+                                active_pb_low_val = None
+                                
+                        # Check Inducement (#): Low breaks valid pullback low within current cycle
+                        if active_pb_low_val is not None and c_low < active_pb_low_val:
+                            inducement_done = True
+                            label = "IS" if wick_high_val is not None else "#"
+                            evt_type = "IS" if wick_high_val is not None else "IDM"
+                            
+                            structure_events.append({
+                                'type': evt_type,
+                                'label': label,
+                                'start_time': active_pb_low_idx,
+                                'start_val': active_pb_low_val,
+                                'end_time': idx,
+                                'end_val': active_pb_low_val,
+                                'color': '#00e5ff' if evt_type == 'IS' else '#ffd600'
+                            })
+                            
+                            # Uptrend Confirmed: Identify Demand Zones
+                            if evt_type == 'IDM':
+                                merged_zones = extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx, 0.003)
+                                active_demand_zones.extend(merged_zones)
+
                     else:
-                        active_pb_low_idx = None
-                        active_pb_low_val = None
+                        # Once trend is confirmed by IDM, every new valid swing low is a Demand Zone
+                        if is_sl:
+                            add_zone(active_demand_zones, idx, c_low, c_high, c_low, 'demand', 0.003)
+
+                        target_high = wick_high_val if wick_high_val is not None else proper_high_val
                         
-                # Check Inducement (#): Low breaks valid pullback low within current cycle
-                if active_pb_low_val is not None and c_low < active_pb_low_val:
-                    inducement_done = True
-                    label = "IS" if wick_high_val is not None else "#"
-                    evt_type = "IS" if wick_high_val is not None else "IDM"
-                    
+                        # Check BOS: Candle CLOSE above Proper High / Wick High
+                        if c_close > target_high:
+                            structure_events.append({
+                                'type': 'BOS',
+                                'label': 'BOS',
+                                'start_time': proper_high_idx,
+                                'start_val': proper_high_val,
+                                'end_time': idx,
+                                'end_val': proper_high_val,
+                                'color': '#2962ff'
+                            })
+                            # Lowest low in this BOS leg becomes the new ChoCH level
+                            leg_df = df.loc[proper_high_idx:idx]
+                            leg_min_i = leg_df['low'].idxmin()
+                            choch_idx = leg_min_i
+                            choch_val = float(leg_df.loc[leg_min_i, 'low'])
+                            
+                            inducement_done = False
+                            wick_high_val = None
+                            proper_high_idx = idx
+                            proper_high_val = c_high
+                            # Fetch active pullback for the new leg immediately
+                            sub_df = df.loc[cycle_start_idx:proper_high_idx]
+                            sl_rows = sub_df[sub_df['is_swing_low'] == True]
+                            if len(sl_rows) > 0:
+                                active_pb_low_idx = sl_rows.index[-1]
+                                active_pb_low_val = float(sl_rows['low'].iloc[-1])
+                            else:
+                                active_pb_low_idx = None
+                                active_pb_low_val = None
+                            
+                        # Wick break: High > target but Close <= target
+                        elif c_high > target_high and c_close <= target_high:
+                            wick_high_val = c_high
+                            # Find last swing low within cycle for potential IS
+                            sub_df = df.loc[cycle_start_idx:idx]
+                            sl_rows = sub_df[sub_df['is_swing_low'] == True]
+                            if len(sl_rows) > 0:
+                                active_pb_low_idx = sl_rows.index[-1]
+                                active_pb_low_val = float(sl_rows['low'].iloc[-1])
+                                
+                # Check ChoCH: Low breaks structural ChoCH level
+                if choch_val is not None and c_low < choch_val:
                     structure_events.append({
-                        'type': evt_type,
-                        'label': label,
-                        'start_time': active_pb_low_idx,
-                        'start_val': active_pb_low_val,
+                        'type': 'CHOCH',
+                        'label': 'ChoCH',
+                        'start_time': choch_idx,
+                        'start_val': choch_val,
                         'end_time': idx,
-                        'end_val': active_pb_low_val,
-                        'color': '#00e5ff' if evt_type == 'IS' else '#ffd600'
+                        'end_val': choch_val,
+                        'color': '#e91e63'
                     })
-            else:
-                target_high = wick_high_val if wick_high_val is not None else proper_high_val
-                
-                # Check BOS: Candle CLOSE above Proper High / Wick High
-                if c_close > target_high:
-                    structure_events.append({
-                        'type': 'BOS',
-                        'label': 'BOS',
-                        'start_time': proper_high_idx,
-                        'start_val': proper_high_val,
-                        'end_time': idx,
-                        'end_val': proper_high_val,
-                        'color': '#2962ff'
-                    })
-                    # Lowest low in this BOS leg becomes the new ChoCH level
-                    leg_df = df.loc[proper_high_idx:idx]
-                    leg_min_i = leg_df['low'].idxmin()
-                    choch_idx = leg_min_i
-                    choch_val = float(leg_df.loc[leg_min_i, 'low'])
-                    
+                    current_trend = -1
+                    proper_low_idx = idx
+                    proper_low_val = c_low
                     inducement_done = False
                     wick_high_val = None
-                    proper_high_idx = idx
-                    proper_high_val = c_high
-                    # Reset active pullback for the new leg
-                    active_pb_low_idx = None
-                    active_pb_low_val = None
-                    
-                # Wick break: High > target but Close <= target
-                elif c_high > target_high and c_close <= target_high:
-                    wick_high_val = c_high
-                    # Find last swing low within cycle for potential IS
-                    sub_df = df.loc[cycle_start_idx:idx]
-                    sl_rows = sub_df[sub_df['is_swing_low'] == True]
-                    if len(sl_rows) > 0:
-                        active_pb_low_idx = sl_rows.index[-1]
-                        active_pb_low_val = float(sl_rows['low'].iloc[-1])
-                        
-            # Check ChoCH: Low breaks structural ChoCH level
-            if choch_val is not None and c_low < choch_val:
-                structure_events.append({
-                    'type': 'CHOCH',
-                    'label': 'ChoCH',
-                    'start_time': choch_idx,
-                    'start_val': choch_val,
-                    'end_time': idx,
-                    'end_val': choch_val,
-                    'color': '#e91e63'
-                })
-                current_trend = -1
-                proper_low_idx = idx
-                proper_low_val = c_low
-                inducement_done = False
-                wick_high_val = None
-                choch_idx = proper_high_idx
-                choch_val = proper_high_val
-                # New cycle starts here — reset pullback tracking
-                cycle_start_idx = idx
-                active_pb_low_idx = None
-                active_pb_low_val = None
-                active_pb_high_idx = None
-                active_pb_high_val = None
-
-        elif current_trend == -1:
-            if proper_low_val is None:
-                if is_sl:
-                    proper_low_idx = idx
-                    proper_low_val = c_low
-                continue
-                
-            if not inducement_done:
-                # Update peak low and find last swing high WITHIN current cycle and PRIOR TO this peak
-                if c_low <= proper_low_val:
-                    proper_low_idx = idx
-                    proper_low_val = c_low
-                    
-                    # Only look for swing highs AFTER cycle_start_idx
+                    choch_idx = proper_high_idx
+                    choch_val = proper_high_val
+                    # New cycle starts here (from peak high)
+                    cycle_start_idx = proper_high_idx
+                    # Fetch active pullback for the new leg immediately
                     sub_df = df.loc[cycle_start_idx:proper_low_idx]
                     sh_rows = sub_df[sub_df['is_swing_high'] == True]
                     if len(sh_rows) > 0:
@@ -186,83 +196,141 @@ def analyze_htf_structure(df):
                     else:
                         active_pb_high_idx = None
                         active_pb_high_val = None
+
+            elif current_trend == -1:
+                if proper_low_val is None:
+                    if is_sl:
+                        proper_low_idx = idx
+                        proper_low_val = c_low
+                    # Don't break here, we still need to check choch
+                else:
+                    if not inducement_done:
+                        # Update peak low and find last swing high WITHIN current cycle and PRIOR TO this peak
+                        if c_low <= proper_low_val:
+                            proper_low_idx = idx
+                            proper_low_val = c_low
+                            
+                            # Only look for swing highs AFTER cycle_start_idx
+                            sub_df = df.loc[cycle_start_idx:proper_low_idx]
+                            sh_rows = sub_df[sub_df['is_swing_high'] == True]
+                            if len(sh_rows) > 0:
+                                active_pb_high_idx = sh_rows.index[-1]
+                                active_pb_high_val = float(sh_rows['high'].iloc[-1])
+                            else:
+                                active_pb_high_idx = None
+                                active_pb_high_val = None
+                                
+                        # Check Inducement (#): High breaks valid pullback high within current cycle
+                        if active_pb_high_val is not None and c_high > active_pb_high_val:
+                            inducement_done = True
+                            label = "IS" if wick_low_val is not None else "#"
+                            evt_type = "IS" if wick_low_val is not None else "IDM"
+                            
+                            structure_events.append({
+                                'type': evt_type,
+                                'label': label,
+                                'start_time': active_pb_high_idx,
+                                'start_val': active_pb_high_val,
+                                'end_time': idx,
+                                'end_val': active_pb_high_val,
+                                'color': '#00e5ff' if evt_type == 'IS' else '#ffd600'
+                            })
+                            
+                            # Downtrend Confirmed: Identify Supply Zones
+                            if evt_type == 'IDM':
+                                merged_zones = extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx, 0.003)
+                                active_supply_zones.extend(merged_zones)
+
+                    else:
+                        # Once trend is confirmed by IDM, every new valid swing high is a Supply Zone
+                        if is_sh:
+                            add_zone(active_supply_zones, idx, c_low, c_high, c_high, 'supply', 0.003)
+
+                        target_low = wick_low_val if wick_low_val is not None else proper_low_val
                         
-                # Check Inducement (#): High breaks valid pullback high within current cycle
-                if active_pb_high_val is not None and c_high > active_pb_high_val:
-                    inducement_done = True
-                    label = "IS" if wick_low_val is not None else "#"
-                    evt_type = "IS" if wick_low_val is not None else "IDM"
-                    
+                        # Check BOS: Candle CLOSE below Proper Low / Wick Low
+                        if c_close < target_low:
+                            structure_events.append({
+                                'type': 'BOS',
+                                'label': 'BOS',
+                                'start_time': proper_low_idx,
+                                'start_val': proper_low_val,
+                                'end_time': idx,
+                                'end_val': proper_low_val,
+                                'color': '#2962ff'
+                            })
+                            # Highest high in this BOS leg becomes the new ChoCH level
+                            leg_df = df.loc[proper_low_idx:idx]
+                            leg_max_i = leg_df['high'].idxmax()
+                            choch_idx = leg_max_i
+                            choch_val = float(leg_df.loc[leg_max_i, 'high'])
+                            
+                            inducement_done = False
+                            wick_low_val = None
+                            proper_low_idx = idx
+                            proper_low_val = c_low
+                            # Fetch active pullback for the new leg immediately
+                            sub_df = df.loc[cycle_start_idx:proper_low_idx]
+                            sh_rows = sub_df[sub_df['is_swing_high'] == True]
+                            if len(sh_rows) > 0:
+                                active_pb_high_idx = sh_rows.index[-1]
+                                active_pb_high_val = float(sh_rows['high'].iloc[-1])
+                            else:
+                                active_pb_high_idx = None
+                                active_pb_high_val = None
+                            
+                        # Wick break: Low < target but Close >= target
+                        elif c_low < target_low and c_close >= target_low:
+                            wick_low_val = c_low
+                            # Find last swing high within cycle for potential IS
+                            sub_df = df.loc[cycle_start_idx:idx]
+                            sh_rows = sub_df[sub_df['is_swing_high'] == True]
+                            if len(sh_rows) > 0:
+                                active_pb_high_idx = sh_rows.index[-1]
+                                active_pb_high_val = float(sh_rows['high'].iloc[-1])
+                                
+                # Check ChoCH: High breaks structural ChoCH level
+                if choch_val is not None and c_high > choch_val:
                     structure_events.append({
-                        'type': evt_type,
-                        'label': label,
-                        'start_time': active_pb_high_idx,
-                        'start_val': active_pb_high_val,
+                        'type': 'CHOCH',
+                        'label': 'ChoCH',
+                        'start_time': choch_idx,
+                        'start_val': choch_val,
                         'end_time': idx,
-                        'end_val': active_pb_high_val,
-                        'color': '#00e5ff' if evt_type == 'IS' else '#ffd600'
+                        'end_val': choch_val,
+                        'color': '#e91e63'
                     })
-            else:
-                target_low = wick_low_val if wick_low_val is not None else proper_low_val
-                
-                # Check BOS: Candle CLOSE below Proper Low / Wick Low
-                if c_close < target_low:
-                    structure_events.append({
-                        'type': 'BOS',
-                        'label': 'BOS',
-                        'start_time': proper_low_idx,
-                        'start_val': proper_low_val,
-                        'end_time': idx,
-                        'end_val': proper_low_val,
-                        'color': '#2962ff'
-                    })
-                    # Highest high in this BOS leg becomes the new ChoCH level
-                    leg_df = df.loc[proper_low_idx:idx]
-                    leg_max_i = leg_df['high'].idxmax()
-                    choch_idx = leg_max_i
-                    choch_val = float(leg_df.loc[leg_max_i, 'high'])
-                    
+                    current_trend = 1
+                    proper_high_idx = idx
+                    proper_high_val = c_high
                     inducement_done = False
                     wick_low_val = None
-                    proper_low_idx = idx
-                    proper_low_val = c_low
-                    # Reset active pullback for the new leg
-                    active_pb_high_idx = None
-                    active_pb_high_val = None
-                    
-                # Wick break: Low < target but Close >= target
-                elif c_low < target_low and c_close >= target_low:
-                    wick_low_val = c_low
-                    # Find last swing high within cycle for potential IS
-                    sub_df = df.loc[cycle_start_idx:idx]
-                    sh_rows = sub_df[sub_df['is_swing_high'] == True]
-                    if len(sh_rows) > 0:
-                        active_pb_high_idx = sh_rows.index[-1]
-                        active_pb_high_val = float(sh_rows['high'].iloc[-1])
-                        
-            # Check ChoCH: High breaks structural ChoCH level
-            if choch_val is not None and c_high > choch_val:
-                structure_events.append({
-                    'type': 'CHOCH',
-                    'label': 'ChoCH',
-                    'start_time': choch_idx,
-                    'start_val': choch_val,
-                    'end_time': idx,
-                    'end_val': choch_val,
-                    'color': '#e91e63'
-                })
-                current_trend = 1
-                proper_high_idx = idx
-                proper_high_val = c_high
-                inducement_done = False
-                wick_low_val = None
-                choch_idx = proper_low_idx
-                choch_val = proper_low_val
-                # New cycle starts here — reset pullback tracking
-                cycle_start_idx = idx
-                active_pb_low_idx = None
-                active_pb_low_val = None
-                active_pb_high_idx = None
-                active_pb_high_val = None
+                    choch_idx = proper_low_idx
+                    choch_val = proper_low_val
+                    # New cycle starts here (from peak low)
+                    cycle_start_idx = proper_low_idx
+                    # Fetch active pullback for the new leg immediately
+                    sub_df = df.loc[cycle_start_idx:proper_high_idx]
+                    sl_rows = sub_df[sub_df['is_swing_low'] == True]
+                    if len(sl_rows) > 0:
+                        active_pb_low_idx = sl_rows.index[-1]
+                        active_pb_low_val = float(sl_rows['low'].iloc[-1])
+                    else:
+                        active_pb_low_idx = None
+                        active_pb_low_val = None
+            
+            if current_trend == prev_trend:
+                break
+            trends_processed += 1
+            
+        # --- Mitigate Active Zones with the current candle ---
+        mitigate_zones(active_demand_zones, active_supply_zones, historical_zones, c_low, c_high, idx)
 
-    return structure_events
+    # Finalize remaining active zones
+    finalize_zones(active_demand_zones, active_supply_zones, historical_zones, df.index[-1])
+
+    return {
+        'events': structure_events,
+        'zones': historical_zones
+    }
+

@@ -1,0 +1,108 @@
+
+def add_zone(active_zones, start_time, bottom, top, peak, zone_type, threshold=0.003):
+    # Try to merge with an existing zone
+    for z in active_zones:
+        # Both must be the same type, but they are since lists are separated
+        diff = abs(z['peak'] - peak) / z['peak']
+        if diff <= threshold:
+            z['bottom'] = min(z['bottom'], bottom)
+            z['top'] = max(z['top'], top)
+            z['start_time'] = start_time
+            # Update history with the new bounds
+            z['history'].append({'time': start_time, 'top': z['top'], 'bottom': z['bottom']})
+            return
+            
+    # Not merged, add as new
+    active_zones.append({
+        'start_time': start_time,
+        'bottom': bottom,
+        'top': top,
+        'peak': peak,
+        'type': zone_type,
+        'history': [{'time': start_time, 'top': top, 'bottom': bottom}]
+    })
+
+def merge_zones(raw_zones, threshold=0.003):
+    if not raw_zones: return []
+    raw_zones = sorted(raw_zones, key=lambda x: x['start_time'])
+    merged = []
+    current = dict(raw_zones[0])
+    for next_zone in raw_zones[1:]:
+        diff = abs(current['peak'] - next_zone['peak']) / current['peak']
+        if diff <= threshold:
+            current['bottom'] = min(current['bottom'], next_zone['bottom'])
+            current['top'] = max(current['top'], next_zone['top'])
+            current['start_time'] = next_zone['start_time']
+        else:
+            merged.append(current)
+            current = dict(next_zone)
+    merged.append(current)
+    for z in merged:
+        z['history'] = [{'time': z['start_time'], 'top': z['top'], 'bottom': z['bottom']}]
+    return merged
+
+def extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx, threshold=0.003):
+    leg_df = df.loc[cycle_start_idx:proper_high_idx]
+    sl_rows = leg_df[leg_df['is_swing_low'] == True]
+    sl_rows = sl_rows[sl_rows.index < active_pb_low_idx]
+    raw_zones = []
+    for z_idx, row in sl_rows.iterrows():
+        raw_zones.append({
+            'start_time': z_idx,
+            'bottom': float(row['low']),
+            'top': float(row['high']),
+            'peak': float(row['low']),
+            'type': 'demand'
+        })
+    return merge_zones(raw_zones, threshold)
+
+def extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx, threshold=0.003):
+    leg_df = df.loc[cycle_start_idx:proper_low_idx]
+    sh_rows = leg_df[leg_df['is_swing_high'] == True]
+    sh_rows = sh_rows[sh_rows.index < active_pb_high_idx]
+    raw_zones = []
+    for z_idx, row in sh_rows.iterrows():
+        raw_zones.append({
+            'start_time': z_idx,
+            'bottom': float(row['low']),
+            'top': float(row['high']),
+            'peak': float(row['high']),
+            'type': 'supply'
+        })
+    return merge_zones(raw_zones, threshold)
+
+def mitigate_zones(active_demand_zones, active_supply_zones, historical_zones, c_low, c_high, idx):
+    # Demand Zones (touched if low dips into top)
+    for z in active_demand_zones[:]:
+        if idx > z['start_time'] and c_low < z['top']:
+            if c_low <= z['bottom']:
+                z['end_time'] = idx
+                z['status'] = 'mitigated'
+                historical_zones.append(z)
+                active_demand_zones.remove(z)
+            else:
+                z['top'] = c_low
+                z['history'].append({'time': idx, 'top': z['top'], 'bottom': z['bottom']})
+                
+    # Supply Zones (touched if high pierces bottom)
+    for z in active_supply_zones[:]:
+        if idx > z['start_time'] and c_high > z['bottom']:
+            if c_high >= z['top']:
+                z['end_time'] = idx
+                z['status'] = 'mitigated'
+                historical_zones.append(z)
+                active_supply_zones.remove(z)
+            else:
+                z['bottom'] = c_high
+                z['history'].append({'time': idx, 'top': z['top'], 'bottom': z['bottom']})
+
+def finalize_zones(active_demand_zones, active_supply_zones, historical_zones, last_idx):
+    for z in active_demand_zones:
+        z['end_time'] = last_idx
+        z['status'] = 'active'
+        historical_zones.append(z)
+        
+    for z in active_supply_zones:
+        z['end_time'] = last_idx
+        z['status'] = 'active'
+        historical_zones.append(z)

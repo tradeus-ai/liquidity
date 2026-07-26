@@ -94,7 +94,9 @@ def plot_structure(df, filename="chart", title="Market Structure"):
     # Add Higher Timeframe Structure Events (#, IS, BOS, ChoCH)
     if not is_intraday:
         from bos_choch_inducement import analyze_htf_structure
-        htf_events = analyze_htf_structure(df)
+        res = analyze_htf_structure(df)
+        htf_events = res['events']
+        htf_zones = res['zones']
         min_date = df.index[0]
         for ev in htf_events:
             st_date = pd.to_datetime(ev['start_time']).strftime(time_format)

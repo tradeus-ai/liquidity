@@ -133,9 +133,13 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         
     zones = []
     htf_events = []
+    htf_zones = []
     if tf == '1d':
         # Analyze Higher Timeframe Market Structure (BOS, ChoCH, Inducement)
-        raw_events = analyze_htf_structure(df_struct)
+        res = analyze_htf_structure(df_struct)
+        raw_events = res['events']
+        raw_zones = res['zones']
+        
         for ev in raw_events:
             st_ts = int(pd.to_datetime(ev['start_time']).timestamp())
             et_ts = int(pd.to_datetime(ev['end_time']).timestamp())
@@ -147,6 +151,26 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
                 'end_time': et_ts,
                 'end_val': float(ev['end_val']),
                 'color': ev['color']
+            })
+            
+        for z in raw_zones:
+            st_ts = int(pd.to_datetime(z['start_time']).timestamp())
+            et_ts = int(pd.to_datetime(z['end_time']).timestamp()) if z.get('end_time') else None
+            
+            history = []
+            for h in z.get('history', []):
+                h_ts = int(pd.to_datetime(h['time']).timestamp())
+                history.append({'time': h_ts, 'top': h['top'], 'bottom': h['bottom']})
+                
+            htf_zones.append({
+                'type': z['type'],
+                'start_time': st_ts,
+                'end_time': et_ts,
+                'bottom': z['bottom'],
+                'top': z['top'],
+                'peak': z['peak'],
+                'status': z['status'],
+                'history': history
             })
 
         zones_df = df_struct.dropna(subset=['zone_type'])
@@ -169,7 +193,8 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         'pullback_points': pullback_points,
         'inside_zones': inside_zones,
         'zones': zones,
-        'htf_events': htf_events
+        'htf_events': htf_events,
+        'htf_zones': htf_zones
     }
     
     # Write to cache
