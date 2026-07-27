@@ -1,0 +1,155 @@
+{
+  "batchIndex": 3,
+  "nodes": [
+    {
+      "id": "file:test_fix_bos.py",
+      "type": "file",
+      "name": "test_fix_bos.py",
+      "filePath": "test_fix_bos.py",
+      "summary": "File test_fix_bos.py (6 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_fix_bos.py#replace_bos_choch",
+      "type": "function",
+      "name": "replace_bos_choch",
+      "filePath": "test_fix_bos.py",
+      "summary": "Function replace_bos_choch in test_fix_bos.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_fix.py",
+      "type": "file",
+      "name": "test_fix.py",
+      "filePath": "test_fix.py",
+      "summary": "File test_fix.py (23 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_fix.py#test_logic",
+      "type": "function",
+      "name": "test_logic",
+      "filePath": "test_fix.py",
+      "summary": "Function test_logic in test_fix.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_lwc_time.py",
+      "type": "file",
+      "name": "test_lwc_time.py",
+      "filePath": "test_lwc_time.py",
+      "summary": "File test_lwc_time.py (19 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:test_lwc_time2.py",
+      "type": "file",
+      "name": "test_lwc_time2.py",
+      "filePath": "test_lwc_time2.py",
+      "summary": "File test_lwc_time2.py (22 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:test_merge.py",
+      "type": "file",
+      "name": "test_merge.py",
+      "filePath": "test_merge.py",
+      "summary": "File test_merge.py (26 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_merge.py#merge_zones",
+      "type": "function",
+      "name": "merge_zones",
+      "filePath": "test_merge.py",
+      "summary": "Function merge_zones in test_merge.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_zones.py",
+      "type": "file",
+      "name": "test_zones.py",
+      "filePath": "test_zones.py",
+      "summary": "File test_zones.py (12 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:web_dashboard.py",
+      "type": "file",
+      "name": "web_dashboard.py",
+      "filePath": "web_dashboard.py",
+      "summary": "File web_dashboard.py (301 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:web_dashboard.py#render_dashboard",
+      "type": "function",
+      "name": "render_dashboard",
+      "filePath": "web_dashboard.py",
+      "summary": "Function render_dashboard in web_dashboard.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:test_fix_bos.py",
+      "target": "function:test_fix_bos.py#replace_bos_choch",
+      "type": "contains"
+    },
+    {
+      "source": "file:test_fix.py",
+      "target": "function:test_fix.py#test_logic",
+      "type": "contains"
+    },
+    {
+      "source": "file:test_merge.py",
+      "target": "function:test_merge.py#merge_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:web_dashboard.py",
+      "target": "function:web_dashboard.py#render_dashboard",
+      "type": "contains"
+    }
+  ]
+}

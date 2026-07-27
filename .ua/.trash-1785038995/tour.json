@@ -1,0 +1,59 @@
+[
+  {
+    "order": 1,
+    "title": "System Overview & Guidelines",
+    "description": "Understand the SMC liquidity rules defined in GEMINI.md.",
+    "nodeIds": [
+      "file:GEMINI.md"
+    ]
+  },
+  {
+    "order": 2,
+    "title": "Market Data Ingestion",
+    "description": "DataFetcher retrieves OHLC data from TradingView feeds for Indian futures.",
+    "nodeIds": [
+      "file:data_fetcher.py"
+    ]
+  },
+  {
+    "order": 3,
+    "title": "Swing & Pullback Detection",
+    "description": "Identifies swing highs and lows required for market structure mapping.",
+    "nodeIds": [
+      "file:smc_pullback.py"
+    ]
+  },
+  {
+    "order": 4,
+    "title": "Higher Timeframe Structure Engine",
+    "description": "Determines ChoCH, Inducement (#), and BOS break of structure events.",
+    "nodeIds": [
+      "file:bos_choch_inducement.py"
+    ]
+  },
+  {
+    "order": 5,
+    "title": "Demand & Supply Zones Engine",
+    "description": "Extracts, merges, and mitigates liquidity zones on confirmed structural legs.",
+    "nodeIds": [
+      "file:smc_zones.py"
+    ]
+  },
+  {
+    "order": 6,
+    "title": "Web Application Server & Caching",
+    "description": "Serves chart data, handles timeframes, and caches calculations.",
+    "nodeIds": [
+      "file:app.py",
+      "file:structure_service.py"
+    ]
+  },
+  {
+    "order": 7,
+    "title": "Interactive HTML Dashboard",
+    "description": "Lightweight-charts UI displaying candlesticks, structure markers, and dynamic zones.",
+    "nodeIds": [
+      "file:dashboard.html"
+    ]
+  }
+]

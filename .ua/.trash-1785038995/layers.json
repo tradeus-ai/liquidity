@@ -1,0 +1,107 @@
+[
+  {
+    "id": "layer:structure-engine",
+    "name": "SMC Structure Analysis Engine",
+    "description": "Core logic for finding swing points, inducements, BOS/ChoCH, and demand/supply zones.",
+    "nodeIds": [
+      "file:bos_choch_inducement.py",
+      "function:bos_choch_inducement.py#analyze_htf_structure",
+      "file:inside_bars.py",
+      "function:inside_bars.py#identify_inside_bar_zones",
+      "file:market_structure.py",
+      "class:market_structure.py#MarketStructureAnalyzer",
+      "file:patch_bos_choch.py",
+      "file:patch_smc_zones_mitigate.py",
+      "file:smc_pullback.py",
+      "function:smc_pullback.py#find_swings",
+      "file:smc_zones.py",
+      "function:smc_zones.py#add_zone",
+      "function:smc_zones.py#merge_zones",
+      "function:smc_zones.py#extract_demand_zones",
+      "function:smc_zones.py#extract_supply_zones",
+      "function:smc_zones.py#mitigate_zones",
+      "function:smc_zones.py#finalize_zones",
+      "function:test_fix_bos.py#replace_bos_choch"
+    ]
+  },
+  {
+    "id": "layer:data-ingestion",
+    "name": "Market Data & Ingestion",
+    "description": "Data fetcher services, TradingView feeds, and local parquet/CSV datasets.",
+    "nodeIds": [
+      "file:Futures.csv",
+      "file:data_fetcher.py",
+      "class:data_fetcher.py#DataFetcher"
+    ]
+  },
+  {
+    "id": "layer:web-service",
+    "name": "Dashboard API & Service",
+    "description": "HTTP server, caching service, and main entry points for running liquidity analytics.",
+    "nodeIds": [
+      "file:app.py",
+      "class:app.py#LiquidityDashboardHandler",
+      "file:main.py",
+      "function:main.py#plot_structure",
+      "function:main.py#main",
+      "file:patch_main_app.py",
+      "file:patch_structure_service.py",
+      "file:structure_service.py",
+      "function:structure_service.py#get_chart_data"
+    ]
+  },
+  {
+    "id": "layer:frontend-ui",
+    "name": "Interactive Dashboard UI",
+    "description": "Lightweight-charts HTML frontend for plotting market structure, zones, and candles.",
+    "nodeIds": [
+      "file:dashboard.html"
+    ]
+  },
+  {
+    "id": "layer:utilities-and-docs",
+    "name": "Utilities & Documentation",
+    "description": "Helper scripts, documentation, and configuration files.",
+    "nodeIds": [
+      "file:GEMINI.md",
+      "file:README.md",
+      "file:chart_15m.html",
+      "file:chart_1d.html",
+      "file:test_lwc_time.html",
+      "file:walkthrough.md",
+      "file:docs/ARCHITECTURE.md",
+      "file:docs/CONFIGURATION.md",
+      "file:docs/DEVELOPMENT.md",
+      "file:docs/GETTING-STARTED.md",
+      "file:docs/LEARNINGS.md",
+      "file:docs/SESSION_SUMMARY.md",
+      "file:docs/TESTING.md",
+      "file:.planning/tmp/docs-work-manifest.json",
+      "file:.ua/.understandignore",
+      "file:feedback_server.py",
+      "class:feedback_server.py#FeedbackHandler",
+      "file:fix_issues.py",
+      "function:fix_issues.py#inject_invalidation",
+      "file:patch_bos_live_zones.py",
+      "file:patch_dashboard.py",
+      "file:patch_invalidation.py",
+      "file:patch_zones.py",
+      "file:rewrite_bos.py",
+      "file:scratch.py",
+      "file:symbol_loader.py",
+      "function:symbol_loader.py#get_symbol_list",
+      "file:test_fetch.py",
+      "function:test_fetch.py#main",
+      "file:test_fix_bos.py",
+      "file:test_fix.py",
+      "function:test_fix.py#test_logic",
+      "file:test_lwc_time.py",
+      "file:test_lwc_time2.py",
+      "file:test_merge.py",
+      "function:test_merge.py#merge_zones",
+      "file:test_zones.py",
+      "file:web_dashboard.py",
+      "function:web_dashboard.py#render_dashboard"
+    ]
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchIndex": 0,
+  "totalBatches": 4,
+  "batchFiles": [
+    {
+      "path": "Futures.csv",
+      "language": "csv",
+      "sizeLines": 215,
+      "fileCategory": "data"
+    },
+    {
+      "path": "GEMINI.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 56,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "chart_15m.html",
+      "language": "html",
+      "sizeLines": 63148,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "chart_1d.html",
+      "language": "html",
+      "sizeLines": 52131,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "dashboard.html",
+      "language": "html",
+      "sizeLines": 706,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "test_lwc_time.html",
+      "language": "html",
+      "sizeLines": 339,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "walkthrough.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    }
+  ]
+}

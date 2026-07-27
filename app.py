@@ -19,7 +19,8 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
 
         # 1. API: Get Symbols List
         if path == '/api/symbols':
-            symbols = get_symbol_list()
+            market_type = query.get('type', ['futures'])[0]
+            symbols = get_symbol_list(market_type)
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -32,7 +33,8 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             from structure_service import get_chart_data
             symbol = query.get('symbol', ['AMBUJACEM'])[0]
             timeframe = query.get('timeframe', ['1d'])[0]
-            chart_data = get_chart_data(symbol, timeframe)
+            market_type = query.get('type', ['futures'])[0]
+            chart_data = get_chart_data(symbol, timeframe, market_type)
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -40,14 +42,37 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(chart_data).encode('utf-8'))
             return
 
+        # 1c. API: Get Screener Data
+        elif path == '/api/screener':
+            from screener_service import get_screener_data
+            force_refresh = query.get('refresh', ['false'])[0].lower() == 'true'
+            screener_data = get_screener_data(force_refresh=force_refresh)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(screener_data).encode('utf-8'))
+            return
+
         # 2. Serve Dynamic Interactive Dashboard with Symbol & Timeframe controls
         elif path in ['/', '/index.html', '/dashboard.html']:
             symbol = query.get('symbol', ['AMBUJACEM'])[0]
             timeframe = query.get('timeframe', ['1d'])[0]
+            market_type = query.get('type', ['futures'])[0]
 
-            print(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}'...")
-            html_content = render_dashboard(symbol, timeframe)
+            print(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}', market_type='{market_type}'...")
+            html_content = render_dashboard(symbol, timeframe, market_type)
 
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            return
+
+        # 3. Serve Screener UI
+        elif path in ['/screener', '/screener.html']:
+            with open("screener.html", "r", encoding="utf-8") as f:
+                html_content = f.read()
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()

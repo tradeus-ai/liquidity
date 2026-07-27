@@ -137,6 +137,16 @@ def analyze_htf_structure(df):
                                 'end_val': proper_high_val,
                                 'color': '#2962ff'
                             })
+                            for z in active_demand_zones:
+                                z['end_time'] = idx
+                                z['status'] = 'invalidated_by_bos'
+                                historical_zones.append(z)
+                            active_demand_zones.clear()
+                            for z in active_supply_zones:
+                                z['end_time'] = idx
+                                z['status'] = 'invalidated_by_bos'
+                                historical_zones.append(z)
+                            active_supply_zones.clear()
                             # Lowest low in this BOS leg becomes the new ChoCH level
                             leg_df = df.loc[proper_high_idx:idx]
                             leg_min_i = leg_df['low'].idxmin()
@@ -259,6 +269,16 @@ def analyze_htf_structure(df):
                                 'end_val': proper_low_val,
                                 'color': '#2962ff'
                             })
+                            for z in active_demand_zones:
+                                z['end_time'] = idx
+                                z['status'] = 'invalidated_by_bos'
+                                historical_zones.append(z)
+                            active_demand_zones.clear()
+                            for z in active_supply_zones:
+                                z['end_time'] = idx
+                                z['status'] = 'invalidated_by_bos'
+                                historical_zones.append(z)
+                            active_supply_zones.clear()
                             # Highest high in this BOS leg becomes the new ChoCH level
                             leg_df = df.loc[proper_low_idx:idx]
                             leg_max_i = leg_df['high'].idxmax()
@@ -323,14 +343,12 @@ def analyze_htf_structure(df):
                 break
             trends_processed += 1
             
-        # --- Mitigate Active Zones with the current candle ---
-        mitigate_zones(active_demand_zones, active_supply_zones, historical_zones, c_low, c_high, idx)
-
-    # Finalize remaining active zones
-    finalize_zones(active_demand_zones, active_supply_zones, historical_zones, df.index[-1])
-
     return {
         'events': structure_events,
-        'zones': historical_zones
+        'zones': [],
+        'current_state': {
+            'trend': current_trend,
+            'inducement_done': inducement_done
+        }
     }
 

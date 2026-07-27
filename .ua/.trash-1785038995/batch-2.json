@@ -1,0 +1,611 @@
+{
+  "batchIndex": 2,
+  "nodes": [
+    {
+      "id": "file:.planning/tmp/docs-work-manifest.json",
+      "type": "file",
+      "name": ".planning/tmp/docs-work-manifest.json",
+      "filePath": ".planning/tmp/docs-work-manifest.json",
+      "summary": "File .planning/tmp/docs-work-manifest.json (66 lines, category: config)",
+      "complexity": "simple",
+      "tags": [
+        "json",
+        "config"
+      ]
+    },
+    {
+      "id": "file:.ua/.understandignore",
+      "type": "file",
+      "name": ".ua/.understandignore",
+      "filePath": ".ua/.understandignore",
+      "summary": "File .ua/.understandignore (46 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "unknown",
+        "code"
+      ]
+    },
+    {
+      "id": "file:app.py",
+      "type": "file",
+      "name": "app.py",
+      "filePath": "app.py",
+      "summary": "File app.py (107 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:app.py#LiquidityDashboardHandler",
+      "type": "class",
+      "name": "LiquidityDashboardHandler",
+      "filePath": "app.py",
+      "summary": "Class LiquidityDashboardHandler in app.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:bos_choch_inducement.py",
+      "type": "file",
+      "name": "bos_choch_inducement.py",
+      "filePath": "bos_choch_inducement.py",
+      "summary": "File bos_choch_inducement.py (356 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:bos_choch_inducement.py#analyze_htf_structure",
+      "type": "function",
+      "name": "analyze_htf_structure",
+      "filePath": "bos_choch_inducement.py",
+      "summary": "Function analyze_htf_structure in bos_choch_inducement.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:data_fetcher.py",
+      "type": "file",
+      "name": "data_fetcher.py",
+      "filePath": "data_fetcher.py",
+      "summary": "File data_fetcher.py (54 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:data_fetcher.py#DataFetcher",
+      "type": "class",
+      "name": "DataFetcher",
+      "filePath": "data_fetcher.py",
+      "summary": "Class DataFetcher in data_fetcher.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:feedback_server.py",
+      "type": "file",
+      "name": "feedback_server.py",
+      "filePath": "feedback_server.py",
+      "summary": "File feedback_server.py (64 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:feedback_server.py#FeedbackHandler",
+      "type": "class",
+      "name": "FeedbackHandler",
+      "filePath": "feedback_server.py",
+      "summary": "Class FeedbackHandler in feedback_server.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:fix_issues.py",
+      "type": "file",
+      "name": "fix_issues.py",
+      "filePath": "fix_issues.py",
+      "summary": "File fix_issues.py (86 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:fix_issues.py#inject_invalidation",
+      "type": "function",
+      "name": "inject_invalidation",
+      "filePath": "fix_issues.py",
+      "summary": "Function inject_invalidation in fix_issues.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:inside_bars.py",
+      "type": "file",
+      "name": "inside_bars.py",
+      "filePath": "inside_bars.py",
+      "summary": "File inside_bars.py (59 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:inside_bars.py#identify_inside_bar_zones",
+      "type": "function",
+      "name": "identify_inside_bar_zones",
+      "filePath": "inside_bars.py",
+      "summary": "Function identify_inside_bar_zones in inside_bars.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "main.py",
+      "summary": "File main.py (263 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:main.py#plot_structure",
+      "type": "function",
+      "name": "plot_structure",
+      "filePath": "main.py",
+      "summary": "Function plot_structure in main.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:main.py#main",
+      "type": "function",
+      "name": "main",
+      "filePath": "main.py",
+      "summary": "Function main in main.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:market_structure.py",
+      "type": "file",
+      "name": "market_structure.py",
+      "filePath": "market_structure.py",
+      "summary": "File market_structure.py (168 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:market_structure.py#MarketStructureAnalyzer",
+      "type": "class",
+      "name": "MarketStructureAnalyzer",
+      "filePath": "market_structure.py",
+      "summary": "Class MarketStructureAnalyzer in market_structure.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:patch_bos_choch.py",
+      "type": "file",
+      "name": "patch_bos_choch.py",
+      "filePath": "patch_bos_choch.py",
+      "summary": "File patch_bos_choch.py (158 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_bos_live_zones.py",
+      "type": "file",
+      "name": "patch_bos_live_zones.py",
+      "filePath": "patch_bos_live_zones.py",
+      "summary": "File patch_bos_live_zones.py (36 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_dashboard.py",
+      "type": "file",
+      "name": "patch_dashboard.py",
+      "filePath": "patch_dashboard.py",
+      "summary": "File patch_dashboard.py (126 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_invalidation.py",
+      "type": "file",
+      "name": "patch_invalidation.py",
+      "filePath": "patch_invalidation.py",
+      "summary": "File patch_invalidation.py (86 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_main_app.py",
+      "type": "file",
+      "name": "patch_main_app.py",
+      "filePath": "patch_main_app.py",
+      "summary": "File patch_main_app.py (38 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_smc_zones_mitigate.py",
+      "type": "file",
+      "name": "patch_smc_zones_mitigate.py",
+      "filePath": "patch_smc_zones_mitigate.py",
+      "summary": "File patch_smc_zones_mitigate.py (15 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_structure_service.py",
+      "type": "file",
+      "name": "patch_structure_service.py",
+      "filePath": "patch_structure_service.py",
+      "summary": "File patch_structure_service.py (95 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_zones.py",
+      "type": "file",
+      "name": "patch_zones.py",
+      "filePath": "patch_zones.py",
+      "summary": "File patch_zones.py (35 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:rewrite_bos.py",
+      "type": "file",
+      "name": "rewrite_bos.py",
+      "filePath": "rewrite_bos.py",
+      "summary": "File rewrite_bos.py (109 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:scratch.py",
+      "type": "file",
+      "name": "scratch.py",
+      "filePath": "scratch.py",
+      "summary": "File scratch.py (1 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:smc_pullback.py",
+      "type": "file",
+      "name": "smc_pullback.py",
+      "filePath": "smc_pullback.py",
+      "summary": "File smc_pullback.py (237 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:smc_pullback.py#find_swings",
+      "type": "function",
+      "name": "find_swings",
+      "filePath": "smc_pullback.py",
+      "summary": "Function find_swings in smc_pullback.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:smc_zones.py",
+      "type": "file",
+      "name": "smc_zones.py",
+      "filePath": "smc_zones.py",
+      "summary": "File smc_zones.py (108 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#add_zone",
+      "type": "function",
+      "name": "add_zone",
+      "filePath": "smc_zones.py",
+      "summary": "Function add_zone in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#merge_zones",
+      "type": "function",
+      "name": "merge_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function merge_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#extract_demand_zones",
+      "type": "function",
+      "name": "extract_demand_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function extract_demand_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#extract_supply_zones",
+      "type": "function",
+      "name": "extract_supply_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function extract_supply_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#mitigate_zones",
+      "type": "function",
+      "name": "mitigate_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function mitigate_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#finalize_zones",
+      "type": "function",
+      "name": "finalize_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function finalize_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:structure_service.py",
+      "type": "file",
+      "name": "structure_service.py",
+      "filePath": "structure_service.py",
+      "summary": "File structure_service.py (215 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:structure_service.py#get_chart_data",
+      "type": "function",
+      "name": "get_chart_data",
+      "filePath": "structure_service.py",
+      "summary": "Function get_chart_data in structure_service.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:symbol_loader.py",
+      "type": "file",
+      "name": "symbol_loader.py",
+      "filePath": "symbol_loader.py",
+      "summary": "File symbol_loader.py (26 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:symbol_loader.py#get_symbol_list",
+      "type": "function",
+      "name": "get_symbol_list",
+      "filePath": "symbol_loader.py",
+      "summary": "Function get_symbol_list in symbol_loader.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_fetch.py",
+      "type": "file",
+      "name": "test_fetch.py",
+      "filePath": "test_fetch.py",
+      "summary": "File test_fetch.py (21 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_fetch.py#main",
+      "type": "function",
+      "name": "main",
+      "filePath": "test_fetch.py",
+      "summary": "Function main in test_fetch.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:app.py",
+      "target": "class:app.py#LiquidityDashboardHandler",
+      "type": "contains"
+    },
+    {
+      "source": "file:bos_choch_inducement.py",
+      "target": "function:bos_choch_inducement.py#analyze_htf_structure",
+      "type": "contains"
+    },
+    {
+      "source": "file:data_fetcher.py",
+      "target": "class:data_fetcher.py#DataFetcher",
+      "type": "contains"
+    },
+    {
+      "source": "file:feedback_server.py",
+      "target": "class:feedback_server.py#FeedbackHandler",
+      "type": "contains"
+    },
+    {
+      "source": "file:fix_issues.py",
+      "target": "function:fix_issues.py#inject_invalidation",
+      "type": "contains"
+    },
+    {
+      "source": "file:inside_bars.py",
+      "target": "function:inside_bars.py#identify_inside_bar_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py#plot_structure",
+      "type": "contains"
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py#main",
+      "type": "contains"
+    },
+    {
+      "source": "file:market_structure.py",
+      "target": "class:market_structure.py#MarketStructureAnalyzer",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_pullback.py",
+      "target": "function:smc_pullback.py#find_swings",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#add_zone",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#merge_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#extract_demand_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#extract_supply_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#mitigate_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#finalize_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:structure_service.py",
+      "target": "function:structure_service.py#get_chart_data",
+      "type": "contains"
+    },
+    {
+      "source": "file:symbol_loader.py",
+      "target": "function:symbol_loader.py#get_symbol_list",
+      "type": "contains"
+    },
+    {
+      "source": "file:test_fetch.py",
+      "target": "function:test_fetch.py#main",
+      "type": "contains"
+    }
+  ]
+}

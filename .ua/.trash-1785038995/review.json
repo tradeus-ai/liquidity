@@ -1,0 +1,49 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'file:Futures.csv' has no edges (orphan)",
+    "Node 'file:GEMINI.md' has no edges (orphan)",
+    "Node 'file:README.md' has no edges (orphan)",
+    "Node 'file:chart_15m.html' has no edges (orphan)",
+    "Node 'file:chart_1d.html' has no edges (orphan)",
+    "Node 'file:dashboard.html' has no edges (orphan)",
+    "Node 'file:test_lwc_time.html' has no edges (orphan)",
+    "Node 'file:walkthrough.md' has no edges (orphan)",
+    "Node 'file:docs/ARCHITECTURE.md' has no edges (orphan)",
+    "Node 'file:docs/CONFIGURATION.md' has no edges (orphan)",
+    "Node 'file:docs/DEVELOPMENT.md' has no edges (orphan)",
+    "Node 'file:docs/GETTING-STARTED.md' has no edges (orphan)",
+    "Node 'file:docs/LEARNINGS.md' has no edges (orphan)",
+    "Node 'file:docs/SESSION_SUMMARY.md' has no edges (orphan)",
+    "Node 'file:docs/TESTING.md' has no edges (orphan)",
+    "Node 'file:.planning/tmp/docs-work-manifest.json' has no edges (orphan)",
+    "Node 'file:.ua/.understandignore' has no edges (orphan)",
+    "Node 'file:patch_bos_choch.py' has no edges (orphan)",
+    "Node 'file:patch_bos_live_zones.py' has no edges (orphan)",
+    "Node 'file:patch_dashboard.py' has no edges (orphan)",
+    "Node 'file:patch_invalidation.py' has no edges (orphan)",
+    "Node 'file:patch_main_app.py' has no edges (orphan)",
+    "Node 'file:patch_smc_zones_mitigate.py' has no edges (orphan)",
+    "Node 'file:patch_structure_service.py' has no edges (orphan)",
+    "Node 'file:patch_zones.py' has no edges (orphan)",
+    "Node 'file:rewrite_bos.py' has no edges (orphan)",
+    "Node 'file:scratch.py' has no edges (orphan)",
+    "Node 'file:test_lwc_time.py' has no edges (orphan)",
+    "Node 'file:test_lwc_time2.py' has no edges (orphan)",
+    "Node 'file:test_zones.py' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 70,
+    "totalEdges": 23,
+    "totalLayers": 5,
+    "tourSteps": 7,
+    "nodeTypes": {
+      "file": 47,
+      "class": 4,
+      "function": 19
+    },
+    "edgeTypes": {
+      "contains": 23
+    }
+  }
+}

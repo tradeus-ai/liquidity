@@ -1,0 +1,102 @@
+{
+  "batchIndex": 0,
+  "nodes": [
+    {
+      "id": "file:Futures.csv",
+      "type": "file",
+      "name": "Futures.csv",
+      "filePath": "Futures.csv",
+      "summary": "File Futures.csv (216 lines, category: data)",
+      "complexity": "simple",
+      "tags": [
+        "csv",
+        "data"
+      ]
+    },
+    {
+      "id": "file:GEMINI.md",
+      "type": "file",
+      "name": "GEMINI.md",
+      "filePath": "GEMINI.md",
+      "summary": "File GEMINI.md (28 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "File README.md (56 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:chart_15m.html",
+      "type": "file",
+      "name": "chart_15m.html",
+      "filePath": "chart_15m.html",
+      "summary": "File chart_15m.html (63149 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:chart_1d.html",
+      "type": "file",
+      "name": "chart_1d.html",
+      "filePath": "chart_1d.html",
+      "summary": "File chart_1d.html (52132 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:dashboard.html",
+      "type": "file",
+      "name": "dashboard.html",
+      "filePath": "dashboard.html",
+      "summary": "File dashboard.html (706 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:test_lwc_time.html",
+      "type": "file",
+      "name": "test_lwc_time.html",
+      "filePath": "test_lwc_time.html",
+      "summary": "File test_lwc_time.html (340 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:walkthrough.md",
+      "type": "file",
+      "name": "walkthrough.md",
+      "filePath": "walkthrough.md",
+      "summary": "File walkthrough.md (20 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    }
+  ],
+  "edges": []
+}

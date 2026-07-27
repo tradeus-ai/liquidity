@@ -1,0 +1,1185 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "01da0d8408c242246e75aad2f19c9d07d22ae114",
+  "generatedAt": "2026-07-26T04:09:55.742Z",
+  "files": {
+    ".planning/tmp/docs-work-manifest.json": {
+      "filePath": ".planning/tmp/docs-work-manifest.json",
+      "contentHash": "dd75db1c7362a49f1d41e7fc2aeb18f18585d2156e1029efd526b5d54e6dfd56",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 67,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.understandignore": {
+      "filePath": ".ua/.understandignore",
+      "contentHash": "b2a43b9b927107b5e177ec59d6c6191e3b92f6fa6c50d77af7fc50978e2fcaa6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": false
+    },
+    "app.py": {
+      "filePath": "app.py",
+      "contentHash": "ee7f34909e70f1fe402157bf051022e85f769de374e7fc87a870e8edc953871e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "LiquidityDashboardHandler",
+          "methods": [
+            "do_GET",
+            "do_POST"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 82
+        }
+      ],
+      "imports": [
+        {
+          "source": "http.server",
+          "specifiers": [
+            "http.server"
+          ]
+        },
+        {
+          "source": "socketserver",
+          "specifiers": [
+            "socketserver"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "urllib.parse",
+          "specifiers": [
+            "urllib.parse"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "symbol_loader",
+          "specifiers": [
+            "get_symbol_list"
+          ]
+        },
+        {
+          "source": "web_dashboard",
+          "specifiers": [
+            "render_dashboard"
+          ]
+        }
+      ],
+      "exports": [
+        "LiquidityDashboardHandler"
+      ],
+      "totalLines": 108,
+      "hasStructuralAnalysis": true
+    },
+    "bos_choch_inducement.py": {
+      "filePath": "bos_choch_inducement.py",
+      "contentHash": "af3084ba2ae62ba61afa8cfd6dee1371affef47b1a34531f122898568c83c8db",
+      "functions": [
+        {
+          "name": "analyze_htf_structure",
+          "params": [
+            "df"
+          ],
+          "exported": true,
+          "lineCount": 335
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "smc_zones",
+          "specifiers": [
+            "extract_demand_zones",
+            "extract_supply_zones",
+            "mitigate_zones",
+            "finalize_zones",
+            "add_zone"
+          ]
+        }
+      ],
+      "exports": [
+        "analyze_htf_structure"
+      ],
+      "totalLines": 357,
+      "hasStructuralAnalysis": true
+    },
+    "chart_15m.html": {
+      "filePath": "chart_15m.html",
+      "contentHash": "76ae5ab3f59ac7e34484b7c2f8483c46beaa43c676c030040ae4a66b645f7cca",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 63149,
+      "hasStructuralAnalysis": false
+    },
+    "chart_1d.html": {
+      "filePath": "chart_1d.html",
+      "contentHash": "0585edc61af43aa5e2297ac85589a840d51125aa709dfaf943feb308c845f2e9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 52132,
+      "hasStructuralAnalysis": false
+    },
+    "dashboard.html": {
+      "filePath": "dashboard.html",
+      "contentHash": "4a7c57603ded5f317ff101c3c511c0f00fed259dc3e26c3a4b7bd3f223e8a35e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 707,
+      "hasStructuralAnalysis": false
+    },
+    "data_fetcher.py": {
+      "filePath": "data_fetcher.py",
+      "contentHash": "8cdd6977319f1cb998997bb21b1d7107d3ae3011b8e4833c1fc074c5cd89b952",
+      "functions": [],
+      "classes": [
+        {
+          "name": "DataFetcher",
+          "methods": [
+            "__init__",
+            "_get_file_path",
+            "fetch_data"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 50
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "TvDatafeed",
+            "Interval"
+          ]
+        }
+      ],
+      "exports": [
+        "DataFetcher"
+      ],
+      "totalLines": 55,
+      "hasStructuralAnalysis": true
+    },
+    "docs/ARCHITECTURE.md": {
+      "filePath": "docs/ARCHITECTURE.md",
+      "contentHash": "f1ce4a46ad1ae75ac976ba4b8e798b2c9f7e51aa2ad3fa279f9b56c6730f0707",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 76,
+      "hasStructuralAnalysis": true
+    },
+    "docs/CONFIGURATION.md": {
+      "filePath": "docs/CONFIGURATION.md",
+      "contentHash": "347f536ddda1acce1062e1bd79670eec35872d018cb466fea34b22850c1f7432",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "docs/DEVELOPMENT.md": {
+      "filePath": "docs/DEVELOPMENT.md",
+      "contentHash": "2f2472d66ceb6e2a0c81b198263fcd2bd862118d32e0fa4b6859af185331d1ef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": true
+    },
+    "docs/GETTING-STARTED.md": {
+      "filePath": "docs/GETTING-STARTED.md",
+      "contentHash": "f54644128c6a550b972c297e63509723d390c99c196a3c47e6c6f41e26211610",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    },
+    "docs/LEARNINGS.md": {
+      "filePath": "docs/LEARNINGS.md",
+      "contentHash": "a07c5d0c13fe37b337b70c30ee578fc24a9cfce0c8c7568efa8fd7991e296885",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 148,
+      "hasStructuralAnalysis": true
+    },
+    "docs/SESSION_SUMMARY.md": {
+      "filePath": "docs/SESSION_SUMMARY.md",
+      "contentHash": "93dd21f9437e5c2ae93a4932eba3a1015625e7ac3cf88fdbee6f5f367affde13",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 219,
+      "hasStructuralAnalysis": true
+    },
+    "docs/TESTING.md": {
+      "filePath": "docs/TESTING.md",
+      "contentHash": "c07fdb2deace2a2bfaa18f42517f517b43e0b3860cb74665e9909ac240df9f77",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": true
+    },
+    "feedback_server.py": {
+      "filePath": "feedback_server.py",
+      "contentHash": "873e61334772d1cecd10ab5386eece6324c47db492aa1b94d3998961b0c25b96",
+      "functions": [],
+      "classes": [
+        {
+          "name": "FeedbackHandler",
+          "methods": [
+            "do_OPTIONS",
+            "do_POST"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 46
+        }
+      ],
+      "imports": [
+        {
+          "source": "http.server",
+          "specifiers": [
+            "http.server"
+          ]
+        },
+        {
+          "source": "socketserver",
+          "specifiers": [
+            "socketserver"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        }
+      ],
+      "exports": [
+        "FeedbackHandler"
+      ],
+      "totalLines": 65,
+      "hasStructuralAnalysis": true
+    },
+    "fix_issues.py": {
+      "filePath": "fix_issues.py",
+      "contentHash": "2d07c8796ff183fa742e696cf03ba942ec252abf23d2600cf043ba65f5aedb9f",
+      "functions": [
+        {
+          "name": "inject_invalidation",
+          "params": [
+            "code",
+            "trigger_line",
+            "invalidation_label"
+          ],
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        }
+      ],
+      "exports": [
+        "inject_invalidation"
+      ],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "Futures.csv": {
+      "filePath": "Futures.csv",
+      "contentHash": "64ec2a02279af3e121d9ebe39bc830b571ae52e7a3c778a4a8497d5198603b0b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 216,
+      "hasStructuralAnalysis": false
+    },
+    "GEMINI.md": {
+      "filePath": "GEMINI.md",
+      "contentHash": "55a0ba8b55e254c7b205518b315e4cec28422636a7caf8eed4e86e3108d35588",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "inside_bars.py": {
+      "filePath": "inside_bars.py",
+      "contentHash": "221ae8cd4fba1735b5e8ac0ef15a46484d48116e2f8c92aff4f72c88ea799e90",
+      "functions": [
+        {
+          "name": "identify_inside_bar_zones",
+          "params": [
+            "df"
+          ],
+          "exported": true,
+          "lineCount": 54
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        }
+      ],
+      "exports": [
+        "identify_inside_bar_zones"
+      ],
+      "totalLines": 60,
+      "hasStructuralAnalysis": true
+    },
+    "main.py": {
+      "filePath": "main.py",
+      "contentHash": "c06fa3f08159a7c2bc01d9bbc7e4ea52b8360b3e27dd808f229a0bf46a22d4a4",
+      "functions": [
+        {
+          "name": "plot_structure",
+          "params": [
+            "df",
+            "filename",
+            "title"
+          ],
+          "exported": true,
+          "lineCount": 220
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 20
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "data_fetcher",
+          "specifiers": [
+            "DataFetcher"
+          ]
+        },
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "Interval"
+          ]
+        },
+        {
+          "source": "market_structure",
+          "specifiers": [
+            "MarketStructureAnalyzer"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "lightweight_charts.widgets",
+          "specifiers": [
+            "StaticLWC"
+          ]
+        }
+      ],
+      "exports": [
+        "plot_structure",
+        "main"
+      ],
+      "totalLines": 264,
+      "hasStructuralAnalysis": true
+    },
+    "market_structure.py": {
+      "filePath": "market_structure.py",
+      "contentHash": "01a6bc10d63be61db2ae3dc25404651c59254713c9b0e354125660015bea2f13",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MarketStructureAnalyzer",
+          "methods": [
+            "__init__",
+            "find_swing_points",
+            "identify_structure"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 164
+        }
+      ],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "smc_pullback",
+          "specifiers": [
+            "find_swings"
+          ]
+        }
+      ],
+      "exports": [
+        "MarketStructureAnalyzer"
+      ],
+      "totalLines": 169,
+      "hasStructuralAnalysis": true
+    },
+    "patch_bos_choch.py": {
+      "filePath": "patch_bos_choch.py",
+      "contentHash": "b09cdb9db653c37eb4d6c740dadbfa5a65f3887d95c6c54cdb7e42ef1a817692",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 159,
+      "hasStructuralAnalysis": true
+    },
+    "patch_bos_live_zones.py": {
+      "filePath": "patch_bos_live_zones.py",
+      "contentHash": "06d1638bc4aa62f8abd653bdd204b45ba20d1eb09512924506d37ab7d5279ba3",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    },
+    "patch_dashboard.py": {
+      "filePath": "patch_dashboard.py",
+      "contentHash": "fd102f37ca9f8acb45a18edfde5b6dadab31e20a446067e86f9c9f7308e4ac88",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 127,
+      "hasStructuralAnalysis": true
+    },
+    "patch_invalidation.py": {
+      "filePath": "patch_invalidation.py",
+      "contentHash": "2469ee48341c9e06af4af0b9df1ccf5009090a5f182e878c8b154da0687cb35e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "patch_main_app.py": {
+      "filePath": "patch_main_app.py",
+      "contentHash": "d60d0ca0fb34bef764614a93d12a77d91727cce204772cfd1eb16d8878f3eb34",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 39,
+      "hasStructuralAnalysis": true
+    },
+    "patch_smc_zones_mitigate.py": {
+      "filePath": "patch_smc_zones_mitigate.py",
+      "contentHash": "448c131f5688cd3d8d76757c294ecb364be970894e1eb3b976fbf6d469be08a4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    },
+    "patch_structure_service.py": {
+      "filePath": "patch_structure_service.py",
+      "contentHash": "db2da20c82543df1f91bc92bd5149b553c214c43c5e4b13c73e84874d19e8708",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 96,
+      "hasStructuralAnalysis": true
+    },
+    "patch_zones.py": {
+      "filePath": "patch_zones.py",
+      "contentHash": "ba25d376b0ab6b821397ba10a6f5383dda6e6d4c7ef465b695a40b7bfa30e90c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 36,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "2419fe669927c9e6fc06918a7094a70436d93d15a6aab1fc79688af14495effa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 57,
+      "hasStructuralAnalysis": true
+    },
+    "rewrite_bos.py": {
+      "filePath": "rewrite_bos.py",
+      "contentHash": "8c7a5e3710372aac0394cdf4834d3169a92f8d56e769b50416ac49bc81333d77",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": true
+    },
+    "scratch.py": {
+      "filePath": "scratch.py",
+      "contentHash": "4da30a0da39a9c2486a67993afd488a960e7855d919b3ae34122275f8ff4d761",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "smc_pullback.py": {
+      "filePath": "smc_pullback.py",
+      "contentHash": "31c41e3173a043f12d692a5d928937cc35117f2e9b5b5b51320ea62e92d93217",
+      "functions": [
+        {
+          "name": "find_swings",
+          "params": [
+            "df",
+            "ltf_df"
+          ],
+          "exported": true,
+          "lineCount": 204
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "find_swings"
+      ],
+      "totalLines": 238,
+      "hasStructuralAnalysis": true
+    },
+    "smc_zones.py": {
+      "filePath": "smc_zones.py",
+      "contentHash": "ce1116b09168f77f7324f799fb24eecf2feb78989033d42b652703d170f6ca89",
+      "functions": [
+        {
+          "name": "add_zone",
+          "params": [
+            "active_zones",
+            "start_time",
+            "bottom",
+            "top",
+            "peak",
+            "zone_type",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "merge_zones",
+          "params": [
+            "raw_zones",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "extract_demand_zones",
+          "params": [
+            "df",
+            "cycle_start_idx",
+            "proper_high_idx",
+            "active_pb_low_idx",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "extract_supply_zones",
+          "params": [
+            "df",
+            "cycle_start_idx",
+            "proper_low_idx",
+            "active_pb_high_idx",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "mitigate_zones",
+          "params": [
+            "active_demand_zones",
+            "active_supply_zones",
+            "historical_zones",
+            "c_low",
+            "c_high",
+            "idx"
+          ],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "finalize_zones",
+          "params": [
+            "active_demand_zones",
+            "active_supply_zones",
+            "historical_zones",
+            "last_idx"
+          ],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "add_zone",
+        "merge_zones",
+        "extract_demand_zones",
+        "extract_supply_zones",
+        "mitigate_zones",
+        "finalize_zones"
+      ],
+      "totalLines": 109,
+      "hasStructuralAnalysis": true
+    },
+    "structure_service.py": {
+      "filePath": "structure_service.py",
+      "contentHash": "b368c19f2d63845309209513a12e2fab2b10190b57626a70ba7c4b8eff864053",
+      "functions": [
+        {
+          "name": "get_chart_data",
+          "params": [
+            "symbol_raw",
+            "timeframe_raw"
+          ],
+          "exported": true,
+          "lineCount": 185
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "Interval"
+          ]
+        },
+        {
+          "source": "data_fetcher",
+          "specifiers": [
+            "DataFetcher"
+          ]
+        },
+        {
+          "source": "market_structure",
+          "specifiers": [
+            "MarketStructureAnalyzer"
+          ]
+        },
+        {
+          "source": "inside_bars",
+          "specifiers": [
+            "identify_inside_bar_zones"
+          ]
+        },
+        {
+          "source": "bos_choch_inducement",
+          "specifiers": [
+            "analyze_htf_structure"
+          ]
+        }
+      ],
+      "exports": [
+        "get_chart_data"
+      ],
+      "totalLines": 216,
+      "hasStructuralAnalysis": true
+    },
+    "symbol_loader.py": {
+      "filePath": "symbol_loader.py",
+      "contentHash": "b85e87774f0fff3542d5243e40f466c6932891b68ae1ba75219427ac6744e823",
+      "functions": [
+        {
+          "name": "get_symbol_list",
+          "params": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        }
+      ],
+      "exports": [
+        "get_symbol_list"
+      ],
+      "totalLines": 27,
+      "hasStructuralAnalysis": true
+    },
+    "test_fetch.py": {
+      "filePath": "test_fetch.py",
+      "contentHash": "b31340bd5d3157eed5fec8577674a76a91b1a6a2ee8acc7a08f49d362f018d52",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "TvDatafeed",
+            "Interval"
+          ]
+        }
+      ],
+      "exports": [
+        "main"
+      ],
+      "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "test_fix_bos.py": {
+      "filePath": "test_fix_bos.py",
+      "contentHash": "dbdf51c687f7f4d2d5ffef79763c4ea9762266bb2a0b39da1db9c30fd584d66a",
+      "functions": [
+        {
+          "name": "replace_bos_choch",
+          "params": [],
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "replace_bos_choch"
+      ],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    "test_fix.py": {
+      "filePath": "test_fix.py",
+      "contentHash": "d0be25f4244143d411bf179b0b5639d30eb8754f114f7ae5fd19f2cee5d86898",
+      "functions": [
+        {
+          "name": "test_logic",
+          "params": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "smc_pullback",
+          "specifiers": [
+            "find_swings"
+          ]
+        }
+      ],
+      "exports": [
+        "test_logic"
+      ],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "test_lwc_time.html": {
+      "filePath": "test_lwc_time.html",
+      "contentHash": "08077747ec868c51bcc05824fc60d68ced3fec1d0b97ae53ebf3c7d3c20c268e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 340,
+      "hasStructuralAnalysis": false
+    },
+    "test_lwc_time.py": {
+      "filePath": "test_lwc_time.py",
+      "contentHash": "807727719fea032e46703290c55c6ce953d5109db283b69b73bf2e7e81fb1804",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "lightweight_charts.widgets",
+          "specifiers": [
+            "StaticLWC"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 20,
+      "hasStructuralAnalysis": true
+    },
+    "test_lwc_time2.py": {
+      "filePath": "test_lwc_time2.py",
+      "contentHash": "7f67065f71eeab0100633b5dcbf0e9241b7bc20b160bad263d52be2aaf0434f6",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "lightweight_charts.widgets",
+          "specifiers": [
+            "StaticLWC"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": true
+    },
+    "test_merge.py": {
+      "filePath": "test_merge.py",
+      "contentHash": "573353dd8cecf2d4ef1a6e75e51407ca6a74f535afb694efcb2c2d7b43715d75",
+      "functions": [
+        {
+          "name": "merge_zones",
+          "params": [
+            "raw_zones",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "merge_zones"
+      ],
+      "totalLines": 27,
+      "hasStructuralAnalysis": true
+    },
+    "test_zones.py": {
+      "filePath": "test_zones.py",
+      "contentHash": "3953aac82b5ec4cf795171f672c515464dbdbc690fac23c2619946665e349e9d",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "smc_pullback",
+          "specifiers": [
+            "find_swings"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "walkthrough.md": {
+      "filePath": "walkthrough.md",
+      "contentHash": "7ff5445cad3b0f38c2238d65cc6df583bf6f90601ee5a3537c07d789f77701c2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 21,
+      "hasStructuralAnalysis": true
+    },
+    "web_dashboard.py": {
+      "filePath": "web_dashboard.py",
+      "contentHash": "fd9b443a9862115109e12a00a4c292f2c6afbe2eaef2db366a41c18736760cf4",
+      "functions": [
+        {
+          "name": "render_dashboard",
+          "params": [
+            "symbol_raw",
+            "timeframe_raw"
+          ],
+          "exported": true,
+          "lineCount": 295
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "symbol_loader",
+          "specifiers": [
+            "get_symbol_list"
+          ]
+        },
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        },
+        {
+          "source": "lightweight_charts.widgets",
+          "specifiers": [
+            "StaticLWC"
+          ]
+        }
+      ],
+      "exports": [
+        "render_dashboard"
+      ],
+      "totalLines": 302,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

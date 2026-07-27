@@ -1,0 +1,308 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": ".planning/tmp/docs-work-manifest.json",
+      "language": "json",
+      "sizeLines": 66,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.understandignore",
+      "language": "unknown",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "app.py",
+      "language": "python",
+      "sizeLines": 107,
+      "fileCategory": "code"
+    },
+    {
+      "path": "bos_choch_inducement.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "chart_15m.html",
+      "language": "html",
+      "sizeLines": 63148,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "chart_1d.html",
+      "language": "html",
+      "sizeLines": 52131,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "dashboard.html",
+      "language": "html",
+      "sizeLines": 706,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "data_fetcher.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "language": "markdown",
+      "sizeLines": 75,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "language": "markdown",
+      "sizeLines": 43,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/GETTING-STARTED.md",
+      "language": "markdown",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/LEARNINGS.md",
+      "language": "markdown",
+      "sizeLines": 147,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/SESSION_SUMMARY.md",
+      "language": "markdown",
+      "sizeLines": 218,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/TESTING.md",
+      "language": "markdown",
+      "sizeLines": 22,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "feedback_server.py",
+      "language": "python",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "fix_issues.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Futures.csv",
+      "language": "csv",
+      "sizeLines": 215,
+      "fileCategory": "data"
+    },
+    {
+      "path": "GEMINI.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "inside_bars.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "main.py",
+      "language": "python",
+      "sizeLines": 263,
+      "fileCategory": "code"
+    },
+    {
+      "path": "market_structure.py",
+      "language": "python",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_bos_choch.py",
+      "language": "python",
+      "sizeLines": 158,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_bos_live_zones.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_dashboard.py",
+      "language": "python",
+      "sizeLines": 126,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_invalidation.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_main_app.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_smc_zones_mitigate.py",
+      "language": "python",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_structure_service.py",
+      "language": "python",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_zones.py",
+      "language": "python",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 56,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "rewrite_bos.py",
+      "language": "python",
+      "sizeLines": 109,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scratch.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_pullback.py",
+      "language": "python",
+      "sizeLines": 237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_zones.py",
+      "language": "python",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "structure_service.py",
+      "language": "python",
+      "sizeLines": 215,
+      "fileCategory": "code"
+    },
+    {
+      "path": "symbol_loader.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_fetch.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_fix_bos.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_fix.py",
+      "language": "python",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_lwc_time.html",
+      "language": "html",
+      "sizeLines": 339,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "test_lwc_time.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_lwc_time2.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_merge.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_zones.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "walkthrough.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "web_dashboard.py",
+      "language": "python",
+      "sizeLines": 301,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 47,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "moderate",
+  "stats": {
+    "filesScanned": 47,
+    "byCategory": {
+      "config": 1,
+      "code": 31,
+      "markup": 4,
+      "docs": 10,
+      "data": 1
+    },
+    "byLanguage": {
+      "json": 1,
+      "unknown": 1,
+      "python": 30,
+      "html": 4,
+      "markdown": 10,
+      "csv": 1
+    }
+  }
+}

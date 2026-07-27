@@ -13,6 +13,7 @@ CACHE_DIR = "data/structure_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 TIMEFRAME_MAP = {
+    '1w': (Interval.in_weekly, '1W'),
     '1d': (Interval.in_daily, '1d'),
     '1h': (Interval.in_1_hour, '1h'),
     '15m': (Interval.in_15_minute, '15m'),
@@ -20,18 +21,26 @@ TIMEFRAME_MAP = {
 }
 
 LTF_MAP = {
+    '1w': '1d',
     '1d': '15m',
     '1h': '5m',
     '15m': '5m',
     '5m': None
 }
 
-def get_chart_data(symbol_raw, timeframe_raw='1d'):
+def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     tf = timeframe_raw.lower()
     if tf not in TIMEFRAME_MAP:
         tf = '1d'
         
-    tv_symbol = f"{symbol_raw}1!" if not symbol_raw.endswith('1!') else symbol_raw
+    m_type = str(market_type).lower().strip()
+    clean_symbol_raw = symbol_raw.replace('1!', '')
+    
+    if m_type == 'equity':
+        tv_symbol = clean_symbol_raw
+    else:
+        tv_symbol = f"{clean_symbol_raw}1!"
+        
     exchange = 'NSE'
     
     interval_enum, interval_name = TIMEFRAME_MAP[tf]
@@ -43,7 +52,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         return {'error': f'Failed to fetch data for {tv_symbol}'}
 
     clean_sym = tv_symbol.replace('!', '_')
-    cache_path = os.path.join(CACHE_DIR, f"{clean_sym}_{tf}.json")
+    cache_path = os.path.join(CACHE_DIR, f"{clean_sym}_{tf}_{m_type}.json")
     
     last_candle_time = int(pd.to_datetime(df.index[-1]).timestamp())
     total_candles = len(df)
@@ -86,9 +95,11 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
     
     candles = []
     for _, row in df_plot.iterrows():
-        ts = int(pd.to_datetime(row['time']).timestamp())
+        dt = pd.to_datetime(row['time'])
+        ts_val = int(dt.timestamp()) if is_intraday else dt.strftime('%Y-%m-%d')
+        
         candles.append({
-            'time': ts,
+            'time': ts_val,
             'open': float(row['open']),
             'high': float(row['high']),
             'low': float(row['low']),
@@ -100,33 +111,35 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
     for idx, row in df_struct.iterrows():
         is_high = row.get('is_swing_high', False)
         is_low = row.get('is_swing_low', False)
-        date_str = pd.to_datetime(idx).strftime(time_format)
-        ts = int(pd.to_datetime(date_str).timestamp())
+        dt = pd.to_datetime(idx)
+        ts_val = int(dt.timestamp()) if is_intraday else dt.strftime('%Y-%m-%d')
         
         if is_high and is_low:
             if last_swing == 'HIGH':
-                pullback_points.append({'time': ts, 'value': float(row['low'])})
-                pullback_points.append({'time': ts, 'value': float(row['high'])})
+                pullback_points.append({'time': ts_val, 'value': float(row['low'])})
+                pullback_points.append({'time': ts_val, 'value': float(row['high'])})
                 last_swing = 'HIGH'
             else:
-                pullback_points.append({'time': ts, 'value': float(row['high'])})
-                pullback_points.append({'time': ts, 'value': float(row['low'])})
+                pullback_points.append({'time': ts_val, 'value': float(row['high'])})
+                pullback_points.append({'time': ts_val, 'value': float(row['low'])})
                 last_swing = 'LOW'
         elif is_high:
-            pullback_points.append({'time': ts, 'value': float(row['high'])})
+            pullback_points.append({'time': ts_val, 'value': float(row['high'])})
             last_swing = 'HIGH'
         elif is_low:
-            pullback_points.append({'time': ts, 'value': float(row['low'])})
+            pullback_points.append({'time': ts_val, 'value': float(row['low'])})
             last_swing = 'LOW'
             
     inside_zones_raw = identify_inside_bar_zones(df_struct)
     inside_zones = []
     for z in inside_zones_raw:
-        st_str = pd.to_datetime(z['start_time']).strftime(time_format)
-        et_str = pd.to_datetime(z['end_time']).strftime(time_format)
+        st_dt = pd.to_datetime(z['start_time'])
+        et_dt = pd.to_datetime(z['end_time'])
+        st_val = int(st_dt.timestamp()) if is_intraday else st_dt.strftime('%Y-%m-%d')
+        et_val = int(et_dt.timestamp()) if is_intraday else et_dt.strftime('%Y-%m-%d')
         inside_zones.append({
-            'start_time': int(pd.to_datetime(st_str).timestamp()),
-            'end_time': int(pd.to_datetime(et_str).timestamp()),
+            'start_time': st_val,
+            'end_time': et_val,
             'high': float(z['high']),
             'low': float(z['low'])
         })
@@ -139,10 +152,13 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         res = analyze_htf_structure(df_struct)
         raw_events = res['events']
         raw_zones = res['zones']
+        current_state = res.get('current_state', {})
         
         for ev in raw_events:
-            st_ts = int(pd.to_datetime(ev['start_time']).timestamp())
-            et_ts = int(pd.to_datetime(ev['end_time']).timestamp())
+            dt_st = pd.to_datetime(ev['start_time'])
+            dt_et = pd.to_datetime(ev['end_time'])
+            st_ts = int(dt_st.timestamp()) if is_intraday else dt_st.strftime('%Y-%m-%d')
+            et_ts = int(dt_et.timestamp()) if is_intraday else dt_et.strftime('%Y-%m-%d')
             htf_events.append({
                 'type': ev['type'],
                 'label': ev['label'],
@@ -153,37 +169,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
                 'color': ev['color']
             })
             
-        for z in raw_zones:
-            st_ts = int(pd.to_datetime(z['start_time']).timestamp())
-            et_ts = int(pd.to_datetime(z['end_time']).timestamp()) if z.get('end_time') else None
-            
-            history = []
-            for h in z.get('history', []):
-                h_ts = int(pd.to_datetime(h['time']).timestamp())
-                history.append({'time': h_ts, 'top': h['top'], 'bottom': h['bottom']})
-                
-            htf_zones.append({
-                'type': z['type'],
-                'start_time': st_ts,
-                'end_time': et_ts,
-                'bottom': z['bottom'],
-                'top': z['top'],
-                'peak': z['peak'],
-                'status': z['status'],
-                'history': history
-            })
-
-        zones_df = df_struct.dropna(subset=['zone_type'])
-        end_ts = int(pd.to_datetime(df_struct.index[-1]).timestamp())
-        for idx, row in zones_df.iterrows():
-            st_ts = int(pd.to_datetime(idx).timestamp())
-            zones.append({
-                'type': str(row['zone_type']),
-                'start_time': st_ts,
-                'end_time': end_ts,
-                'high': float(row['zone_high']),
-                'low': float(row['zone_low'])
-            })
+        htf_zones = []
         
     payload = {
         'symbol': symbol_raw,
@@ -194,7 +180,8 @@ def get_chart_data(symbol_raw, timeframe_raw='1d'):
         'inside_zones': inside_zones,
         'zones': zones,
         'htf_events': htf_events,
-        'htf_zones': htf_zones
+        'htf_zones': htf_zones,
+        'current_state': current_state if tf == '1d' else None
     }
     
     # Write to cache

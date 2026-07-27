@@ -1,0 +1,157 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchIndex": 2,
+  "totalBatches": 4,
+  "batchFiles": [
+    {
+      "path": ".planning/tmp/docs-work-manifest.json",
+      "language": "json",
+      "sizeLines": 66,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.understandignore",
+      "language": "unknown",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "app.py",
+      "language": "python",
+      "sizeLines": 107,
+      "fileCategory": "code"
+    },
+    {
+      "path": "bos_choch_inducement.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data_fetcher.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "feedback_server.py",
+      "language": "python",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "fix_issues.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "inside_bars.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "main.py",
+      "language": "python",
+      "sizeLines": 263,
+      "fileCategory": "code"
+    },
+    {
+      "path": "market_structure.py",
+      "language": "python",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_bos_choch.py",
+      "language": "python",
+      "sizeLines": 158,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_bos_live_zones.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_dashboard.py",
+      "language": "python",
+      "sizeLines": 126,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_invalidation.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_main_app.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_smc_zones_mitigate.py",
+      "language": "python",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_structure_service.py",
+      "language": "python",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "patch_zones.py",
+      "language": "python",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "rewrite_bos.py",
+      "language": "python",
+      "sizeLines": 109,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scratch.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_pullback.py",
+      "language": "python",
+      "sizeLines": 237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_zones.py",
+      "language": "python",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "structure_service.py",
+      "language": "python",
+      "sizeLines": 215,
+      "fileCategory": "code"
+    },
+    {
+      "path": "symbol_loader.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_fetch.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    }
+  ]
+}

@@ -1,0 +1,350 @@
+//@version=5
+indicator("SMC Market Structure (BOS, ChoCH, Inducement, Zones) [TradeUS AI]", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+// ==========================================
+// INPUTS & STYLING
+// ==========================================
+show_pullbacks  = input.bool(true, "Show Pullback ZigZag", group="Structure Options")
+show_swings     = input.bool(true, "Show Swing Labels (SH/SL)", group="Structure Options")
+show_idm        = input.bool(true, "Show Inducement (# / IS)", group="Structure Options")
+show_bos        = input.bool(true, "Show BOS Lines", group="Structure Options")
+show_choch      = input.bool(true, "Show ChoCH Lines", group="Structure Options")
+show_zones      = input.bool(true, "Show Supply/Demand Zones", group="Zones Options")
+
+idm_color   = input.color(#ffd600, "Inducement Color", group="Style Settings")
+is_color    = input.color(#00e5ff, "Inducement Shift Color", group="Style Settings")
+bos_color   = input.color(#2962ff, "BOS Line Color", group="Style Settings")
+choch_color = input.color(#e91e63, "ChoCH Line Color", group="Style Settings")
+demand_col  = input.color(color.new(#4caf50, 75), "Demand Zone Color", group="Style Settings")
+supply_col  = input.color(color.new(#f44336, 75), "Supply Zone Color", group="Style Settings")
+
+// ==========================================
+// ARRAYS & STATE TRACKING FOR SWINGS & STRUCTURE
+// ==========================================
+var int[] swing_high_bars = array.new_int(0)
+var float[] swing_high_vals = array.new_float(0)
+var int[] swing_low_bars = array.new_int(0)
+var float[] swing_low_vals = array.new_float(0)
+
+// Mother Bar & Swing state
+var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
+var int ref_bar_index = na
+var float ref_high = na
+var float ref_low = na
+
+var int swing_high_bar = na
+var float swing_high_val = na
+var int swing_low_bar = na
+var float swing_low_val = na
+
+var int last_confirmed_bar = na
+var float last_confirmed_val = na
+
+// HTF Structure State Machine
+var int trend = 1 // 1 = UPTREND, -1 = DOWNTREND
+
+var int cycle_start_bar = na
+
+var int proper_high_bar = na
+var float proper_high_val = na
+var int proper_low_bar = na
+var float proper_low_val = na
+
+var bool inducement_done = false
+var int active_pb_low_bar = na
+var float active_pb_low_val = na
+var int active_pb_high_bar = na
+var float active_pb_high_val = na
+
+var float wick_high_val = na
+var float wick_low_val = na
+
+var int choch_bar = na
+var float choch_val = na
+
+// Active Zones tracking
+type Zone
+    int start_bar
+    float top
+    float bottom
+    float peak
+    string ztype
+    box b_box
+
+var Zone[] active_zones = array.new<Zone>(0)
+
+// ==========================================
+// GLOBAL HELPER FUNCTIONS
+// ==========================================
+draw_structure_line(x1, x2, val, label_str, col) =>
+    l = line.new(x1, val, x2, val, xloc=xloc.bar_index, color=col, width=2, style=line.style_solid)
+    mid_x = math.floor((x1 + x2) / 2)
+    lbl = label.new(mid_x, val, label_str, xloc=xloc.bar_index, yloc=yloc.price, color=color.new(col, 100), textcolor=col, style=label.style_label_center, size=size.normal)
+
+add_smc_zone(b_idx, z_low, z_high, peak_val, z_type) =>
+    if show_zones
+        bool merged = false
+        if array.size(active_zones) > 0
+            for i = 0 to array.size(active_zones) - 1
+                z = array.get(active_zones, i)
+                if z.ztype == z_type
+                    diff = math.abs(z.peak - peak_val) / z.peak
+                    if diff <= 0.003
+                        z.bottom := math.min(z.bottom, z_low)
+                        z.top := math.max(z.top, z_high)
+                        box.set_top(z.b_box, z.top)
+                        box.set_bottom(z.b_box, z.bottom)
+                        merged := true
+                        break
+        if not merged
+            col = z_type == "demand" ? demand_col : supply_col
+            border_col = z_type == "demand" ? #4caf50 : #f44336
+            bx = box.new(b_idx, z_high, bar_index + 20, z_low, xloc=xloc.bar_index, bgcolor=col, border_color=border_col, border_width=1)
+            nz = Zone.new(b_idx, z_high, z_low, peak_val, z_type, bx)
+            array.push(active_zones, nz)
+
+process_up_break(b_idx, h_val) =>
+    if current_dir == -1
+        if show_swings and not na(swing_low_bar)
+            label.new(swing_low_bar, swing_low_val, "SL", xloc=xloc.bar_index, yloc=yloc.belowbar, color=color.new(#ff5252, 20), style=label.style_label_up, textcolor=color.white, size=size.small)
+        if show_pullbacks and not na(last_confirmed_bar) and not na(swing_low_bar)
+            line.new(last_confirmed_bar, last_confirmed_val, swing_low_bar, swing_low_val, xloc=xloc.bar_index, color=#ff9800, width=2)
+        
+        array.push(swing_low_bars, swing_low_bar)
+        array.push(swing_low_vals, swing_low_val)
+        
+        last_confirmed_bar := swing_low_bar
+        last_confirmed_val := swing_low_val
+        
+        current_dir := 1
+        swing_high_bar := b_idx
+        swing_high_val := h_val
+    else if current_dir == 1
+        if h_val >= swing_high_val
+            swing_high_bar := b_idx
+            swing_high_val := h_val
+    else
+        current_dir := 1
+        swing_high_bar := b_idx
+        swing_high_val := h_val
+
+process_down_break(b_idx, l_val) =>
+    if current_dir == 1
+        if show_swings and not na(swing_high_bar)
+            label.new(swing_high_bar, swing_high_val, "SH", xloc=xloc.bar_index, yloc=yloc.abovebar, color=color.new(#00e676, 20), style=label.style_label_down, textcolor=color.white, size=size.small)
+        if show_pullbacks and not na(last_confirmed_bar) and not na(swing_high_bar)
+            line.new(last_confirmed_bar, last_confirmed_val, swing_high_bar, swing_high_val, xloc=xloc.bar_index, color=#ff9800, width=2)
+        
+        array.push(swing_high_bars, swing_high_bar)
+        array.push(swing_high_vals, swing_high_val)
+        
+        last_confirmed_bar := swing_high_bar
+        last_confirmed_val := swing_high_val
+        
+        current_dir := -1
+        swing_low_bar := b_idx
+        swing_low_val := l_val
+    else if current_dir == -1
+        if l_val <= swing_low_val
+            swing_low_bar := b_idx
+            swing_low_val := l_val
+    else
+        current_dir := -1
+        swing_low_bar := b_idx
+        swing_low_val := l_val
+
+// ==========================================
+// MAIN BAR-BY-BAR LOGIC
+// ==========================================
+if bar_index == 0
+    ref_bar_index := bar_index
+    ref_high := high
+    ref_low := low
+    swing_high_bar := bar_index
+    swing_high_val := high
+    swing_low_bar := bar_index
+    swing_low_val := low
+    cycle_start_bar := bar_index
+    choch_bar := bar_index
+    choch_val := low
+
+if bar_index > 0
+    curr_open = open
+    curr_high = high
+    curr_low = low
+    curr_close = close
+    
+    open_broke_high = curr_open > ref_high
+    open_broke_low = curr_open < ref_low
+    
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low = (curr_low < ref_low) or open_broke_low
+
+    // Detect Swings
+    if broke_high and broke_low
+        int taken_first = open_broke_high ? 1 : (open_broke_low ? -1 : (math.abs(curr_open - ref_low) < math.abs(curr_open - ref_high) ? -1 : 1))
+        if taken_first == 1
+            process_up_break(bar_index, curr_high)
+            process_down_break(bar_index, curr_low)
+        else
+            process_down_break(bar_index, curr_low)
+            process_up_break(bar_index, curr_high)
+        ref_high := curr_high
+        ref_low := curr_low
+        ref_bar_index := bar_index
+    else
+        if current_dir == 1
+            if broke_low
+                process_down_break(bar_index, curr_low)
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+            else if broke_high
+                process_up_break(bar_index, curr_high)
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+        else if current_dir == -1
+            if broke_high
+                process_up_break(bar_index, curr_high)
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+            else if broke_low
+                process_down_break(bar_index, curr_low)
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+        else
+            if broke_high
+                process_up_break(bar_index, curr_high)
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+            else if broke_low
+                process_down_break(bar_index, curr_low)
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+
+    // HTF Market Structure Engine (Uptrend / Downtrend State Machine)
+    if trend == 1
+        if na(proper_high_val)
+            if array.size(swing_high_bars) > 0
+                proper_high_bar := array.get(swing_high_bars, array.size(swing_high_bars)-1)
+                proper_high_val := array.get(swing_high_vals, array.size(swing_high_vals)-1)
+        else
+            if not inducement_done
+                if curr_high >= proper_high_val
+                    proper_high_bar := bar_index
+                    proper_high_val := curr_high
+                    // find active pullback low
+                    if array.size(swing_low_bars) > 0
+                        for k = array.size(swing_low_bars) - 1 to 0
+                            b = array.get(swing_low_bars, k)
+                            if b >= cycle_start_bar and b < proper_high_bar
+                                active_pb_low_bar := b
+                                active_pb_low_val := array.get(swing_low_vals, k)
+                                break
+                if not na(active_pb_low_val) and curr_low < active_pb_low_val
+                    inducement_done := true
+                    lbl = not na(wick_high_val) ? "IS" : "#"
+                    col = not na(wick_high_val) ? is_color : idm_color
+                    if show_idm
+                        draw_structure_line(active_pb_low_bar, bar_index, active_pb_low_val, lbl, col)
+            else
+                target_high = not na(wick_high_val) ? wick_high_val : proper_high_val
+                if curr_close > target_high
+                    if show_bos
+                        draw_structure_line(proper_high_bar, bar_index, proper_high_val, "BOS", bos_color)
+                    inducement_done := false
+                    wick_high_val := na
+                    proper_high_bar := bar_index
+                    proper_high_val := curr_high
+                    choch_bar := bar_index
+                    choch_val := curr_low
+                else if curr_high > target_high and curr_close <= target_high
+                    wick_high_val := curr_high
+
+        if not na(choch_val) and curr_low < choch_val
+            if show_choch
+                draw_structure_line(choch_bar, bar_index, choch_val, "ChoCH", choch_color)
+            trend := -1
+            proper_low_bar := bar_index
+            proper_low_val := curr_low
+            inducement_done := false
+            wick_high_val := na
+            choch_bar := proper_high_bar
+            choch_val := proper_high_val
+            cycle_start_bar := proper_high_bar
+
+    else if trend == -1
+        if na(proper_low_val)
+            if array.size(swing_low_bars) > 0
+                proper_low_bar := array.get(swing_low_bars, array.size(swing_low_bars)-1)
+                proper_low_val := array.get(swing_low_vals, array.size(swing_low_vals)-1)
+        else
+            if not inducement_done
+                if curr_low <= proper_low_val
+                    proper_low_bar := bar_index
+                    proper_low_val := curr_low
+                    if array.size(swing_high_bars) > 0
+                        for k = array.size(swing_high_bars) - 1 to 0
+                            b = array.get(swing_high_bars, k)
+                            if b >= cycle_start_bar and b < proper_low_bar
+                                active_pb_high_bar := b
+                                active_pb_high_val := array.get(swing_high_vals, k)
+                                break
+                if not na(active_pb_high_val) and curr_high > active_pb_high_val
+                    inducement_done := true
+                    lbl = not na(wick_low_val) ? "IS" : "#"
+                    col = not na(wick_low_val) ? is_color : idm_color
+                    if show_idm
+                        draw_structure_line(active_pb_high_bar, bar_index, active_pb_high_val, lbl, col)
+            else
+                target_low = not na(wick_low_val) ? wick_low_val : proper_low_val
+                if curr_close < target_low
+                    if show_bos
+                        draw_structure_line(proper_low_bar, bar_index, proper_low_val, "BOS", bos_color)
+                    inducement_done := false
+                    wick_low_val := na
+                    proper_low_bar := bar_index
+                    proper_low_val := curr_low
+                    choch_bar := bar_index
+                    choch_val := curr_high
+                else if curr_low < target_low and curr_close >= target_low
+                    wick_low_val := curr_low
+
+        if not na(choch_val) and curr_high > choch_val
+            if show_choch
+                draw_structure_line(choch_bar, bar_index, choch_val, "ChoCH", choch_color)
+            trend := 1
+            proper_high_bar := bar_index
+            proper_high_val := curr_high
+            inducement_done := false
+            wick_low_val := na
+            choch_bar := proper_low_bar
+            choch_val := proper_low_val
+            cycle_start_bar := proper_low_bar
+
+    // Dynamic Zone Extension & Mitigation
+    if show_zones and array.size(active_zones) > 0
+        for i = array.size(active_zones) - 1 to 0
+            z = array.get(active_zones, i)
+            box.set_right(z.b_box, bar_index + 5)
+            if z.ztype == "demand"
+                if curr_low < z.top
+                    if curr_low <= z.bottom
+                        box.set_right(z.b_box, bar_index)
+                        array.remove(active_zones, i)
+                    else
+                        z.top := curr_low
+                        box.set_top(z.b_box, z.top)
+            else if z.ztype == "supply"
+                if curr_high > z.bottom
+                    if curr_high >= z.top
+                        box.set_right(z.b_box, bar_index)
+                        array.remove(active_zones, i)
+                    else
+                        z.bottom := curr_high
+                        box.set_bottom(z.b_box, z.bottom)

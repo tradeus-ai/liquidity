@@ -1,0 +1,49 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchIndex": 1,
+  "totalBatches": 4,
+  "batchFiles": [
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "language": "markdown",
+      "sizeLines": 75,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "language": "markdown",
+      "sizeLines": 43,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/GETTING-STARTED.md",
+      "language": "markdown",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/LEARNINGS.md",
+      "language": "markdown",
+      "sizeLines": 147,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/SESSION_SUMMARY.md",
+      "language": "markdown",
+      "sizeLines": 218,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/TESTING.md",
+      "language": "markdown",
+      "sizeLines": 22,
+      "fileCategory": "docs"
+    }
+  ]
+}

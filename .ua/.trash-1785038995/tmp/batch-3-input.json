@@ -1,0 +1,49 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchIndex": 3,
+  "totalBatches": 4,
+  "batchFiles": [
+    {
+      "path": "test_fix_bos.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_fix.py",
+      "language": "python",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_lwc_time.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_lwc_time2.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_merge.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_zones.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "web_dashboard.py",
+      "language": "python",
+      "sizeLines": 301,
+      "fileCategory": "code"
+    }
+  ]
+}

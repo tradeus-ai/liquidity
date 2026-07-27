@@ -1,0 +1,90 @@
+{
+  "batchIndex": 1,
+  "nodes": [
+    {
+      "id": "file:docs/ARCHITECTURE.md",
+      "type": "file",
+      "name": "docs/ARCHITECTURE.md",
+      "filePath": "docs/ARCHITECTURE.md",
+      "summary": "File docs/ARCHITECTURE.md (75 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/CONFIGURATION.md",
+      "type": "file",
+      "name": "docs/CONFIGURATION.md",
+      "filePath": "docs/CONFIGURATION.md",
+      "summary": "File docs/CONFIGURATION.md (21 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/DEVELOPMENT.md",
+      "type": "file",
+      "name": "docs/DEVELOPMENT.md",
+      "filePath": "docs/DEVELOPMENT.md",
+      "summary": "File docs/DEVELOPMENT.md (43 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/GETTING-STARTED.md",
+      "type": "file",
+      "name": "docs/GETTING-STARTED.md",
+      "filePath": "docs/GETTING-STARTED.md",
+      "summary": "File docs/GETTING-STARTED.md (36 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/LEARNINGS.md",
+      "type": "file",
+      "name": "docs/LEARNINGS.md",
+      "filePath": "docs/LEARNINGS.md",
+      "summary": "File docs/LEARNINGS.md (147 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/SESSION_SUMMARY.md",
+      "type": "file",
+      "name": "docs/SESSION_SUMMARY.md",
+      "filePath": "docs/SESSION_SUMMARY.md",
+      "summary": "File docs/SESSION_SUMMARY.md (218 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/TESTING.md",
+      "type": "file",
+      "name": "docs/TESTING.md",
+      "filePath": "docs/TESTING.md",
+      "summary": "File docs/TESTING.md (22 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    }
+  ],
+  "edges": []
+}

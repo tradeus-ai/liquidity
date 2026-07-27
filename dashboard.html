@@ -34,6 +34,7 @@
         /* Top Header Control Bar */
         header {
             height: 55px;
+            flex-shrink: 0;
             background-color: var(--header-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -120,9 +121,53 @@
 
         /* Chart Area */
         #chart-container {
-            flex: 1;
+            height: calc(100vh - 55px - 32px);
             width: 100%;
             position: relative;
+            overflow: hidden;
+        }
+
+        /* Bottom TradingView-style Footer Bar */
+        #chart-footer {
+            height: 32px;
+            background-color: var(--header-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            font-size: 12px;
+            color: #848e9c;
+            user-select: none;
+            z-index: 100;
+        }
+
+        .footer-presets {
+            display: flex;
+            gap: 6px;
+        }
+
+        .footer-btn {
+            background: transparent;
+            border: none;
+            color: #848e9c;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.15s ease;
+        }
+
+        .footer-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .footer-clock {
+            font-family: monospace;
+            color: #848e9c;
+            font-size: 12px;
         }
 
         /* Large Hover OHLC Legend */
@@ -152,162 +197,19 @@
             margin-right: 12px;
         }
 
-        /* Correction Feedback Panel */
-        #feedback-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10000;
-            background: #1e222d;
-            color: #d1d4dc;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #434651;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            width: 320px;
-        }
-
-        #feedback-panel h3 {
-            font-size: 14px;
-            color: #fff;
-            margin-bottom: 6px;
-        }
-
-        #feedback-panel p {
-            font-size: 12px;
-            color: #848e9c;
-            margin-bottom: 8px;
-        }
-
-        #feedback-text {
-            width: 100%;
-            background: #131722;
-            color: #fff;
-            border: 1px solid #434651;
-            border-radius: 4px;
-            padding: 8px;
-            font-size: 12px;
-            resize: vertical;
-            margin-bottom: 8px;
-            outline: none;
-        }
-
-        #feedback-btn {
-            width: 100%;
-            background: var(--accent-color);
-            color: #fff;
-            border: none;
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        #feedback-btn:hover {
-            background: var(--accent-hover);
-        }
-
-        /* Loading Spinner */
-        #loader {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            background: rgba(19, 23, 34, 0.85);
-            padding: 20px 30px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .spinner {
-            width: 35px;
-            height: 35px;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid var(--accent-color);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="title-section">
-            📊 Liquidity Finder
+    <!-- Bottom TradingView-style Time Scale Footer -->
+    <div id="chart-footer">
+        <div class="footer-presets">
+            <button class="footer-btn" onclick="fitRange('1d')">1D</button>
+            <button class="footer-btn" onclick="fitRange('5d')">5D</button>
+            <button class="footer-btn" onclick="fitRange('1m')">1M</button>
+            <button class="footer-btn" onclick="fitRange('3m')">3M</button>
+            <button class="footer-btn" onclick="fitRange('6m')">6M</button>
+            <button class="footer-btn" onclick="fitRange('ytd')">YTD</button>
+            <button class="footer-btn" onclick="fitRange('1y')">1Y</button>
+            <button class="footer-btn" onclick="fitRange('all')">All</button>
         </div>
-
-        <div class="controls-group">
-            <label for="symbol-select">Symbol:</label>
-            <select id="symbol-select">
-                <option value="AMBUJACEM">Loading symbols...</option>
-            </select>
-        </div>
-
-        <div class="controls-group">
-            <label>Timeframe:</label>
-            <div class="tf-buttons">
-                <button class="tf-btn active" data-tf="1d">1D</button>
-                <button class="tf-btn" data-tf="1h">1H</button>
-                <button class="tf-btn" data-tf="15m">15m</button>
-                <button class="tf-btn" data-tf="5m">5m</button>
-            </div>
-        </div>
-
-        <div class="controls-group" style="margin-left: 15px; display: flex; gap: 10px; align-items: center;">
-            <label style="cursor:pointer; color:#00e676; font-weight:700; font-size:13px; background:#131722; padding:4px 8px; border-radius:4px; border:1px solid #363c4e;">
-                <input type="checkbox" id="toggle-master" checked onchange="toggleMaster(this.checked)"> Master SMC Structure
-            </label>
-            <span style="color:#363c4e;">|</span>
-            <label style="cursor:pointer; color:#ff9800; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-pullbacks" checked onchange="toggleLayers()"> Pullbacks</label>
-            <label style="cursor:pointer; color:#ffb300; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-idm" checked onchange="toggleLayers()"> # (IDM)</label>
-            <label style="cursor:pointer; color:#00e5ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-is" checked onchange="toggleLayers()"> IS</label>
-            <label style="cursor:pointer; color:#2962ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-bos" checked onchange="toggleLayers()"> BOS</label>
-            <label style="cursor:pointer; color:#e91e63; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-choch" checked onchange="toggleLayers()"> ChoCH</label>
-            <span style="color:#363c4e;">|</span>
-            <label style="cursor:pointer; color:#4caf50; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-demand" checked onchange="toggleLayers()"> Demand</label>
-            <label style="cursor:pointer; color:#f44336; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-supply" checked onchange="toggleLayers()"> Supply</label>
-
-        </div>
-
-        <div id="status-badge" class="status-badge">Loaded</div>
-    </header>
-
-    <div id="chart-container">
-        <div id="hover-legend">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 4px;">
-                <span class="legend-title" id="legend-symbol">AMBUJACEM - 1D</span>
-                <span id="leg-date" style="color: #2962ff; font-weight: bold; font-size: 16px;">-</span>
-            </div>
-            <div>
-                <span>O: <span id="leg-o" class="legend-val">-</span></span>
-                <span>H: <span id="leg-h" class="legend-val">-</span></span>
-                <span>L: <span id="leg-l" class="legend-val">-</span></span>
-                <span>C: <span id="leg-c" class="legend-val">-</span></span>
-            </div>
-        </div>
-
-        <div id="loader">
-            <div class="spinner"></div>
-            <span style="font-size: 13px; font-weight: 500;">Computing SMC Structure...</span>
-        </div>
-    </div>
-
-    <!-- Correction Feedback Panel -->
-    <div id="feedback-panel">
-        <h3>Correction Feedback</h3>
-        <p>Spot a mistake? Describe it below to save locally as AI feedback.</p>
-        <textarea id="feedback-text" rows="3" placeholder="E.g., Swing high at 2026-04-20 should be at 465.50..."></textarea>
-        <button id="feedback-btn" onclick="sendFeedback()">Send Feedback</button>
+        <div class="footer-clock" id="live-clock">--:--:-- UTC+5:30</div>
     </div>
 
     <script>
@@ -318,6 +220,7 @@
 
         let currentSymbol = 'AMBUJACEM';
         let currentTimeframe = '1d';
+        let currentMarket = 'futures';
 
         // Initialize Chart
         function initChart() {
@@ -409,28 +312,76 @@
                 }
             });
 
-            // Window resize handler
-            window.addEventListener('resize', () => {
-                chart.resize(container.clientWidth, container.clientHeight);
+            // ResizeObserver for dynamic responsiveness
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (chart && entry.contentRect) {
+                        chart.resize(entry.contentRect.width, entry.contentRect.height);
+                    }
+                }
             });
+            resizeObserver.observe(container);
+        }
+
+        // Live Clock Ticker
+        setInterval(() => {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) clockEl.innerText = `${h}:${m}:${s} UTC+5:30`;
+        }, 1000);
+
+        // Time-range Preset Buttons Handler
+        function fitRange(rangeKey) {
+            if (!chart || !window.lastData || !window.lastData.candles || window.lastData.candles.length === 0) return;
+            const candles = window.lastData.candles;
+            const total = candles.length;
             
-            chart.resize(container.clientWidth, container.clientHeight);
+            let count = total;
+            if (rangeKey === '1d') count = Math.min(1, total);
+            else if (rangeKey === '5d') count = Math.min(5, total);
+            else if (rangeKey === '1m') count = Math.min(22, total);
+            else if (rangeKey === '3m') count = Math.min(66, total);
+            else if (rangeKey === '6m') count = Math.min(132, total);
+            else if (rangeKey === 'ytd') {
+                const nowYear = new Date().getFullYear();
+                const firstThisYear = candles.findIndex(c => {
+                    const tStr = String(c.time);
+                    return tStr.startsWith(String(nowYear));
+                });
+                count = firstThisYear !== -1 ? (total - firstThisYear) : Math.min(132, total);
+            }
+            else if (rangeKey === '1y') count = Math.min(252, total);
+            else if (rangeKey === 'all') count = total;
+            
+            const fromIdx = Math.max(0, total - count);
+            chart.timeScale().setVisibleLogicalRange({ from: fromIdx, to: total - 1 });
         }
 
         // Load Symbol List
         async function loadSymbols() {
             try {
-                const res = await fetch('/api/symbols');
+                const res = await fetch(`/api/symbols?type=${currentMarket}`);
                 const symbols = await res.json();
                 const select = document.getElementById('symbol-select');
                 select.innerHTML = '';
+                let matchFound = false;
                 symbols.forEach(sym => {
                     const opt = document.createElement('option');
                     opt.value = sym;
                     opt.textContent = sym;
-                    if (sym === currentSymbol) opt.selected = true;
+                    if (sym === currentSymbol) {
+                        opt.selected = true;
+                        matchFound = true;
+                    }
                     select.appendChild(opt);
                 });
+                if (!matchFound && symbols.length > 0) {
+                    currentSymbol = symbols[0];
+                    select.value = currentSymbol;
+                }
             } catch (err) {
                 console.error("Error loading symbols:", err);
             }
@@ -439,10 +390,11 @@
         // Fetch & Update Chart Data
         async function updateChart() {
             document.getElementById('loader').style.display = 'flex';
-            document.getElementById('legend-symbol').innerText = `${currentSymbol} - ${currentTimeframe.toUpperCase()}`;
+            const mLabel = currentMarket === 'futures' ? ' (FUT)' : ' (EQ)';
+            document.getElementById('legend-symbol').innerText = `${currentSymbol}${mLabel} - ${currentTimeframe.toUpperCase()}`;
 
             try {
-                const res = await fetch(`/api/data?symbol=${encodeURIComponent(currentSymbol)}&timeframe=${encodeURIComponent(currentTimeframe)}`);
+                const res = await fetch(`/api/data?symbol=${encodeURIComponent(currentSymbol)}&timeframe=${encodeURIComponent(currentTimeframe)}&type=${currentMarket}`);
                 const data = await res.json();
 
                 if (data.error) {
@@ -469,6 +421,11 @@
                 window.lastData = data;
                 toggleLayers();
 
+                // Toggle time visibility based on timeframe
+                chart.timeScale().applyOptions({
+                    timeVisible: currentTimeframe !== '1d' && currentTimeframe !== '1w'
+                });
+
                 // Fit Content
                 chart.timeScale().fitContent();
 
@@ -481,8 +438,6 @@
 
 
         let structureLines = [];
-        let zoneSeries = [];
-
 
         function toggleMaster(isChecked) {
             document.querySelectorAll('.layer-toggle').forEach(cb => {
@@ -496,38 +451,19 @@
             const data = window.lastData;
 
             const showPullback = document.getElementById('toggle-pullbacks').checked;
-            const showIDM = document.getElementById('toggle-idm').checked;
-            const showIS = document.getElementById('toggle-is').checked;
-            const showBOS = document.getElementById('toggle-bos').checked;
-            const showChoCH = document.getElementById('toggle-choch').checked;
-
-            const showDemand = document.getElementById('toggle-demand').checked;
-            const showSupply = document.getElementById('toggle-supply').checked;
-
             pullbackLine.applyOptions({ visible: showPullback });
 
-            // Clear old structure line series & zone series
+            // Clear old structure line series
             structureLines.forEach(l => {
                 try { chart.removeSeries(l); } catch(e) {}
             });
             structureLines = [];
-            
-            zoneSeries.forEach(z => {
-                try { chart.removeSeries(z); } catch(e) {}
-            });
-            zoneSeries = [];
-
 
             if (data.htf_events && data.htf_events.length > 0) {
                 const markers = [];
                 const candles = data.candles || [];
 
                 data.htf_events.forEach(ev => {
-                    if (ev.type === 'IDM' && !showIDM) return;
-                    if (ev.type === 'IS' && !showIS) return;
-                    if (ev.type === 'BOS' && !showBOS) return;
-                    if (ev.type === 'CHOCH' && !showChoCH) return;
-
                     // Ensure bounds are strictly clamped
                     const sTime = ev.start_time;
                     const eTime = ev.end_time > sTime ? ev.end_time : sTime;
@@ -572,121 +508,43 @@
                     structureLines.push(line);
                 });
                 candleSeries.setMarkers(markers);
-                
-                // Draw Zones
-                if (data.htf_zones && data.htf_zones.length > 0) {
-                    // Limit zones to the last 200 to prevent WebGL crashing from thousands of series
-                    const visibleZones = data.htf_zones.slice(-200);
-                    
-                    visibleZones.forEach(z => {
-                        if (z.type === 'demand' && !showDemand) return;
-                        if (z.type === 'supply' && !showSupply) return;
-                        
-                        const color = z.type === 'demand' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)';
-                        const lineColor = z.type === 'demand' ? 'rgba(76, 175, 80, 0.5)' : 'rgba(244, 67, 54, 0.5)';
-                        
-                        const area = chart.addAreaSeries({
-                            topColor: color,
-                            bottomColor: color,
-                            lineColor: lineColor,
-                            lineWidth: 1,
-                            lineStyle: LightweightCharts.LineStyle.Solid,
-                            crosshairMarkerVisible: false,
-                            lastValueVisible: false,
-                            priceLineVisible: false,
-                            lineType: LightweightCharts.LineType.Step,
-                            baseValue: { type: 'price', price: z.type === 'demand' ? z.bottom : z.top }
-                        });
-                        
-                        // We use the Step lineType. 
-                        // Demand: baseValue = bottom, Line steps from high down.
-                        // Supply: baseValue = top, Line steps from low up.
-                        let areaData = [];
-                        
-                        // Sort history by time
-                        z.history.sort((a,b) => a.time - b.time);
-                        
-                        z.history.forEach(h => {
-                            areaData.push({
-                                time: h.time, 
-                                value: z.type === 'demand' ? h.top : h.bottom
-                            });
-                        });
-                        
-                        // Extend to end time
-                        if (z.end_time) {
-                            areaData.push({
-                                time: z.end_time,
-                                value: z.type === 'demand' ? areaData[areaData.length-1].value : areaData[areaData.length-1].value
-                            });
-                        }
-                        
-                        // Ensure unique times (sometimes history might have same day if bug)
-                        const uniqueData = [];
-                        const seenTimes = new Set();
-                        areaData.forEach(d => {
-                            if (!seenTimes.has(d.time)) {
-                                seenTimes.add(d.time);
-                                uniqueData.push(d);
-                            }
-                        });
-                        
-                        area.setData(uniqueData);
-                        zoneSeries.push(area);
-                    });
-                }
             } else {
-
                 candleSeries.setMarkers([]);
-            }
-        }
-
-        // Send Correction Feedback
-        async function sendFeedback() {
-            const text = document.getElementById('feedback-text').value;
-            const btn = document.getElementById('feedback-btn');
-
-            if (!text.trim()) {
-                alert("Please type a description of the mistake.");
-                return;
-            }
-
-            const payload = {
-                symbol: currentSymbol,
-                timeframe: currentTimeframe,
-                timestamp: new Date().toISOString(),
-                description: text
-            };
-
-            btn.innerText = "Sending...";
-            try {
-                const res = await fetch('/api/feedback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    btn.innerText = "✅ Sent!";
-                    btn.style.background = "#089981";
-                    document.getElementById('feedback-text').value = '';
-                    setTimeout(() => {
-                        btn.innerText = "Send Feedback";
-                        btn.style.background = "#2962ff";
-                    }, 2000);
-                } else {
-                    alert("Error saving feedback.");
-                    btn.innerText = "Send Feedback";
-                }
-            } catch (err) {
-                alert("Connection failed.");
-                btn.innerText = "Send Feedback";
             }
         }
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', async () => {
+            // Parse query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('symbol')) currentSymbol = urlParams.get('symbol').toUpperCase();
+            if (urlParams.get('timeframe')) currentTimeframe = urlParams.get('timeframe').toLowerCase();
+            if (urlParams.get('type')) currentMarket = urlParams.get('type').toLowerCase();
+
+            // Sync timeframe buttons UI
+            document.querySelectorAll('.tf-btn').forEach(btn => {
+                if (btn.getAttribute('data-tf') === currentTimeframe) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Sync market select UI
+            const mSelect = document.getElementById('market-select');
+            if (mSelect) mSelect.value = currentMarket;
+
             initChart();
             await loadSymbols();
+
+            // Market Select Change
+            if (mSelect) {
+                mSelect.addEventListener('change', async (e) => {
+                    currentMarket = e.target.value;
+                    await loadSymbols();
+                    updateChart();
+                });
+            }
 
             // Symbol Select Change
             document.getElementById('symbol-select').addEventListener('change', (e) => {

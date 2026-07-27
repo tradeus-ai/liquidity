@@ -1,0 +1,1145 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Liquidity",
+    "languages": [
+      "python",
+      "html",
+      "markdown",
+      "json",
+      "csv"
+    ],
+    "frameworks": [
+      "pandas",
+      "lightweight-charts"
+    ],
+    "description": "Higher Timeframe to Lower Timeframe Smart Money Concepts (SMC) Liquidity & Market Structure Analyzer",
+    "analyzedAt": "2026-07-26T04:09:48.236Z",
+    "gitCommitHash": "01da0d8408c242246e75aad2f19c9d07d22ae114"
+  },
+  "nodes": [
+    {
+      "id": "file:Futures.csv",
+      "type": "file",
+      "name": "Futures.csv",
+      "filePath": "Futures.csv",
+      "summary": "File Futures.csv (216 lines, category: data)",
+      "complexity": "simple",
+      "tags": [
+        "csv",
+        "data"
+      ]
+    },
+    {
+      "id": "file:GEMINI.md",
+      "type": "file",
+      "name": "GEMINI.md",
+      "filePath": "GEMINI.md",
+      "summary": "File GEMINI.md (28 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "File README.md (56 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:chart_15m.html",
+      "type": "file",
+      "name": "chart_15m.html",
+      "filePath": "chart_15m.html",
+      "summary": "File chart_15m.html (63149 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:chart_1d.html",
+      "type": "file",
+      "name": "chart_1d.html",
+      "filePath": "chart_1d.html",
+      "summary": "File chart_1d.html (52132 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:dashboard.html",
+      "type": "file",
+      "name": "dashboard.html",
+      "filePath": "dashboard.html",
+      "summary": "File dashboard.html (706 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:test_lwc_time.html",
+      "type": "file",
+      "name": "test_lwc_time.html",
+      "filePath": "test_lwc_time.html",
+      "summary": "File test_lwc_time.html (340 lines, category: markup)",
+      "complexity": "simple",
+      "tags": [
+        "html",
+        "markup"
+      ]
+    },
+    {
+      "id": "file:walkthrough.md",
+      "type": "file",
+      "name": "walkthrough.md",
+      "filePath": "walkthrough.md",
+      "summary": "File walkthrough.md (20 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/ARCHITECTURE.md",
+      "type": "file",
+      "name": "docs/ARCHITECTURE.md",
+      "filePath": "docs/ARCHITECTURE.md",
+      "summary": "File docs/ARCHITECTURE.md (75 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/CONFIGURATION.md",
+      "type": "file",
+      "name": "docs/CONFIGURATION.md",
+      "filePath": "docs/CONFIGURATION.md",
+      "summary": "File docs/CONFIGURATION.md (21 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/DEVELOPMENT.md",
+      "type": "file",
+      "name": "docs/DEVELOPMENT.md",
+      "filePath": "docs/DEVELOPMENT.md",
+      "summary": "File docs/DEVELOPMENT.md (43 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/GETTING-STARTED.md",
+      "type": "file",
+      "name": "docs/GETTING-STARTED.md",
+      "filePath": "docs/GETTING-STARTED.md",
+      "summary": "File docs/GETTING-STARTED.md (36 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/LEARNINGS.md",
+      "type": "file",
+      "name": "docs/LEARNINGS.md",
+      "filePath": "docs/LEARNINGS.md",
+      "summary": "File docs/LEARNINGS.md (147 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/SESSION_SUMMARY.md",
+      "type": "file",
+      "name": "docs/SESSION_SUMMARY.md",
+      "filePath": "docs/SESSION_SUMMARY.md",
+      "summary": "File docs/SESSION_SUMMARY.md (218 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:docs/TESTING.md",
+      "type": "file",
+      "name": "docs/TESTING.md",
+      "filePath": "docs/TESTING.md",
+      "summary": "File docs/TESTING.md (22 lines, category: docs)",
+      "complexity": "simple",
+      "tags": [
+        "markdown",
+        "docs"
+      ]
+    },
+    {
+      "id": "file:.planning/tmp/docs-work-manifest.json",
+      "type": "file",
+      "name": ".planning/tmp/docs-work-manifest.json",
+      "filePath": ".planning/tmp/docs-work-manifest.json",
+      "summary": "File .planning/tmp/docs-work-manifest.json (66 lines, category: config)",
+      "complexity": "simple",
+      "tags": [
+        "json",
+        "config"
+      ]
+    },
+    {
+      "id": "file:.ua/.understandignore",
+      "type": "file",
+      "name": ".ua/.understandignore",
+      "filePath": ".ua/.understandignore",
+      "summary": "File .ua/.understandignore (46 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "unknown",
+        "code"
+      ]
+    },
+    {
+      "id": "file:app.py",
+      "type": "file",
+      "name": "app.py",
+      "filePath": "app.py",
+      "summary": "File app.py (107 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:app.py#LiquidityDashboardHandler",
+      "type": "class",
+      "name": "LiquidityDashboardHandler",
+      "filePath": "app.py",
+      "summary": "Class LiquidityDashboardHandler in app.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:bos_choch_inducement.py",
+      "type": "file",
+      "name": "bos_choch_inducement.py",
+      "filePath": "bos_choch_inducement.py",
+      "summary": "File bos_choch_inducement.py (356 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:bos_choch_inducement.py#analyze_htf_structure",
+      "type": "function",
+      "name": "analyze_htf_structure",
+      "filePath": "bos_choch_inducement.py",
+      "summary": "Function analyze_htf_structure in bos_choch_inducement.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:data_fetcher.py",
+      "type": "file",
+      "name": "data_fetcher.py",
+      "filePath": "data_fetcher.py",
+      "summary": "File data_fetcher.py (54 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:data_fetcher.py#DataFetcher",
+      "type": "class",
+      "name": "DataFetcher",
+      "filePath": "data_fetcher.py",
+      "summary": "Class DataFetcher in data_fetcher.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:feedback_server.py",
+      "type": "file",
+      "name": "feedback_server.py",
+      "filePath": "feedback_server.py",
+      "summary": "File feedback_server.py (64 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:feedback_server.py#FeedbackHandler",
+      "type": "class",
+      "name": "FeedbackHandler",
+      "filePath": "feedback_server.py",
+      "summary": "Class FeedbackHandler in feedback_server.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:fix_issues.py",
+      "type": "file",
+      "name": "fix_issues.py",
+      "filePath": "fix_issues.py",
+      "summary": "File fix_issues.py (86 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:fix_issues.py#inject_invalidation",
+      "type": "function",
+      "name": "inject_invalidation",
+      "filePath": "fix_issues.py",
+      "summary": "Function inject_invalidation in fix_issues.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:inside_bars.py",
+      "type": "file",
+      "name": "inside_bars.py",
+      "filePath": "inside_bars.py",
+      "summary": "File inside_bars.py (59 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:inside_bars.py#identify_inside_bar_zones",
+      "type": "function",
+      "name": "identify_inside_bar_zones",
+      "filePath": "inside_bars.py",
+      "summary": "Function identify_inside_bar_zones in inside_bars.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "main.py",
+      "summary": "File main.py (263 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:main.py#plot_structure",
+      "type": "function",
+      "name": "plot_structure",
+      "filePath": "main.py",
+      "summary": "Function plot_structure in main.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:main.py#main",
+      "type": "function",
+      "name": "main",
+      "filePath": "main.py",
+      "summary": "Function main in main.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:market_structure.py",
+      "type": "file",
+      "name": "market_structure.py",
+      "filePath": "market_structure.py",
+      "summary": "File market_structure.py (168 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "class:market_structure.py#MarketStructureAnalyzer",
+      "type": "class",
+      "name": "MarketStructureAnalyzer",
+      "filePath": "market_structure.py",
+      "summary": "Class MarketStructureAnalyzer in market_structure.py",
+      "complexity": "simple",
+      "tags": [
+        "class"
+      ]
+    },
+    {
+      "id": "file:patch_bos_choch.py",
+      "type": "file",
+      "name": "patch_bos_choch.py",
+      "filePath": "patch_bos_choch.py",
+      "summary": "File patch_bos_choch.py (158 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_bos_live_zones.py",
+      "type": "file",
+      "name": "patch_bos_live_zones.py",
+      "filePath": "patch_bos_live_zones.py",
+      "summary": "File patch_bos_live_zones.py (36 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_dashboard.py",
+      "type": "file",
+      "name": "patch_dashboard.py",
+      "filePath": "patch_dashboard.py",
+      "summary": "File patch_dashboard.py (126 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_invalidation.py",
+      "type": "file",
+      "name": "patch_invalidation.py",
+      "filePath": "patch_invalidation.py",
+      "summary": "File patch_invalidation.py (86 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_main_app.py",
+      "type": "file",
+      "name": "patch_main_app.py",
+      "filePath": "patch_main_app.py",
+      "summary": "File patch_main_app.py (38 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_smc_zones_mitigate.py",
+      "type": "file",
+      "name": "patch_smc_zones_mitigate.py",
+      "filePath": "patch_smc_zones_mitigate.py",
+      "summary": "File patch_smc_zones_mitigate.py (15 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_structure_service.py",
+      "type": "file",
+      "name": "patch_structure_service.py",
+      "filePath": "patch_structure_service.py",
+      "summary": "File patch_structure_service.py (95 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:patch_zones.py",
+      "type": "file",
+      "name": "patch_zones.py",
+      "filePath": "patch_zones.py",
+      "summary": "File patch_zones.py (35 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:rewrite_bos.py",
+      "type": "file",
+      "name": "rewrite_bos.py",
+      "filePath": "rewrite_bos.py",
+      "summary": "File rewrite_bos.py (109 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:scratch.py",
+      "type": "file",
+      "name": "scratch.py",
+      "filePath": "scratch.py",
+      "summary": "File scratch.py (1 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:smc_pullback.py",
+      "type": "file",
+      "name": "smc_pullback.py",
+      "filePath": "smc_pullback.py",
+      "summary": "File smc_pullback.py (237 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:smc_pullback.py#find_swings",
+      "type": "function",
+      "name": "find_swings",
+      "filePath": "smc_pullback.py",
+      "summary": "Function find_swings in smc_pullback.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:smc_zones.py",
+      "type": "file",
+      "name": "smc_zones.py",
+      "filePath": "smc_zones.py",
+      "summary": "File smc_zones.py (108 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#add_zone",
+      "type": "function",
+      "name": "add_zone",
+      "filePath": "smc_zones.py",
+      "summary": "Function add_zone in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#merge_zones",
+      "type": "function",
+      "name": "merge_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function merge_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#extract_demand_zones",
+      "type": "function",
+      "name": "extract_demand_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function extract_demand_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#extract_supply_zones",
+      "type": "function",
+      "name": "extract_supply_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function extract_supply_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#mitigate_zones",
+      "type": "function",
+      "name": "mitigate_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function mitigate_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "function:smc_zones.py#finalize_zones",
+      "type": "function",
+      "name": "finalize_zones",
+      "filePath": "smc_zones.py",
+      "summary": "Function finalize_zones in smc_zones.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:structure_service.py",
+      "type": "file",
+      "name": "structure_service.py",
+      "filePath": "structure_service.py",
+      "summary": "File structure_service.py (215 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:structure_service.py#get_chart_data",
+      "type": "function",
+      "name": "get_chart_data",
+      "filePath": "structure_service.py",
+      "summary": "Function get_chart_data in structure_service.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:symbol_loader.py",
+      "type": "file",
+      "name": "symbol_loader.py",
+      "filePath": "symbol_loader.py",
+      "summary": "File symbol_loader.py (26 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:symbol_loader.py#get_symbol_list",
+      "type": "function",
+      "name": "get_symbol_list",
+      "filePath": "symbol_loader.py",
+      "summary": "Function get_symbol_list in symbol_loader.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_fetch.py",
+      "type": "file",
+      "name": "test_fetch.py",
+      "filePath": "test_fetch.py",
+      "summary": "File test_fetch.py (21 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_fetch.py#main",
+      "type": "function",
+      "name": "main",
+      "filePath": "test_fetch.py",
+      "summary": "Function main in test_fetch.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_fix_bos.py",
+      "type": "file",
+      "name": "test_fix_bos.py",
+      "filePath": "test_fix_bos.py",
+      "summary": "File test_fix_bos.py (6 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_fix_bos.py#replace_bos_choch",
+      "type": "function",
+      "name": "replace_bos_choch",
+      "filePath": "test_fix_bos.py",
+      "summary": "Function replace_bos_choch in test_fix_bos.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_fix.py",
+      "type": "file",
+      "name": "test_fix.py",
+      "filePath": "test_fix.py",
+      "summary": "File test_fix.py (23 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_fix.py#test_logic",
+      "type": "function",
+      "name": "test_logic",
+      "filePath": "test_fix.py",
+      "summary": "Function test_logic in test_fix.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_lwc_time.py",
+      "type": "file",
+      "name": "test_lwc_time.py",
+      "filePath": "test_lwc_time.py",
+      "summary": "File test_lwc_time.py (19 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:test_lwc_time2.py",
+      "type": "file",
+      "name": "test_lwc_time2.py",
+      "filePath": "test_lwc_time2.py",
+      "summary": "File test_lwc_time2.py (22 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:test_merge.py",
+      "type": "file",
+      "name": "test_merge.py",
+      "filePath": "test_merge.py",
+      "summary": "File test_merge.py (26 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:test_merge.py#merge_zones",
+      "type": "function",
+      "name": "merge_zones",
+      "filePath": "test_merge.py",
+      "summary": "Function merge_zones in test_merge.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    },
+    {
+      "id": "file:test_zones.py",
+      "type": "file",
+      "name": "test_zones.py",
+      "filePath": "test_zones.py",
+      "summary": "File test_zones.py (12 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "file:web_dashboard.py",
+      "type": "file",
+      "name": "web_dashboard.py",
+      "filePath": "web_dashboard.py",
+      "summary": "File web_dashboard.py (301 lines, category: code)",
+      "complexity": "simple",
+      "tags": [
+        "python",
+        "code"
+      ]
+    },
+    {
+      "id": "function:web_dashboard.py#render_dashboard",
+      "type": "function",
+      "name": "render_dashboard",
+      "filePath": "web_dashboard.py",
+      "summary": "Function render_dashboard in web_dashboard.py",
+      "complexity": "simple",
+      "tags": [
+        "function"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:app.py",
+      "target": "class:app.py#LiquidityDashboardHandler",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:bos_choch_inducement.py",
+      "target": "function:bos_choch_inducement.py#analyze_htf_structure",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:data_fetcher.py",
+      "target": "class:data_fetcher.py#DataFetcher",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:feedback_server.py",
+      "target": "class:feedback_server.py#FeedbackHandler",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:fix_issues.py",
+      "target": "function:fix_issues.py#inject_invalidation",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:inside_bars.py",
+      "target": "function:inside_bars.py#identify_inside_bar_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py#plot_structure",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py#main",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:market_structure.py",
+      "target": "class:market_structure.py#MarketStructureAnalyzer",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_pullback.py",
+      "target": "function:smc_pullback.py#find_swings",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#add_zone",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#merge_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#extract_demand_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#extract_supply_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#mitigate_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:smc_zones.py",
+      "target": "function:smc_zones.py#finalize_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:structure_service.py",
+      "target": "function:structure_service.py#get_chart_data",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:symbol_loader.py",
+      "target": "function:symbol_loader.py#get_symbol_list",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_fetch.py",
+      "target": "function:test_fetch.py#main",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_fix_bos.py",
+      "target": "function:test_fix_bos.py#replace_bos_choch",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_fix.py",
+      "target": "function:test_fix.py#test_logic",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_merge.py",
+      "target": "function:test_merge.py#merge_zones",
+      "type": "contains",
+      "direction": "forward"
+    },
+    {
+      "source": "file:web_dashboard.py",
+      "target": "function:web_dashboard.py#render_dashboard",
+      "type": "contains",
+      "direction": "forward"
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:structure-engine",
+      "name": "SMC Structure Analysis Engine",
+      "description": "Core logic for finding swing points, inducements, BOS/ChoCH, and demand/supply zones.",
+      "nodeIds": [
+        "file:bos_choch_inducement.py",
+        "function:bos_choch_inducement.py#analyze_htf_structure",
+        "file:inside_bars.py",
+        "function:inside_bars.py#identify_inside_bar_zones",
+        "file:market_structure.py",
+        "class:market_structure.py#MarketStructureAnalyzer",
+        "file:patch_bos_choch.py",
+        "file:patch_smc_zones_mitigate.py",
+        "file:smc_pullback.py",
+        "function:smc_pullback.py#find_swings",
+        "file:smc_zones.py",
+        "function:smc_zones.py#add_zone",
+        "function:smc_zones.py#merge_zones",
+        "function:smc_zones.py#extract_demand_zones",
+        "function:smc_zones.py#extract_supply_zones",
+        "function:smc_zones.py#mitigate_zones",
+        "function:smc_zones.py#finalize_zones",
+        "function:test_fix_bos.py#replace_bos_choch"
+      ]
+    },
+    {
+      "id": "layer:data-ingestion",
+      "name": "Market Data & Ingestion",
+      "description": "Data fetcher services, TradingView feeds, and local parquet/CSV datasets.",
+      "nodeIds": [
+        "file:Futures.csv",
+        "file:data_fetcher.py",
+        "class:data_fetcher.py#DataFetcher"
+      ]
+    },
+    {
+      "id": "layer:web-service",
+      "name": "Dashboard API & Service",
+      "description": "HTTP server, caching service, and main entry points for running liquidity analytics.",
+      "nodeIds": [
+        "file:app.py",
+        "class:app.py#LiquidityDashboardHandler",
+        "file:main.py",
+        "function:main.py#plot_structure",
+        "function:main.py#main",
+        "file:patch_main_app.py",
+        "file:patch_structure_service.py",
+        "file:structure_service.py",
+        "function:structure_service.py#get_chart_data"
+      ]
+    },
+    {
+      "id": "layer:frontend-ui",
+      "name": "Interactive Dashboard UI",
+      "description": "Lightweight-charts HTML frontend for plotting market structure, zones, and candles.",
+      "nodeIds": [
+        "file:dashboard.html"
+      ]
+    },
+    {
+      "id": "layer:utilities-and-docs",
+      "name": "Utilities & Documentation",
+      "description": "Helper scripts, documentation, and configuration files.",
+      "nodeIds": [
+        "file:GEMINI.md",
+        "file:README.md",
+        "file:chart_15m.html",
+        "file:chart_1d.html",
+        "file:test_lwc_time.html",
+        "file:walkthrough.md",
+        "file:docs/ARCHITECTURE.md",
+        "file:docs/CONFIGURATION.md",
+        "file:docs/DEVELOPMENT.md",
+        "file:docs/GETTING-STARTED.md",
+        "file:docs/LEARNINGS.md",
+        "file:docs/SESSION_SUMMARY.md",
+        "file:docs/TESTING.md",
+        "file:.planning/tmp/docs-work-manifest.json",
+        "file:.ua/.understandignore",
+        "file:feedback_server.py",
+        "class:feedback_server.py#FeedbackHandler",
+        "file:fix_issues.py",
+        "function:fix_issues.py#inject_invalidation",
+        "file:patch_bos_live_zones.py",
+        "file:patch_dashboard.py",
+        "file:patch_invalidation.py",
+        "file:patch_zones.py",
+        "file:rewrite_bos.py",
+        "file:scratch.py",
+        "file:symbol_loader.py",
+        "function:symbol_loader.py#get_symbol_list",
+        "file:test_fetch.py",
+        "function:test_fetch.py#main",
+        "file:test_fix_bos.py",
+        "file:test_fix.py",
+        "function:test_fix.py#test_logic",
+        "file:test_lwc_time.py",
+        "file:test_lwc_time2.py",
+        "file:test_merge.py",
+        "function:test_merge.py#merge_zones",
+        "file:test_zones.py",
+        "file:web_dashboard.py",
+        "function:web_dashboard.py#render_dashboard"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "System Overview & Guidelines",
+      "description": "Understand the SMC liquidity rules defined in GEMINI.md.",
+      "nodeIds": [
+        "file:GEMINI.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Market Data Ingestion",
+      "description": "DataFetcher retrieves OHLC data from TradingView feeds for Indian futures.",
+      "nodeIds": [
+        "file:data_fetcher.py"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "Swing & Pullback Detection",
+      "description": "Identifies swing highs and lows required for market structure mapping.",
+      "nodeIds": [
+        "file:smc_pullback.py"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Higher Timeframe Structure Engine",
+      "description": "Determines ChoCH, Inducement (#), and BOS break of structure events.",
+      "nodeIds": [
+        "file:bos_choch_inducement.py"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Demand & Supply Zones Engine",
+      "description": "Extracts, merges, and mitigates liquidity zones on confirmed structural legs.",
+      "nodeIds": [
+        "file:smc_zones.py"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "Web Application Server & Caching",
+      "description": "Serves chart data, handles timeframes, and caches calculations.",
+      "nodeIds": [
+        "file:app.py",
+        "file:structure_service.py"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "Interactive HTML Dashboard",
+      "description": "Lightweight-charts UI displaying candlesticks, structure markers, and dynamic zones.",
+      "nodeIds": [
+        "file:dashboard.html"
+      ]
+    }
+  ]
+}

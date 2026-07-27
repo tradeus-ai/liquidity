@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 47,
+  "totalBatches": 4,
+  "exportsByPath": {
+    ".ua/.understandignore": [],
+    "app.py": [
+      "LiquidityDashboardHandler"
+    ],
+    "bos_choch_inducement.py": [
+      "analyze_htf_structure"
+    ],
+    "data_fetcher.py": [
+      "DataFetcher"
+    ],
+    "feedback_server.py": [
+      "FeedbackHandler"
+    ],
+    "fix_issues.py": [
+      "inject_invalidation"
+    ],
+    "inside_bars.py": [
+      "identify_inside_bar_zones"
+    ],
+    "main.py": [
+      "plot_structure",
+      "main"
+    ],
+    "market_structure.py": [
+      "MarketStructureAnalyzer"
+    ],
+    "patch_bos_choch.py": [],
+    "patch_bos_live_zones.py": [],
+    "patch_dashboard.py": [],
+    "patch_invalidation.py": [],
+    "patch_main_app.py": [],
+    "patch_smc_zones_mitigate.py": [],
+    "patch_structure_service.py": [],
+    "patch_zones.py": [],
+    "rewrite_bos.py": [],
+    "scratch.py": [],
+    "smc_pullback.py": [
+      "find_swings"
+    ],
+    "smc_zones.py": [
+      "add_zone",
+      "merge_zones",
+      "extract_demand_zones",
+      "extract_supply_zones",
+      "mitigate_zones",
+      "finalize_zones"
+    ],
+    "structure_service.py": [
+      "get_chart_data"
+    ],
+    "symbol_loader.py": [
+      "get_symbol_list"
+    ],
+    "test_fetch.py": [
+      "main"
+    ],
+    "test_fix_bos.py": [
+      "replace_bos_choch"
+    ],
+    "test_fix.py": [
+      "test_logic"
+    ],
+    "test_lwc_time.py": [],
+    "test_lwc_time2.py": [],
+    "test_merge.py": [
+      "merge_zones"
+    ],
+    "test_zones.py": [],
+    "web_dashboard.py": [
+      "render_dashboard"
+    ]
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "Futures.csv",
+          "language": "csv",
+          "sizeLines": 215,
+          "fileCategory": "data"
+        },
+        {
+          "path": "GEMINI.md",
+          "language": "markdown",
+          "sizeLines": 28,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "README.md",
+          "language": "markdown",
+          "sizeLines": 56,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "chart_15m.html",
+          "language": "html",
+          "sizeLines": 63148,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "chart_1d.html",
+          "language": "html",
+          "sizeLines": 52131,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "dashboard.html",
+          "language": "html",
+          "sizeLines": 706,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "test_lwc_time.html",
+          "language": "html",
+          "sizeLines": 339,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "walkthrough.md",
+          "language": "markdown",
+          "sizeLines": 20,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "Futures.csv": [],
+        "GEMINI.md": [],
+        "README.md": [],
+        "chart_15m.html": [],
+        "chart_1d.html": [],
+        "dashboard.html": [],
+        "test_lwc_time.html": [],
+        "walkthrough.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "docs/ARCHITECTURE.md",
+          "language": "markdown",
+          "sizeLines": 75,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/CONFIGURATION.md",
+          "language": "markdown",
+          "sizeLines": 21,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/DEVELOPMENT.md",
+          "language": "markdown",
+          "sizeLines": 43,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/GETTING-STARTED.md",
+          "language": "markdown",
+          "sizeLines": 36,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/LEARNINGS.md",
+          "language": "markdown",
+          "sizeLines": 147,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/SESSION_SUMMARY.md",
+          "language": "markdown",
+          "sizeLines": 218,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/TESTING.md",
+          "language": "markdown",
+          "sizeLines": 22,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/ARCHITECTURE.md": [],
+        "docs/CONFIGURATION.md": [],
+        "docs/DEVELOPMENT.md": [],
+        "docs/GETTING-STARTED.md": [],
+        "docs/LEARNINGS.md": [],
+        "docs/SESSION_SUMMARY.md": [],
+        "docs/TESTING.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": ".planning/tmp/docs-work-manifest.json",
+          "language": "json",
+          "sizeLines": 66,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".ua/.understandignore",
+          "language": "unknown",
+          "sizeLines": 46,
+          "fileCategory": "code"
+        },
+        {
+          "path": "app.py",
+          "language": "python",
+          "sizeLines": 107,
+          "fileCategory": "code"
+        },
+        {
+          "path": "bos_choch_inducement.py",
+          "language": "python",
+          "sizeLines": 356,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data_fetcher.py",
+          "language": "python",
+          "sizeLines": 54,
+          "fileCategory": "code"
+        },
+        {
+          "path": "feedback_server.py",
+          "language": "python",
+          "sizeLines": 64,
+          "fileCategory": "code"
+        },
+        {
+          "path": "fix_issues.py",
+          "language": "python",
+          "sizeLines": 86,
+          "fileCategory": "code"
+        },
+        {
+          "path": "inside_bars.py",
+          "language": "python",
+          "sizeLines": 59,
+          "fileCategory": "code"
+        },
+        {
+          "path": "main.py",
+          "language": "python",
+          "sizeLines": 263,
+          "fileCategory": "code"
+        },
+        {
+          "path": "market_structure.py",
+          "language": "python",
+          "sizeLines": 168,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_bos_choch.py",
+          "language": "python",
+          "sizeLines": 158,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_bos_live_zones.py",
+          "language": "python",
+          "sizeLines": 36,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_dashboard.py",
+          "language": "python",
+          "sizeLines": 126,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_invalidation.py",
+          "language": "python",
+          "sizeLines": 86,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_main_app.py",
+          "language": "python",
+          "sizeLines": 38,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_smc_zones_mitigate.py",
+          "language": "python",
+          "sizeLines": 15,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_structure_service.py",
+          "language": "python",
+          "sizeLines": 95,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patch_zones.py",
+          "language": "python",
+          "sizeLines": 35,
+          "fileCategory": "code"
+        },
+        {
+          "path": "rewrite_bos.py",
+          "language": "python",
+          "sizeLines": 109,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scratch.py",
+          "language": "python",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "smc_pullback.py",
+          "language": "python",
+          "sizeLines": 237,
+          "fileCategory": "code"
+        },
+        {
+          "path": "smc_zones.py",
+          "language": "python",
+          "sizeLines": 108,
+          "fileCategory": "code"
+        },
+        {
+          "path": "structure_service.py",
+          "language": "python",
+          "sizeLines": 215,
+          "fileCategory": "code"
+        },
+        {
+          "path": "symbol_loader.py",
+          "language": "python",
+          "sizeLines": 26,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_fetch.py",
+          "language": "python",
+          "sizeLines": 21,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".planning/tmp/docs-work-manifest.json": [],
+        ".ua/.understandignore": [],
+        "app.py": [],
+        "bos_choch_inducement.py": [],
+        "data_fetcher.py": [],
+        "feedback_server.py": [],
+        "fix_issues.py": [],
+        "inside_bars.py": [],
+        "main.py": [],
+        "market_structure.py": [],
+        "patch_bos_choch.py": [],
+        "patch_bos_live_zones.py": [],
+        "patch_dashboard.py": [],
+        "patch_invalidation.py": [],
+        "patch_main_app.py": [],
+        "patch_smc_zones_mitigate.py": [],
+        "patch_structure_service.py": [],
+        "patch_zones.py": [],
+        "rewrite_bos.py": [],
+        "scratch.py": [],
+        "smc_pullback.py": [],
+        "smc_zones.py": [],
+        "structure_service.py": [],
+        "symbol_loader.py": [],
+        "test_fetch.py": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "test_fix_bos.py",
+          "language": "python",
+          "sizeLines": 6,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_fix.py",
+          "language": "python",
+          "sizeLines": 23,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_lwc_time.py",
+          "language": "python",
+          "sizeLines": 19,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_lwc_time2.py",
+          "language": "python",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_merge.py",
+          "language": "python",
+          "sizeLines": 26,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_zones.py",
+          "language": "python",
+          "sizeLines": 12,
+          "fileCategory": "code"
+        },
+        {
+          "path": "web_dashboard.py",
+          "language": "python",
+          "sizeLines": 301,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "test_fix_bos.py": [],
+        "test_fix.py": [],
+        "test_lwc_time.py": [],
+        "test_lwc_time2.py": [],
+        "test_merge.py": [],
+        "test_zones.py": [],
+        "web_dashboard.py": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}
