@@ -8,7 +8,7 @@ import sys
 from symbol_loader import get_symbol_list
 from web_dashboard import render_dashboard
 
-PORT = 8080
+PORT = 8081
 FEEDBACK_FILE = "chart_feedback.json"
 
 class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
@@ -56,9 +56,12 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
 
         # 2. Serve Dynamic Interactive Dashboard with Symbol & Timeframe controls
         elif path in ['/', '/index.html', '/dashboard.html']:
-            symbol = query.get('symbol', ['AMBUJACEM'])[0]
-            timeframe = query.get('timeframe', ['1d'])[0]
             market_type = query.get('type', ['futures'])[0]
+            default_symbols = get_symbol_list(market_type)
+            default_symbol = default_symbols[0] if default_symbols else 'AMBUJACEM'
+            
+            symbol = query.get('symbol', [default_symbol])[0]
+            timeframe = query.get('timeframe', ['1d'])[0]
 
             print(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}', market_type='{market_type}'...")
             html_content = render_dashboard(symbol, timeframe, market_type)

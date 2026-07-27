@@ -157,9 +157,69 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         color: #fff;
     }}
     .handler, #container {{
-        height: calc(100vh - 50px) !important;
+        height: calc(100vh - 50px - 32px) !important;
     }}
+    
+    /* Bottom TradingView-style Footer Bar */
+    .chart-footer {{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 32px;
+        background-color: #1e222d;
+        border-top: 1px solid #363c4e;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        font-size: 12px;
+        color: #848e9c;
+        user-select: none;
+        z-index: 100;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }}
+    .footer-presets {{ display: flex; gap: 6px; }}
+    .footer-btn {{
+        background: transparent; border: none; color: #848e9c;
+        font-size: 11px; font-weight: 600; cursor: pointer;
+        padding: 2px 6px; border-radius: 3px; transition: all 0.15s ease;
+    }}
+    .footer-btn:hover {{ color: #fff; background: rgba(255, 255, 255, 0.08); }}
+    .footer-clock {{ font-family: monospace; color: #848e9c; font-size: 12px; }}
+    
+    /* Large Hover OHLC Legend */
+    #hover-legend {{
+        position: absolute;
+        top: 65px;
+        left: 15px;
+        z-index: 1000;
+        font-size: 20px !important;
+        font-weight: 600 !important;
+        font-family: monospace;
+        color: #ffffff;
+        pointer-events: none;
+        background: rgba(19, 23, 34, 0.7);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #363c4e;
+    }}
+    .legend-title {{ font-size: 16px; color: #848e9c; margin-bottom: 4px; }}
+    .legend-val {{ margin-right: 12px; }}
     </style>
+
+    <div id="hover-legend" style="display:none;">
+        <div class="legend-title" id="legend-symbol">{symbol_raw} - {tf.upper()}</div>
+        <div style="font-size:14px; margin-bottom:8px; color:#ff9800;">
+            <span id="leg-date">-</span>
+        </div>
+        <div style="font-size:13px; color:#d1d4dc;">
+            O <span class="legend-val" id="leg-o">-</span>
+            H <span class="legend-val" id="leg-h">-</span>
+            L <span class="legend-val" id="leg-l">-</span>
+            C <span class="legend-val" id="leg-c">-</span>
+        </div>
+    </div>
 
     <div class="custom-topbar">
         <div class="title">📊 Liquidity Finder</div>
@@ -170,6 +230,8 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             <select id="top-market-select" onchange="changeMarket(this.value)">
                 <option value="futures" {"selected" if m_type == "futures" else ""}>Futures</option>
                 <option value="equity" {"selected" if m_type == "equity" else ""}>Equity</option>
+                <option value="forex" {"selected" if m_type == "forex" else ""}>Forex</option>
+                <option value="metals" {"selected" if m_type == "metals" else ""}>Metals</option>
             </select>
         </div>
 
@@ -185,23 +247,28 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             <button class="tf-btn {'active' if tf=='15m' else ''}" onclick="changeTF('15m')">15m</button>
             <button class="tf-btn {'active' if tf=='5m' else ''}" onclick="changeTF('5m')">5m</button>
         </div>
-        <div style="display:flex; gap:10px; align-items:center; margin-left:10px;">
-            <label style="cursor:pointer; color:#00e676; font-weight:700; font-size:12px; background:#131722; padding:3px 6px; border-radius:4px; border:1px solid #363c4e;">
-                <input type="checkbox" id="toggle-master" checked onchange="toggleMaster(this.checked)"> Master SMC Structure
-            </label>
-            <span style="color:#363c4e;">|</span>
-            <label style="cursor:pointer; color:#ff9800; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-pullbacks" checked onchange="toggleLayers()"> Pullbacks</label>
-            <label style="cursor:pointer; color:#ffb300; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-idm" checked onchange="toggleLayers()"> # (IDM)</label>
-            <label style="cursor:pointer; color:#00e5ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-is" checked onchange="toggleLayers()"> IS</label>
-            <label style="cursor:pointer; color:#2962ff; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-bos" checked onchange="toggleLayers()"> BOS</label>
-            <label style="cursor:pointer; color:#e91e63; font-size:12px;"><input type="checkbox" class="layer-toggle" id="toggle-choch" checked onchange="toggleLayers()"> ChoCH</label>
+    </div>
+    
+    <!-- Bottom TradingView-style Time Scale Footer -->
+    <div class="chart-footer">
+        <div class="footer-presets">
+            <button class="footer-btn" onclick="fitRange('1d')">1D</button>
+            <button class="footer-btn" onclick="fitRange('5d')">5D</button>
+            <button class="footer-btn" onclick="fitRange('1m')">1M</button>
+            <button class="footer-btn" onclick="fitRange('3m')">3M</button>
+            <button class="footer-btn" onclick="fitRange('6m')">6M</button>
+            <button class="footer-btn" onclick="fitRange('ytd')">YTD</button>
+            <button class="footer-btn" onclick="fitRange('1y')">1Y</button>
+            <button class="footer-btn" onclick="fitRange('all')">All</button>
         </div>
+        <div class="footer-clock" id="live-clock">--:--:-- UTC+5:30</div>
     </div>
 
     <script>
     function changeMarket(m) {{
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('type', m);
+        urlParams.delete('symbol');
         window.location.search = urlParams.toString();
     }}
     function changeSymbol(sym) {{
@@ -214,8 +281,127 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         urlParams.set('timeframe', tf);
         window.location.search = urlParams.toString();
     }}
+    
+    // Live Clock Ticker
+    setInterval(() => {{
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        const clockEl = document.getElementById('live-clock');
+        if (clockEl) clockEl.innerText = `${{h}}:${{m}}:${{s}} UTC+5:30`;
+    }}, 1000);
+    
+    // Fit range functionality. window.chart doesn't exist by default in StaticLWC
+    // But StaticLWC defines window.chart inside its script if we access window.handlers?
+    // Actually, lightweight-charts instance is stored somewhere. For simplicity, we just use window.chart = chart in the injected script or leave it.
+    """ + r"""
+    
+    // Attach hover legend to the chart
+    setTimeout(() => {
+        let chart = null;
+        let candleSeries = null;
+        
+        // Find the chart from window.handlers
+        if (window.handlers) {
+            const keys = Object.keys(window.handlers);
+            if (keys.length > 0) {
+                const handler = window.handlers[keys[0]];
+                if (handler && handler.chart) {
+                    chart = handler.chart;
+                    candleSeries = handler.series;
+                }
+            }
+        }
+        
+        if (chart) {
+            document.getElementById('hover-legend').style.display = 'block';
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentTimeframe = urlParams.get('timeframe') || '1d';
+            const mType = urlParams.get('type') || 'futures';
+            const decimals = mType === 'forex' ? 5 : 2;
+            
+            // Adjust the series price scale for Forex
+            if (candleSeries) {
+                candleSeries.applyOptions({
+                    priceFormat: {
+                        type: 'price',
+                        precision: decimals,
+                        minMove: 1 / Math.pow(10, decimals)
+                    }
+                });
+            }
+            
+            chart.subscribeCrosshairMove(param => {
+                if (!param || !param.time) {
+                    document.getElementById('leg-date').innerText = '-';
+                    document.getElementById('leg-o').innerText = '-';
+                    document.getElementById('leg-h').innerText = '-';
+                    document.getElementById('leg-l').innerText = '-';
+                    document.getElementById('leg-c').innerText = '-';
+                    return;
+                }
+
+                let dateStr = "";
+                if (typeof param.time === 'number') {
+                    const d = new Date(param.time * 1000);
+                    const y = d.getUTCFullYear();
+                    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(d.getUTCDate()).padStart(2, '0');
+                    const hh = String(d.getUTCHours()).padStart(2, '0');
+                    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+                    if (currentTimeframe === '1d' || currentTimeframe === '1w') {
+                        dateStr = `${y}-${m}-${day}`;
+                    } else {
+                        dateStr = `${y}-${m}-${day} ${hh}:${mm}`;
+                    }
+                } else if (typeof param.time === 'object') {
+                    const y = param.time.year;
+                    const m = String(param.time.month).padStart(2, '0');
+                    const day = String(param.time.day).padStart(2, '0');
+                    dateStr = `${y}-${m}-${day}`;
+                } else {
+                    dateStr = String(param.time);
+                }
+                document.getElementById('leg-date').innerText = dateStr;
+
+                if (param.seriesData) {
+                    // Try to get price from seriesData map
+                    let price = null;
+                    if (candleSeries) {
+                        price = param.seriesData.get(candleSeries);
+                    }
+                    if (!price) {
+                        // Fallback if candleSeries not identified: just pick the first available series data
+                        const iter = param.seriesData.values();
+                        for (let val of iter) {
+                            if (val && val.open !== undefined) {
+                                price = val;
+                                break;
+                            }
+                        }
+                    }
+                    if (price) {
+                        document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(decimals) : '-';
+                        document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(decimals) : '-';
+                        document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(decimals) : '-';
+                        document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(decimals) : '-';
+                    }
+                }
+            });
+        }
+    }, 500);
     </script>
     """
     
-    full_html = f"{chart._html}</script>{topbar_ui}</body></html>"
+    # Inject our container resize to the generated lightweight-charts HTML
+    # StaticLWC hardcodes window.innerHeight for canvas height, so we must override it
+    # to account for our 50px top header + 32px bottom footer = 82px.
+    html_fixed = chart._html.replace('window.innerHeight', '(window.innerHeight - 82)')
+    
+    # Hide the default tiny legend since we added our custom large one
+    html_fixed = html_fixed.replace('legend:{', 'legend:{visible:false,')
+    
+    full_html = f"{html_fixed}</script>{topbar_ui}</body></html>"
+
     return full_html

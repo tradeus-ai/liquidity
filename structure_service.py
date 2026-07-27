@@ -38,10 +38,13 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     
     if m_type == 'equity':
         tv_symbol = clean_symbol_raw
+        exchange = 'NSE'
+    elif m_type in ['forex', 'metals']:
+        tv_symbol = clean_symbol_raw
+        exchange = 'PEPPERSTONE'
     else:
         tv_symbol = f"{clean_symbol_raw}1!"
-        
-    exchange = 'NSE'
+        exchange = 'NSE'
     
     interval_enum, interval_name = TIMEFRAME_MAP[tf]
     

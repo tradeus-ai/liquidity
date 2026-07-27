@@ -10,6 +10,11 @@ def get_symbol_list(market_type='futures'):
     """
     m_type = str(market_type).lower().strip()
     
+    if m_type == 'forex':
+        return ['AUDUSD', 'EURUSD', 'USDJPY', 'GBPUSD', 'USDCAD', 'USDCHF', 'NZDUSD']
+    if m_type == 'metals':
+        return ['XAUUSD', 'XAGUSD']
+    
     if m_type == 'equity':
         paths_to_try = [
             os.path.join(BASE_DIR, "stocks list", "NSE_all_stocks.csv"),
