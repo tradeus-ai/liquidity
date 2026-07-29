@@ -1,10 +1,11 @@
 import os
 import pandas as pd
-from tvDatafeed import TvDatafeed, Interval
+from tvDatafeed import TvDatafeedLive, Interval
+from config import TV_USERNAME, TV_PASSWORD
 
 class DataFetcher:
     def __init__(self, data_dir="data"):
-        self.tv = TvDatafeed()
+        self.tv = TvDatafeedLive(TV_USERNAME, TV_PASSWORD)
         self.data_dir = data_dir
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
