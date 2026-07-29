@@ -35,7 +35,13 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             candles_df['time'] = pd.to_datetime(candles_df['time'], unit='s').astype('datetime64[ns]')
         else:
             candles_df['time'] = pd.to_datetime(candles_df['time']).astype('datetime64[ns]')
+            
+        # Ensure unique timestamps and no zero-interval division errors
+        candles_df.drop_duplicates(subset=['time'], inplace=True)
         chart.set(candles_df[['time', 'open', 'high', 'low', 'close']])
+        
+        if getattr(chart, '_interval', 0) == 0:
+            chart._interval = 86400 if not is_intraday else 300
     
     # Add pullback line safely
     if len(data.get('pullback_points', [])) > 1:
