@@ -8,7 +8,7 @@ import sys
 from symbol_loader import get_symbol_list
 from web_dashboard import render_dashboard
 
-PORT = 8081
+PORT = 80
 FEEDBACK_FILE = "chart_feedback.json"
 
 class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):

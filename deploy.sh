@@ -1,5 +1,5 @@
 #!/bin/bash
-# Liquidity Market Structure Analyzer - Ubuntu 20.04 Deployment Script
+# Liquidity Market Structure Analyzer - Ubuntu 24.04 LTS Deployment Script
 
 set -e # Exit immediately if a command exits with a non-zero status
 
@@ -7,24 +7,27 @@ set -e # Exit immediately if a command exits with a non-zero status
 APP_DIR="/opt/liquidity"
 APP_REPO_DIR="$(pwd)"
 SERVICE_NAME="liquidity-dashboard"
-PORT=8081
-USERNAME=$(whoami)
+PORT=80
+USERNAME=${SUDO_USER:-$(whoami)}
 
 echo "========================================================"
 echo "Starting deployment of Liquidity Market Structure Analyzer"
-echo "Target OS: Ubuntu 20.04"
+echo "Target OS: Ubuntu 24.04 LTS"
 echo "========================================================"
 
 # 1. System Updates and Dependencies
 echo "[1/5] Updating system and installing dependencies..."
-sudo apt-get update
-sudo apt-get install -y python3 python3-venv python3-pip git curl htop
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+sudo -E apt-get update
+sudo -E apt-get install -y python3 python3-venv python3-pip git curl htop
 
 # 2. Setup Application Directory
 echo "[2/5] Setting up application directory at $APP_DIR..."
 sudo mkdir -p $APP_DIR
 # Assuming we are running this from the repository root, copy files
 sudo cp -r $APP_REPO_DIR/* $APP_DIR/
+# Copy the hidden files like .env and .venv might be too much, but we need config.py (it's not hidden)
 sudo chown -R $USERNAME:$USERNAME $APP_DIR
 
 # 3. Setup Virtual Environment and Install Python Dependencies
@@ -41,7 +44,7 @@ cat <<EOF > requirements.txt
 pandas
 numpy
 mplfinance
-tvDatafeed
+git+https://github.com/rongardF/tvdatafeed.git
 pyarrow
 lightweight_charts
 EOF
@@ -59,9 +62,10 @@ After=network.target
 
 [Service]
 User=$USERNAME
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/.venv/bin"
-# Executing app.py which binds to PORT 8081
+# Executing app.py which binds to PORT 80
 ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/app.py
 Restart=always
 RestartSec=5
