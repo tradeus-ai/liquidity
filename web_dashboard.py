@@ -319,7 +319,7 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             const urlParams = new URLSearchParams(window.location.search);
             const currentTimeframe = urlParams.get('timeframe') || '1d';
             const mType = urlParams.get('type') || 'futures';
-            const decimals = mType === 'forex' ? 5 : 2;
+            const decimals = (mType === 'forex' || mType === 'metals') ? 5 : 2;
             
             // Adjust the series price scale for Forex
             if (candleSeries) {
