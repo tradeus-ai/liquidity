@@ -25,8 +25,15 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         wick_up_color='#ffffff',
         wick_down_color='#ffffff'
     )
+    forex_metals_list = ['AUDUSD', 'EURUSD', 'USDJPY', 'GBPUSD', 'USDCAD', 'USDCHF', 'NZDUSD', 'XAUUSD', 'XAGUSD']
+    clean_sym_upper = str(symbol_raw).upper().replace('1!', '').strip()
+    is_forex_metals = (m_type in ['forex', 'metals']) or (clean_sym_upper in forex_metals_list)
+    decimals_val = 5 if is_forex_metals else 2
+
     chart.time_scale(time_visible=is_intraday, seconds_visible=False)
     chart.legend(visible=True, ohlc=True, percent=True, font_size=20)
+    if is_forex_metals:
+        chart.precision(5)
     
     # Format candle dataframe for lightweight-charts safely
     candles_df = pd.DataFrame(data['candles'])
@@ -301,6 +308,10 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     // Fit range functionality. window.chart doesn't exist by default in StaticLWC
     // But StaticLWC defines window.chart inside its script if we access window.handlers?
     // Actually, lightweight-charts instance is stored somewhere. For simplicity, we just use window.chart = chart in the injected script or leave it.
+    
+    // Injected from Python
+    const PYTHON_DECIMALS = {decimals_val};
+    
     """ + r"""
     
     // Attach hover legend to the chart
@@ -324,10 +335,10 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             document.getElementById('hover-legend').style.display = 'block';
             const urlParams = new URLSearchParams(window.location.search);
             const currentTimeframe = urlParams.get('timeframe') || '1d';
-            const mType = urlParams.get('type') || 'futures';
-            const decimals = (mType === 'forex' || mType === 'metals') ? 5 : 2;
             
-            // Adjust the series price scale for Forex
+            const decimals = PYTHON_DECIMALS;
+            
+            // Adjust the series price scale for Forex and Metals
             if (candleSeries) {
                 candleSeries.applyOptions({
                     priceFormat: {

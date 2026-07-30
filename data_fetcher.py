@@ -14,6 +14,18 @@ class DataFetcher:
         safe_symbol = symbol.replace('!', '_bang')
         return os.path.join(self.data_dir, f"{safe_symbol}_{interval}.parquet")
 
+    def _safe_get_hist(self, symbol, exchange, interval, n_bars):
+        try:
+            return self.tv.get_hist(symbol=symbol, exchange=exchange, interval=interval, n_bars=n_bars)
+        except Exception as e:
+            print(f"[{symbol}] tvDatafeed fetch error: {e}. Re-authenticating session...")
+            try:
+                self.tv = TvDatafeedLive(TV_USERNAME, TV_PASSWORD)
+                return self.tv.get_hist(symbol=symbol, exchange=exchange, interval=interval, n_bars=n_bars)
+            except Exception as e2:
+                print(f"[{symbol}] tvDatafeed re-authentication failed: {e2}")
+                return None
+
     def fetch_data(self, symbol, exchange, interval_enum, interval_name, n_bars_initial=5000, n_bars_update=500):
         """
         Fetches data with caching. If cache exists, fetches the last few candles and merges.
@@ -26,7 +38,7 @@ class DataFetcher:
             
             # Fetch recent data to update
             print(f"[{symbol} {interval_name}] Fetching {n_bars_update} recent candles for update...")
-            df_recent = self.tv.get_hist(symbol=symbol, exchange=exchange, interval=interval_enum, n_bars=n_bars_update)
+            df_recent = self._safe_get_hist(symbol=symbol, exchange=exchange, interval=interval_enum, n_bars=n_bars_update)
             
             if df_recent is not None and not df_recent.empty:
                 # Merge and drop duplicates based on index
@@ -44,7 +56,7 @@ class DataFetcher:
                 return df_local
         else:
             print(f"[{symbol} {interval_name}] No local cache found. Fetching {n_bars_initial} candles...")
-            df = self.tv.get_hist(symbol=symbol, exchange=exchange, interval=interval_enum, n_bars=n_bars_initial)
+            df = self._safe_get_hist(symbol=symbol, exchange=exchange, interval=interval_enum, n_bars=n_bars_initial)
             
             if df is not None and not df.empty:
                 df.to_parquet(file_path)

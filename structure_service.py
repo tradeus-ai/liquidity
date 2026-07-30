@@ -34,8 +34,15 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         tf = '1d'
         
     m_type = str(market_type).lower().strip()
-    clean_symbol_raw = symbol_raw.replace('1!', '')
+    clean_symbol_raw = symbol_raw.replace('1!', '').strip()
+    clean_upper = clean_symbol_raw.upper()
     
+    if m_type not in ['forex', 'metals', 'equity']:
+        if clean_upper in {'AUDUSD', 'EURUSD', 'USDJPY', 'GBPUSD', 'USDCAD', 'USDCHF', 'NZDUSD'}:
+            m_type = 'forex'
+        elif clean_upper in {'XAUUSD', 'XAGUSD'}:
+            m_type = 'metals'
+            
     if m_type == 'equity':
         tv_symbol = clean_symbol_raw
         exchange = 'NSE'

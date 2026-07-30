@@ -8,8 +8,12 @@ import sys
 from symbol_loader import get_symbol_list
 from web_dashboard import render_dashboard
 
-PORT = 80
+PORT = int(os.environ.get("PORT", 8081))
 FEEDBACK_FILE = "chart_feedback.json"
+
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    allow_reuse_address = True
+    daemon_threads = True
 
 class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -56,11 +60,24 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
 
         # 2. Serve Dynamic Interactive Dashboard with Symbol & Timeframe controls
         elif path in ['/', '/index.html', '/dashboard.html']:
-            market_type = query.get('type', ['futures'])[0]
+            requested_type = query.get('type', [None])[0]
+            requested_symbol = query.get('symbol', [None])[0]
+            
+            if requested_symbol and not requested_type:
+                clean_sym = requested_symbol.upper().replace('1!', '').strip()
+                if clean_sym in {'AUDUSD', 'EURUSD', 'USDJPY', 'GBPUSD', 'USDCAD', 'USDCHF', 'NZDUSD'}:
+                    market_type = 'forex'
+                elif clean_sym in {'XAUUSD', 'XAGUSD'}:
+                    market_type = 'metals'
+                else:
+                    market_type = 'futures'
+            else:
+                market_type = requested_type or 'futures'
+                
             default_symbols = get_symbol_list(market_type)
             default_symbol = default_symbols[0] if default_symbols else 'AMBUJACEM'
             
-            symbol = query.get('symbol', [default_symbol])[0]
+            symbol = requested_symbol or default_symbol
             timeframe = query.get('timeframe', ['1d'])[0]
 
             print(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}', market_type='{market_type}'...")
@@ -123,8 +140,7 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
 
 if __name__ == "__main__":
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), LiquidityDashboardHandler) as httpd:
+    with ThreadedTCPServer(("", PORT), LiquidityDashboardHandler) as httpd:
         print(f"=" * 80)
         print(f"🚀 Liquidity Dashboard running at http://127.0.0.1:{PORT}")
         print(f"Features: Multi-Symbol Dropdown (215+ symbols), Timeframes (1D, 1H, 15m, 5m), White Candles, Orange Pullback, Pink Inside Boxes")
