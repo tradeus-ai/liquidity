@@ -2,3 +2,9 @@
 .vscode/
 data/
 __pycache__/
+# Terraform
+infrastructure/.terraform/
+infrastructure/terraform.tfstate
+infrastructure/terraform.tfstate.backup
+infrastructure/terraform.tfvars
+infrastructure/*.tfvars

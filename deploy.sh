@@ -7,6 +7,7 @@ set -e # Exit immediately if a command exits with a non-zero status
 APP_DIR="/opt/liquidity"
 APP_REPO_DIR="$(pwd)"
 SERVICE_NAME="liquidity-dashboard"
+SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 PORT=80
 USERNAME=${SUDO_USER:-$(whoami)}
 
@@ -15,15 +16,33 @@ echo "Starting deployment of Liquidity Market Structure Analyzer"
 echo "Target OS: Ubuntu 24.04 LTS"
 echo "========================================================"
 
+# 0. Clean up existing service
+echo "[0/6] Checking for existing service..."
+if systemctl is-active --quiet $SERVICE_NAME; then
+    echo "Stopping existing $SERVICE_NAME service..."
+    sudo systemctl stop $SERVICE_NAME
+fi
+
+if systemctl is-enabled --quiet $SERVICE_NAME 2>/dev/null; then
+    echo "Disabling existing $SERVICE_NAME service..."
+    sudo systemctl disable $SERVICE_NAME
+fi
+
+if [ -f "$SERVICE_FILE" ]; then
+    echo "Removing existing service file..."
+    sudo rm -f "$SERVICE_FILE"
+    sudo systemctl daemon-reload
+fi
+
 # 1. System Updates and Dependencies
-echo "[1/5] Updating system and installing dependencies..."
+echo "[1/6] Updating system and installing dependencies..."
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
 sudo -E apt-get update
 sudo -E apt-get install -y python3 python3-venv python3-pip git curl htop
 
 # 2. Setup Application Directory
-echo "[2/5] Setting up application directory at $APP_DIR..."
+echo "[2/6] Setting up application directory at $APP_DIR..."
 sudo mkdir -p $APP_DIR
 # Assuming we are running this from the repository root, copy files
 sudo cp -r $APP_REPO_DIR/* $APP_DIR/
@@ -31,7 +50,7 @@ sudo cp -r $APP_REPO_DIR/* $APP_DIR/
 sudo chown -R $USERNAME:$USERNAME $APP_DIR
 
 # 3. Setup Virtual Environment and Install Python Dependencies
-echo "[3/5] Setting up Python virtual environment..."
+echo "[3/6] Setting up Python virtual environment..."
 cd $APP_DIR
 python3 -m venv .venv
 
@@ -52,8 +71,7 @@ EOF
 pip install -r requirements.txt
 
 # 4. Configure Systemd Service
-echo "[4/5] Configuring systemd service ($SERVICE_NAME)..."
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+echo "[4/6] Configuring systemd service ($SERVICE_NAME)..."
 
 sudo bash -c "cat > $SERVICE_FILE" << EOF
 [Unit]
@@ -75,7 +93,7 @@ WantedBy=multi-user.target
 EOF
 
 # 5. Start and Enable Service
-echo "[5/5] Starting and enabling the service..."
+echo "[5/6] Starting and enabling the service..."
 sudo systemctl daemon-reload
 sudo systemctl enable $SERVICE_NAME
 sudo systemctl restart $SERVICE_NAME
