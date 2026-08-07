@@ -38,7 +38,7 @@ graph TD
 | `dashboard.html` | Standalone client-side SPA dashboard (fetch-based, uses `/api/data`) |
 | `structure_service.py` | Orchestrates all analysis modules; persistent JSON caching under `data/structure_cache/` |
 | `smc_pullback.py` | Pullback zigzag swing detection with open-gap-break and proximity logic |
-| `bos_choch_inducement.py` | HTF state machine: Inducement (`#`), Inducement Shift (`IS`), BOS, ChoCH |
+| `bos_choch_inducement.py` | HTF state machine: Inducement (`#`), Inducement Shift (`IS`) for wick breaks, BOS, ChoCH |
 | `inside_bars.py` | Inside bar zone detection (pink rectangles) |
 | `data_fetcher.py` | TradingView API connection and local Parquet caching |
 | `symbol_loader.py` | Loads 215+ NSE Futures symbols from `Futures.csv` |
@@ -49,7 +49,7 @@ graph TD
 1. **Request**: User visits `http://127.0.0.1:8080/` or calls `/api/data?symbol=X&timeframe=Y`.
 2. **Cache Check**: `structure_service.py` checks `data/structure_cache/{symbol}_{tf}.json` for a valid cache (matches `last_timestamp` and `total_candles`).
 3. **Data Fetching**: On cache miss, `data_fetcher.py` checks `data/` for Parquet cache, fetches recent bars from TradingView, and merges.
-4. **Analysis Pipeline**: `smc_pullback.py` → swing highs/lows → `bos_choch_inducement.py` → HTF events → `inside_bars.py` → zones.
+4. **Analysis Pipeline**: `smc_pullback.py` → swing highs/lows → `bos_choch_inducement.py` (tracks wick sweeps for Inducement Shifts, determines BOS/ChoCH) → HTF events → `inside_bars.py` → zones.
 5. **Caching**: Results are saved to `data/structure_cache/` for < 10ms subsequent loads.
 6. **Rendering**: `web_dashboard.py` renders a `lightweight-charts` interactive chart with all overlays (pullback line, HTF markers, inside bar boxes).
 

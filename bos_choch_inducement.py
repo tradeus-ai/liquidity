@@ -51,7 +51,9 @@ def analyze_htf_structure(df):
     active_pb_high_idx = None
     active_pb_high_val = None
     
+    wick_high_idx = None
     wick_high_val = None
+    wick_low_idx = None
     wick_low_val = None
     
     choch_idx = min_low_idx
@@ -101,8 +103,8 @@ def analyze_htf_structure(df):
                         # Check Inducement (#): Low breaks valid pullback low within current cycle
                         if active_pb_low_val is not None and c_low < active_pb_low_val:
                             inducement_done = True
-                            label = "IS" if wick_high_val is not None else "#"
-                            evt_type = "IS" if wick_high_val is not None else "IDM"
+                            label = "#"
+                            evt_type = "IDM"
                             
                             structure_events.append({
                                 'type': evt_type,
@@ -111,7 +113,7 @@ def analyze_htf_structure(df):
                                 'start_val': active_pb_low_val,
                                 'end_time': idx,
                                 'end_val': active_pb_low_val,
-                                'color': '#00e5ff' if evt_type == 'IS' else '#ffd600'
+                                'color': '#ffd600'
                             })
                             
                             # Uptrend Confirmed: Identify Demand Zones
@@ -124,6 +126,35 @@ def analyze_htf_structure(df):
                         if is_sl:
                             add_zone(active_demand_zones, idx, c_low, c_high, c_low, 'demand', 0.003)
 
+                        if wick_high_val is not None:
+                            # Check for Inducement Shift (IS)
+                            sub_df = df.loc[cycle_start_idx:idx]
+                            sl_rows = sub_df[sub_df['is_swing_low'] == True]
+                            if len(sl_rows) > 0:
+                                current_pb_low_idx = sl_rows.index[-1]
+                                current_pb_low_val = float(sl_rows['low'].iloc[-1])
+                            else:
+                                current_pb_low_idx = None
+                                current_pb_low_val = None
+                                
+                            if current_pb_low_val is not None and c_low < current_pb_low_val:
+                                # IS occurred! The wick high is now confirmed as the new proper high.
+                                proper_high_idx = wick_high_idx
+                                proper_high_val = wick_high_val
+                                
+                                structure_events.append({
+                                    'type': 'IS',
+                                    'label': 'IS',
+                                    'start_time': current_pb_low_idx,
+                                    'start_val': current_pb_low_val,
+                                    'end_time': idx,
+                                    'end_val': current_pb_low_val,
+                                    'color': '#00e5ff'
+                                })
+                                
+                                wick_high_idx = None
+                                wick_high_val = None
+                                
                         target_high = wick_high_val if wick_high_val is not None else proper_high_val
                         
                         # Check BOS: Candle CLOSE above Proper High / Wick High
@@ -154,6 +185,7 @@ def analyze_htf_structure(df):
                             choch_val = float(leg_df.loc[leg_min_i, 'low'])
                             
                             inducement_done = False
+                            wick_high_idx = None
                             wick_high_val = None
                             proper_high_idx = idx
                             proper_high_val = c_high
@@ -169,13 +201,9 @@ def analyze_htf_structure(df):
                             
                         # Wick break: High > target but Close <= target
                         elif c_high > target_high and c_close <= target_high:
+                            wick_high_idx = idx
                             wick_high_val = c_high
-                            # Find last swing low within cycle for potential IS
-                            sub_df = df.loc[cycle_start_idx:idx]
-                            sl_rows = sub_df[sub_df['is_swing_low'] == True]
-                            if len(sl_rows) > 0:
-                                active_pb_low_idx = sl_rows.index[-1]
-                                active_pb_low_val = float(sl_rows['low'].iloc[-1])
+                            # IS check happens on next candles
                                 
                 # Check ChoCH: Low breaks structural ChoCH level
                 if choch_val is not None and c_low < choch_val:
@@ -192,6 +220,7 @@ def analyze_htf_structure(df):
                     proper_low_idx = idx
                     proper_low_val = c_low
                     inducement_done = False
+                    wick_high_idx = None
                     wick_high_val = None
                     choch_idx = proper_high_idx
                     choch_val = proper_high_val
@@ -233,8 +262,8 @@ def analyze_htf_structure(df):
                         # Check Inducement (#): High breaks valid pullback high within current cycle
                         if active_pb_high_val is not None and c_high > active_pb_high_val:
                             inducement_done = True
-                            label = "IS" if wick_low_val is not None else "#"
-                            evt_type = "IS" if wick_low_val is not None else "IDM"
+                            label = "#"
+                            evt_type = "IDM"
                             
                             structure_events.append({
                                 'type': evt_type,
@@ -243,7 +272,7 @@ def analyze_htf_structure(df):
                                 'start_val': active_pb_high_val,
                                 'end_time': idx,
                                 'end_val': active_pb_high_val,
-                                'color': '#00e5ff' if evt_type == 'IS' else '#ffd600'
+                                'color': '#ffd600'
                             })
                             
                             # Downtrend Confirmed: Identify Supply Zones
@@ -256,6 +285,35 @@ def analyze_htf_structure(df):
                         if is_sh:
                             add_zone(active_supply_zones, idx, c_low, c_high, c_high, 'supply', 0.003)
 
+                        if wick_low_val is not None:
+                            # Check for Inducement Shift (IS)
+                            sub_df = df.loc[cycle_start_idx:idx]
+                            sh_rows = sub_df[sub_df['is_swing_high'] == True]
+                            if len(sh_rows) > 0:
+                                current_pb_high_idx = sh_rows.index[-1]
+                                current_pb_high_val = float(sh_rows['high'].iloc[-1])
+                            else:
+                                current_pb_high_idx = None
+                                current_pb_high_val = None
+                                
+                            if current_pb_high_val is not None and c_high > current_pb_high_val:
+                                # IS occurred! The wick low is now confirmed as the new proper low.
+                                proper_low_idx = wick_low_idx
+                                proper_low_val = wick_low_val
+                                
+                                structure_events.append({
+                                    'type': 'IS',
+                                    'label': 'IS',
+                                    'start_time': current_pb_high_idx,
+                                    'start_val': current_pb_high_val,
+                                    'end_time': idx,
+                                    'end_val': current_pb_high_val,
+                                    'color': '#00e5ff'
+                                })
+                                
+                                wick_low_idx = None
+                                wick_low_val = None
+                                
                         target_low = wick_low_val if wick_low_val is not None else proper_low_val
                         
                         # Check BOS: Candle CLOSE below Proper Low / Wick Low
@@ -286,6 +344,7 @@ def analyze_htf_structure(df):
                             choch_val = float(leg_df.loc[leg_max_i, 'high'])
                             
                             inducement_done = False
+                            wick_low_idx = None
                             wick_low_val = None
                             proper_low_idx = idx
                             proper_low_val = c_low
@@ -301,13 +360,9 @@ def analyze_htf_structure(df):
                             
                         # Wick break: Low < target but Close >= target
                         elif c_low < target_low and c_close >= target_low:
+                            wick_low_idx = idx
                             wick_low_val = c_low
-                            # Find last swing high within cycle for potential IS
-                            sub_df = df.loc[cycle_start_idx:idx]
-                            sh_rows = sub_df[sub_df['is_swing_high'] == True]
-                            if len(sh_rows) > 0:
-                                active_pb_high_idx = sh_rows.index[-1]
-                                active_pb_high_val = float(sh_rows['high'].iloc[-1])
+                            # IS check happens on next candles
                                 
                 # Check ChoCH: High breaks structural ChoCH level
                 if choch_val is not None and c_high > choch_val:
@@ -324,6 +379,7 @@ def analyze_htf_structure(df):
                     proper_high_idx = idx
                     proper_high_val = c_high
                     inducement_done = False
+                    wick_low_idx = None
                     wick_low_val = None
                     choch_idx = proper_low_idx
                     choch_val = proper_low_val
