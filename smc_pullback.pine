@@ -1,0 +1,177 @@
+//@version=5
+indicator("SMC Pullback Swings [TradeUS AI]", overlay=true, max_lines_count=500, max_labels_count=500)
+
+// Inputs
+show_zigzag   = input.bool(true, "Show Pullback ZigZag Line", group="Visualization")
+zigzag_color  = input.color(#ff9800, "ZigZag Line Color", group="Visualization")
+show_labels   = input.bool(true, "Show Swing Labels (SH / SL)", group="Visualization")
+sh_color      = input.color(#00e676, "Swing High Color", group="Visualization")
+sl_color      = input.color(#ff5252, "Swing Low Color", group="Visualization")
+
+// State Variables
+var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
+
+var int ref_bar_index = na
+var float ref_high = na
+var float ref_low = na
+
+var int swing_high_bar = na
+var float swing_high_val = na
+
+var int swing_low_bar = na
+var float swing_low_val = na
+
+var int last_confirmed_bar = na
+var float last_confirmed_val = na
+
+// Helper function to draw zigzag segment
+add_zigzag_line(x1, y1, x2, y2, col) =>
+    if show_zigzag and not na(x1) and not na(y1) and not na(x2) and not na(y2)
+        line.new(x1, y1, x2, y2, xloc=xloc.bar_index, color=col, width=2)
+
+// Global Functions for Up / Down Breaks
+process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
+    int n_dir = c_dir
+    int n_sh_b = sh_b
+    float n_sh_v = sh_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+
+    if c_dir == -1
+        
+        add_zigzag_line(lc_b, lc_v, sl_b, sl_v, zigzag_color)
+        n_lc_b := sl_b
+        n_lc_v := sl_v
+        
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+    else if c_dir == 1
+        if h_val >= sh_v
+            n_sh_b := b_idx
+            n_sh_v := h_val
+    else
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+        
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v]
+
+process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
+    int n_dir = c_dir
+    int n_sl_b = sl_b
+    float n_sl_v = sl_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+
+    if c_dir == 1
+        
+        add_zigzag_line(lc_b, lc_v, sh_b, sh_v, zigzag_color)
+        n_lc_b := sh_b
+        n_lc_v := sh_v
+        
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+    else if c_dir == -1
+        if l_val <= sl_v
+            n_sl_b := b_idx
+            n_sl_v := l_val
+    else
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+        
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v]
+
+// Main Execution Loop
+if bar_index == 0
+    ref_bar_index := bar_index
+    ref_high := high
+    ref_low := low
+    swing_high_bar := bar_index
+    swing_high_val := high
+    swing_low_bar := bar_index
+    swing_low_val := low
+
+if bar_index > 0
+    curr_open = open
+    curr_high = high
+    curr_low = low
+    
+    open_broke_high = curr_open > ref_high
+    open_broke_low = curr_open < ref_low
+    
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low = (curr_low < ref_low) or open_broke_low
+
+    if broke_high and broke_low
+        int taken_first = 0
+        if open_broke_high
+            taken_first := 1
+        else if open_broke_low
+            taken_first := -1
+        else
+            dist_high = math.abs(curr_open - ref_high)
+            dist_low = math.abs(curr_open - ref_low)
+            if dist_low < dist_high
+                taken_first := -1
+            else
+                taken_first := 1
+                
+        if taken_first == 1
+            [d1, sh_b1, sh_v1, lc_b1, lc_v1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+            current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1
+            
+            [d2, sl_b2, sl_v2, lc_b2, lc_v2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+            current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2
+        else
+            [d1, sl_b1, sl_v1, lc_b1, lc_v1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+            current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1
+            
+            [d2, sh_b2, sh_v2, lc_b2, lc_v2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+            current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2
+            
+        ref_high := curr_high
+        ref_low := curr_low
+        ref_bar_index := bar_index
+    else
+        if current_dir == 1
+            if broke_low
+                [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+            else if broke_high
+                [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+        else if current_dir == -1
+            if broke_high
+                [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+            else if broke_low
+                [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+        else
+            if broke_high
+                [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index
+            else if broke_low
+                [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                ref_high := curr_high
+                ref_low := curr_low
+                ref_bar_index := bar_index

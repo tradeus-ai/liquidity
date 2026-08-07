@@ -1,0 +1,365 @@
+//@version=5
+indicator("Market Structure [TradeUS AI]", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
+
+// --- SMC Pullback Logic ---
+var int current_dir = 0
+var int ref_bar_index = na
+var float ref_high = na
+var float ref_low = na
+
+var int swing_high_bar = na
+var float swing_high_val = na
+var int swing_low_bar = na
+var float swing_low_val = na
+var int last_confirmed_bar = na
+var float last_confirmed_val = na
+
+process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
+    int n_dir = c_dir
+    int n_sh_b = sh_b
+    float n_sh_v = sh_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sl = false
+    
+    if c_dir == -1
+        confirmed_sl := true
+        n_lc_b := sl_b
+        n_lc_v := sl_v
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+    else if c_dir == 1
+        if h_val >= sh_v
+            n_sh_b := b_idx
+            n_sh_v := h_val
+    else
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+        
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v, confirmed_sl]
+
+process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
+    int n_dir = c_dir
+    int n_sl_b = sl_b
+    float n_sl_v = sl_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sh = false
+
+    if c_dir == 1
+        confirmed_sh := true
+        n_lc_b := sh_b
+        n_lc_v := sh_v
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+    else if c_dir == -1
+        if l_val <= sl_v
+            n_sl_b := b_idx
+            n_sl_v := l_val
+    else
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+        
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v, confirmed_sh]
+
+if bar_index == 0
+    ref_bar_index := bar_index
+    ref_high := high
+    ref_low := low
+    swing_high_bar := bar_index
+    swing_high_val := high
+    swing_low_bar := bar_index
+    swing_low_val := low
+
+bool is_sh = false
+bool is_sl = false
+
+if bar_index > 0
+    curr_open = open
+    curr_high = high
+    curr_low = low
+    
+    open_broke_high = curr_open > ref_high
+    open_broke_low = curr_open < ref_low
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low = (curr_low < ref_low) or open_broke_low
+
+    bool conf_sl = false
+    bool conf_sh = false
+
+    if broke_high and broke_low
+        int taken_first = 0
+        if open_broke_high
+            taken_first := 1
+        else if open_broke_low
+            taken_first := -1
+        else
+            dist_high = math.abs(curr_open - ref_high)
+            dist_low = math.abs(curr_open - ref_low)
+            if dist_low < dist_high
+                taken_first := -1
+            else
+                taken_first := 1
+                
+        if taken_first == 1
+            [d1, sh_b1, sh_v1, lc_b1, lc_v1, csl1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+            current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sl := csl1
+            
+            [d2, sl_b2, sl_v2, lc_b2, lc_v2, csh2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+            current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sh := csh2
+        else
+            [d1, sl_b1, sl_v1, lc_b1, lc_v1, csh1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+            current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sh := csh1
+            
+            [d2, sh_b2, sh_v2, lc_b2, lc_v2, csl2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+            current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sl := csl2
+            
+        ref_high := curr_high
+        ref_low := curr_low
+    else
+        if current_dir == 1
+            if broke_low
+                [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+                ref_high := curr_high
+                ref_low := curr_low
+            else if broke_high
+                [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                ref_high := curr_high
+                ref_low := curr_low
+        else if current_dir == -1
+            if broke_high
+                [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                ref_high := curr_high
+                ref_low := curr_low
+            else if broke_low
+                [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+                ref_high := curr_high
+                ref_low := curr_low
+        else
+            if broke_high
+                [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                ref_high := curr_high
+                ref_low := curr_low
+            else if broke_low
+                [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+                ref_high := curr_high
+                ref_low := curr_low
+
+    is_sh := conf_sh
+    is_sl := conf_sl
+
+// --- HTF Structure Logic ---
+var int current_trend = 1
+var int cycle_start_idx = na
+
+var int proper_high_idx = na
+var float proper_high_val = na
+var int proper_low_idx = na
+var float proper_low_val = na
+
+var bool inducement_done = false
+var int active_pb_low_idx = na
+var float active_pb_low_val = na
+var int active_pb_high_idx = na
+var float active_pb_high_val = na
+
+var int wick_high_idx = na
+var float wick_high_val = na
+var int wick_low_idx = na
+var float wick_low_val = na
+
+var int choch_idx = na
+var float choch_val = na
+
+// Tracking the active pullbacks
+var int last_sl_idx = na
+var float last_sl_val = na
+var int last_sh_idx = na
+var float last_sh_val = na
+
+// leg tracking for ChoCH
+var float leg_lowest = na
+var int leg_lowest_idx = na
+var float leg_highest = na
+var int leg_highest_idx = na
+
+if bar_index == 0
+    cycle_start_idx := bar_index
+    choch_idx := bar_index
+    choch_val := low
+    leg_lowest := low
+    leg_lowest_idx := bar_index
+    leg_highest := high
+    leg_highest_idx := bar_index
+
+// Update tracking arrays
+if is_sl
+    if last_confirmed_bar >= cycle_start_idx
+        last_sl_idx := last_confirmed_bar
+        last_sl_val := last_confirmed_val
+if is_sh
+    if last_confirmed_bar >= cycle_start_idx
+        last_sh_idx := last_confirmed_bar
+        last_sh_val := last_confirmed_val
+
+if not na(proper_high_idx) and bar_index >= proper_high_idx
+    if na(leg_lowest) or low < leg_lowest
+        leg_lowest := low
+        leg_lowest_idx := bar_index
+if not na(proper_low_idx) and bar_index >= proper_low_idx
+    if na(leg_highest) or high > leg_highest
+        leg_highest := high
+        leg_highest_idx := bar_index
+
+int trends_processed = 0
+bool continue_loop = true
+while trends_processed < 2 and continue_loop
+    int prev_trend = current_trend
+    
+    if current_trend == 1
+        if na(proper_high_val)
+            if is_sh
+                proper_high_idx := last_confirmed_bar
+                proper_high_val := last_confirmed_val
+        else
+            if not inducement_done
+                if high >= proper_high_val
+                    proper_high_idx := bar_index
+                    proper_high_val := high
+                    active_pb_low_idx := last_sl_idx
+                    active_pb_low_val := last_sl_val
+                    
+                if not na(active_pb_low_val) and low < active_pb_low_val
+                    inducement_done := true
+                    line.new(active_pb_low_idx, active_pb_low_val, bar_index, active_pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                    label.new(math.round((active_pb_low_idx + bar_index)/2), active_pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    
+            else
+                if not na(wick_high_val)
+                    if not na(last_sl_val) and last_sl_idx <= wick_high_idx
+                        if low < last_sl_val
+                            proper_high_idx := wick_high_idx
+                            proper_high_val := wick_high_val
+                            line.new(last_sl_idx, last_sl_val, bar_index, last_sl_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                            label.new(math.round((last_sl_idx + bar_index)/2), last_sl_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                            wick_high_idx := na
+                            wick_high_val := na
+                            
+                float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
+                
+                if close > target_high
+                    line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
+                    label.new(math.round((proper_high_idx + bar_index)/2), proper_high_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                    choch_idx := leg_lowest_idx
+                    choch_val := leg_lowest
+                    inducement_done := false
+                    wick_high_idx := na
+                    wick_high_val := na
+                    proper_high_idx := bar_index
+                    proper_high_val := high
+                    active_pb_low_idx := last_sl_idx
+                    active_pb_low_val := last_sl_val
+                    leg_lowest := low
+                    leg_lowest_idx := bar_index
+                    
+                else if high > target_high and close <= target_high
+                    wick_high_idx := bar_index
+                    wick_high_val := high
+                    
+        if not na(choch_val) and low < choch_val
+            line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
+            label.new(math.round((choch_idx + bar_index)/2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+            current_trend := -1
+            proper_low_idx := bar_index
+            proper_low_val := low
+            inducement_done := false
+            wick_high_idx := na
+            wick_high_val := na
+            choch_idx := proper_high_idx
+            choch_val := proper_high_val
+            cycle_start_idx := proper_high_idx
+            active_pb_high_idx := last_sh_idx
+            active_pb_high_val := last_sh_val
+            leg_highest := high
+            leg_highest_idx := bar_index
+            
+    else if current_trend == -1
+        if na(proper_low_val)
+            if is_sl
+                proper_low_idx := last_confirmed_bar
+                proper_low_val := last_confirmed_val
+        else
+            if not inducement_done
+                if low <= proper_low_val
+                    proper_low_idx := bar_index
+                    proper_low_val := low
+                    active_pb_high_idx := last_sh_idx
+                    active_pb_high_val := last_sh_val
+                    
+                if not na(active_pb_high_val) and high > active_pb_high_val
+                    inducement_done := true
+                    line.new(active_pb_high_idx, active_pb_high_val, bar_index, active_pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                    label.new(math.round((active_pb_high_idx + bar_index)/2), active_pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    
+            else
+                if not na(wick_low_val)
+                    if not na(last_sh_val) and last_sh_idx <= wick_low_idx
+                        if high > last_sh_val
+                            proper_low_idx := wick_low_idx
+                            proper_low_val := wick_low_val
+                            line.new(last_sh_idx, last_sh_val, bar_index, last_sh_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                            label.new(math.round((last_sh_idx + bar_index)/2), last_sh_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                            wick_low_idx := na
+                            wick_low_val := na
+                            
+                float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
+                
+                if close < target_low
+                    line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
+                    label.new(math.round((proper_low_idx + bar_index)/2), proper_low_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                    choch_idx := leg_highest_idx
+                    choch_val := leg_highest
+                    inducement_done := false
+                    wick_low_idx := na
+                    wick_low_val := na
+                    proper_low_idx := bar_index
+                    proper_low_val := low
+                    active_pb_high_idx := last_sh_idx
+                    active_pb_high_val := last_sh_val
+                    leg_highest := high
+                    leg_highest_idx := bar_index
+                    
+                else if low < target_low and close >= target_low
+                    wick_low_idx := bar_index
+                    wick_low_val := low
+                    
+        if not na(choch_val) and high > choch_val
+            line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
+            label.new(math.round((choch_idx + bar_index)/2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+            current_trend := 1
+            proper_high_idx := bar_index
+            proper_high_val := high
+            inducement_done := false
+            wick_low_idx := na
+            wick_low_val := na
+            choch_idx := proper_low_idx
+            choch_val := proper_low_val
+            cycle_start_idx := proper_low_idx
+            active_pb_low_idx := last_sl_idx
+            active_pb_low_val := last_sl_val
+            leg_lowest := low
+            leg_lowest_idx := bar_index
+            
+    if current_trend == prev_trend
+        continue_loop := false
+    trends_processed += 1

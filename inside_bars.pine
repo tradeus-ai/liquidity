@@ -1,0 +1,74 @@
+//@version=5
+indicator("Inside Bar Zones [TradeUS AI]", overlay=true, max_boxes_count=500)
+
+// ==========================================
+// INPUTS & STYLING
+// ==========================================
+show_zones      = input.bool(true, "Show Inside Bar Zones", group="Display")
+zone_color      = input.color(color.new(#e91e63, 75), "Zone Color", group="Style")
+zone_border     = input.color(color.new(#e91e63, 50), "Zone Border Color", group="Style")
+border_width    = input.int(1, "Border Width", minval=1, maxval=4, group="Style")
+
+// ==========================================
+// STATE VARIABLES
+// ==========================================
+var float ref_high = na
+var float ref_low = na
+var int   ref_bar = na
+var int   inside_count = 0
+var int   last_inside_bar = na
+
+// ==========================================
+// INITIALISATION (first bar)
+// ==========================================
+if bar_index == 0
+    ref_high := high
+    ref_low  := low
+    ref_bar  := bar_index
+
+// ==========================================
+// MAIN BAR-BY-BAR LOGIC
+// ==========================================
+if bar_index > 0
+    broke_high = high > ref_high
+    broke_low  = low  < ref_low
+
+    if broke_high or broke_low
+        // Breakout — close any active inside bar sequence
+        if inside_count > 0 and show_zones
+            box.new(
+                 left   = ref_bar,
+                 top    = ref_high,
+                 right  = last_inside_bar,
+                 bottom = ref_low,
+                 xloc           = xloc.bar_index,
+                 bgcolor        = zone_color,
+                 border_color   = zone_border,
+                 border_width   = border_width
+                 )
+
+        // Reset: breakout candle becomes the new reference
+        ref_high     := high
+        ref_low      := low
+        ref_bar      := bar_index
+        inside_count := 0
+        last_inside_bar := na
+    else
+        // Inside bar detected — high <= ref_high AND low >= ref_low
+        inside_count     += 1
+        last_inside_bar  := bar_index
+
+// ==========================================
+// CLOSE UNCLOSED SEQUENCE ON LAST BAR
+// ==========================================
+if barstate.islast and inside_count > 0 and show_zones
+    box.new(
+         left   = ref_bar,
+         top    = ref_high,
+         right  = last_inside_bar,
+         bottom = ref_low,
+         xloc           = xloc.bar_index,
+         bgcolor        = zone_color,
+         border_color   = zone_border,
+         border_width   = border_width
+         )

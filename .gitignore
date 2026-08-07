@@ -8,3 +8,4 @@ infrastructure/terraform.tfstate
 infrastructure/terraform.tfstate.backup
 infrastructure/terraform.tfvars
 infrastructure/*.tfvars
+*.zip

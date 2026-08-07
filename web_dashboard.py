@@ -208,38 +208,7 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     .footer-btn:hover {{ color: #fff; background: rgba(255, 255, 255, 0.08); }}
     .footer-clock {{ font-family: monospace; color: #848e9c; font-size: 12px; }}
     
-    /* Large Hover OHLC Legend */
-    #hover-legend {{
-        position: absolute;
-        top: 65px;
-        left: 15px;
-        z-index: 1000;
-        font-size: 20px !important;
-        font-weight: 600 !important;
-        font-family: monospace;
-        color: #ffffff;
-        pointer-events: none;
-        background: rgba(19, 23, 34, 0.7);
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #363c4e;
-    }}
-    .legend-title {{ font-size: 16px; color: #848e9c; margin-bottom: 4px; }}
-    .legend-val {{ margin-right: 12px; }}
     </style>
-
-    <div id="hover-legend" style="display:none;">
-        <div class="legend-title" id="legend-symbol">{symbol_raw} - {tf.upper()}</div>
-        <div style="font-size:14px; margin-bottom:8px; color:#ff9800;">
-            <span id="leg-date">-</span>
-        </div>
-        <div style="font-size:13px; color:#d1d4dc;">
-            O <span class="legend-val" id="leg-o">-</span>
-            H <span class="legend-val" id="leg-h">-</span>
-            L <span class="legend-val" id="leg-l">-</span>
-            C <span class="legend-val" id="leg-c">-</span>
-        </div>
-    </div>
 
     <div class="custom-topbar">
         <div class="title">📊 Liquidity Finder</div>
@@ -332,7 +301,6 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         
         if (!lwChart || !lwSeries) return;
         
-        document.getElementById('hover-legend').style.display = 'block';
         const urlParams = new URLSearchParams(window.location.search);
         const currentTimeframe = urlParams.get('timeframe') || '1d';
         
@@ -344,59 +312,6 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
                 type: 'price',
                 precision: decimals,
                 minMove: 1 / Math.pow(10, decimals)
-            }
-        });
-        
-        lwChart.subscribeCrosshairMove(param => {
-            if (!param || !param.time) {
-                document.getElementById('leg-date').innerText = '-';
-                document.getElementById('leg-o').innerText = '-';
-                document.getElementById('leg-h').innerText = '-';
-                document.getElementById('leg-l').innerText = '-';
-                document.getElementById('leg-c').innerText = '-';
-                return;
-            }
-
-            let dateStr = "";
-            if (typeof param.time === 'number') {
-                const d = new Date(param.time * 1000);
-                const y = d.getUTCFullYear();
-                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(d.getUTCDate()).padStart(2, '0');
-                const hh = String(d.getUTCHours()).padStart(2, '0');
-                const mm = String(d.getUTCMinutes()).padStart(2, '0');
-                if (currentTimeframe === '1d' || currentTimeframe === '1w') {
-                    dateStr = `${y}-${m}-${day}`;
-                } else {
-                    dateStr = `${y}-${m}-${day} ${hh}:${mm}`;
-                }
-            } else if (typeof param.time === 'object') {
-                const y = param.time.year;
-                const m = String(param.time.month).padStart(2, '0');
-                const day = String(param.time.day).padStart(2, '0');
-                dateStr = `${y}-${m}-${day}`;
-            } else {
-                dateStr = String(param.time);
-            }
-            document.getElementById('leg-date').innerText = dateStr;
-
-            if (param.seriesData) {
-                let price = param.seriesData.get(lwSeries);
-                if (!price) {
-                    const iter = param.seriesData.values();
-                    for (let val of iter) {
-                        if (val && val.open !== undefined) {
-                            price = val;
-                            break;
-                        }
-                    }
-                }
-                if (price) {
-                    document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(decimals) : '-';
-                    document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(decimals) : '-';
-                    document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(decimals) : '-';
-                    document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(decimals) : '-';
-                }
             }
         });
         
@@ -461,8 +376,7 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     # to account for our 50px top header + 32px bottom footer = 82px.
     html_fixed = chart._html.replace('window.innerHeight', '(window.innerHeight - 82)')
     
-    # Hide the default tiny legend since we added our custom large one
-    html_fixed = html_fixed.replace('legend:{', 'legend:{visible:false,')
+    # We use the built-in legend now, no need to hide it
     
     full_html = f"{html_fixed}</script>{topbar_ui}</body></html>"
 
