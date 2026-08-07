@@ -128,7 +128,8 @@ def analyze_htf_structure(df):
 
                         if wick_high_val is not None:
                             # Check for Inducement Shift (IS)
-                            sub_df = df.loc[cycle_start_idx:idx]
+                            # IS pullback low must be prior to the wick high (left of the high)
+                            sub_df = df.loc[cycle_start_idx:wick_high_idx]
                             sl_rows = sub_df[sub_df['is_swing_low'] == True]
                             if len(sl_rows) > 0:
                                 current_pb_low_idx = sl_rows.index[-1]
@@ -287,7 +288,8 @@ def analyze_htf_structure(df):
 
                         if wick_low_val is not None:
                             # Check for Inducement Shift (IS)
-                            sub_df = df.loc[cycle_start_idx:idx]
+                            # IS pullback high must be prior to the wick low (left of the low)
+                            sub_df = df.loc[cycle_start_idx:wick_low_idx]
                             sh_rows = sub_df[sub_df['is_swing_high'] == True]
                             if len(sh_rows) > 0:
                                 current_pb_high_idx = sh_rows.index[-1]

@@ -67,7 +67,9 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         return str(val)
 
     # HTF Structure Events (#, IS, BOS, ChoCH) - ONLY for Daily - 1D
+    htf_js_events_str = "[]"
     if tf == '1d':
+        events_for_js = []
         for ev in data.get('htf_events', []):
             st_date = format_time_scalar(ev['start_time'])
             et_date = format_time_scalar(ev['end_time'])
@@ -76,6 +78,11 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
                 end_time=et_date, end_value=ev['end_val'],
                 line_color=ev['color'], width=2, style='solid'
             )
+            # Format time for JS injection
+            js_start = chart._single_datetime_format(st_date)
+            js_end = chart._single_datetime_format(et_date)
+            events_for_js.append(f"{{start_time: {js_start}, end_time: {js_end}, price: {ev['start_val']}, text: '{ev['label']}', color: '{ev['color']}'}}")
+        htf_js_events_str = "[" + ",\n".join(events_for_js) + "]"
 
     # Inside bar zones (pink rectangle)
     time_fmt = '%Y-%m-%d %H:%M:%S' if is_intraday else '%Y-%m-%d'
@@ -314,98 +321,136 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     
     """ + r"""
     
-    // Attach hover legend to the chart
+    // Attach hover legend and midpoint labels using the actual chart handler
     setTimeout(() => {
-        let chart = null;
-        let candleSeries = null;
+        // StaticLWC stores chart as window.<random_id> — use the injected ID
+        const lwHandler = """ + chart.id + r""";
+        if (!lwHandler) return;
         
-        // Find the chart from window.handlers
-        if (window.handlers) {
-            const keys = Object.keys(window.handlers);
-            if (keys.length > 0) {
-                const handler = window.handlers[keys[0]];
-                if (handler && handler.chart) {
-                    chart = handler.chart;
-                    candleSeries = handler.series;
+        const lwChart = lwHandler.chart;
+        const lwSeries = lwHandler.series;
+        
+        if (!lwChart || !lwSeries) return;
+        
+        document.getElementById('hover-legend').style.display = 'block';
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentTimeframe = urlParams.get('timeframe') || '1d';
+        
+        const decimals = PYTHON_DECIMALS;
+        
+        // Adjust the series price scale for Forex and Metals
+        lwSeries.applyOptions({
+            priceFormat: {
+                type: 'price',
+                precision: decimals,
+                minMove: 1 / Math.pow(10, decimals)
+            }
+        });
+        
+        lwChart.subscribeCrosshairMove(param => {
+            if (!param || !param.time) {
+                document.getElementById('leg-date').innerText = '-';
+                document.getElementById('leg-o').innerText = '-';
+                document.getElementById('leg-h').innerText = '-';
+                document.getElementById('leg-l').innerText = '-';
+                document.getElementById('leg-c').innerText = '-';
+                return;
+            }
+
+            let dateStr = "";
+            if (typeof param.time === 'number') {
+                const d = new Date(param.time * 1000);
+                const y = d.getUTCFullYear();
+                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(d.getUTCDate()).padStart(2, '0');
+                const hh = String(d.getUTCHours()).padStart(2, '0');
+                const mm = String(d.getUTCMinutes()).padStart(2, '0');
+                if (currentTimeframe === '1d' || currentTimeframe === '1w') {
+                    dateStr = `${y}-${m}-${day}`;
+                } else {
+                    dateStr = `${y}-${m}-${day} ${hh}:${mm}`;
+                }
+            } else if (typeof param.time === 'object') {
+                const y = param.time.year;
+                const m = String(param.time.month).padStart(2, '0');
+                const day = String(param.time.day).padStart(2, '0');
+                dateStr = `${y}-${m}-${day}`;
+            } else {
+                dateStr = String(param.time);
+            }
+            document.getElementById('leg-date').innerText = dateStr;
+
+            if (param.seriesData) {
+                let price = param.seriesData.get(lwSeries);
+                if (!price) {
+                    const iter = param.seriesData.values();
+                    for (let val of iter) {
+                        if (val && val.open !== undefined) {
+                            price = val;
+                            break;
+                        }
+                    }
+                }
+                if (price) {
+                    document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(decimals) : '-';
+                    document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(decimals) : '-';
+                    document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(decimals) : '-';
+                    document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(decimals) : '-';
                 }
             }
-        }
+        });
         
-        if (chart) {
-            document.getElementById('hover-legend').style.display = 'block';
-            const urlParams = new URLSearchParams(window.location.search);
-            const currentTimeframe = urlParams.get('timeframe') || '1d';
+        // ===== Midpoint Labels for HTF Events (Inducement, IS, BOS, ChoCH) =====
+        const htfEvents = """ + htf_js_events_str + r""";
+        if (htfEvents.length > 0) {
+            // lwHandler.div has position:relative — perfect for absolute label positioning
+            const container = lwHandler.div;
             
-            const decimals = PYTHON_DECIMALS;
+            htfEvents.forEach(ev => {
+                let div = document.createElement('div');
+                div.innerText = ev.text;
+                div.style.position = 'absolute';
+                div.style.color = ev.color;
+                div.style.backgroundColor = '#131722'; // Match chart background
+                div.style.padding = '0px 5px';
+                div.style.fontSize = '11px';
+                div.style.fontWeight = 'bold';
+                div.style.fontFamily = 'Monaco, monospace';
+                div.style.zIndex = '100';
+                div.style.pointerEvents = 'none';
+                div.style.whiteSpace = 'nowrap';
+                div.style.lineHeight = '1';
+                container.appendChild(div);
+                ev.div = div;
+            });
             
-            // Adjust the series price scale for Forex and Metals
-            if (candleSeries) {
-                candleSeries.applyOptions({
-                    priceFormat: {
-                        type: 'price',
-                        precision: decimals,
-                        minMove: 1 / Math.pow(10, decimals)
+            function updateLabels() {
+                htfEvents.forEach(ev => {
+                    try {
+                        let x1 = lwChart.timeScale().timeToCoordinate(ev.start_time);
+                        let x2 = lwChart.timeScale().timeToCoordinate(ev.end_time);
+                        let y = lwSeries.priceToCoordinate(ev.price);
+                        
+                        if (x1 !== null && x2 !== null && y !== null) {
+                            let midX = (x1 + x2) / 2;
+                            ev.div.style.left = midX + 'px';
+                            ev.div.style.top = y + 'px';
+                            ev.div.style.transform = 'translate(-50%, -50%)';
+                            ev.div.style.display = 'block';
+                        } else {
+                            ev.div.style.display = 'none';
+                        }
+                    } catch (e) {
+                        ev.div.style.display = 'none';
                     }
                 });
             }
             
-            chart.subscribeCrosshairMove(param => {
-                if (!param || !param.time) {
-                    document.getElementById('leg-date').innerText = '-';
-                    document.getElementById('leg-o').innerText = '-';
-                    document.getElementById('leg-h').innerText = '-';
-                    document.getElementById('leg-l').innerText = '-';
-                    document.getElementById('leg-c').innerText = '-';
-                    return;
-                }
-
-                let dateStr = "";
-                if (typeof param.time === 'number') {
-                    const d = new Date(param.time * 1000);
-                    const y = d.getUTCFullYear();
-                    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-                    const day = String(d.getUTCDate()).padStart(2, '0');
-                    const hh = String(d.getUTCHours()).padStart(2, '0');
-                    const mm = String(d.getUTCMinutes()).padStart(2, '0');
-                    if (currentTimeframe === '1d' || currentTimeframe === '1w') {
-                        dateStr = `${y}-${m}-${day}`;
-                    } else {
-                        dateStr = `${y}-${m}-${day} ${hh}:${mm}`;
-                    }
-                } else if (typeof param.time === 'object') {
-                    const y = param.time.year;
-                    const m = String(param.time.month).padStart(2, '0');
-                    const day = String(param.time.day).padStart(2, '0');
-                    dateStr = `${y}-${m}-${day}`;
-                } else {
-                    dateStr = String(param.time);
-                }
-                document.getElementById('leg-date').innerText = dateStr;
-
-                if (param.seriesData) {
-                    // Try to get price from seriesData map
-                    let price = null;
-                    if (candleSeries) {
-                        price = param.seriesData.get(candleSeries);
-                    }
-                    if (!price) {
-                        // Fallback if candleSeries not identified: just pick the first available series data
-                        const iter = param.seriesData.values();
-                        for (let val of iter) {
-                            if (val && val.open !== undefined) {
-                                price = val;
-                                break;
-                            }
-                        }
-                    }
-                    if (price) {
-                        document.getElementById('leg-o').innerText = price.open ? price.open.toFixed(decimals) : '-';
-                        document.getElementById('leg-h').innerText = price.high ? price.high.toFixed(decimals) : '-';
-                        document.getElementById('leg-l').innerText = price.low ? price.low.toFixed(decimals) : '-';
-                        document.getElementById('leg-c').innerText = price.close ? price.close.toFixed(decimals) : '-';
-                    }
-                }
-            });
+            lwChart.timeScale().subscribeVisibleLogicalRangeChange(updateLabels);
+            lwChart.timeScale().subscribeVisibleTimeRangeChange(updateLabels);
+            // Initial render + periodic update for resize/pan
+            updateLabels();
+            setInterval(updateLabels, 50);
         }
     }, 500);
     </script>
