@@ -1,8 +1,10 @@
 //@version=5
 indicator("Market Structure [TradeUS AI]", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
 
-// --- SMC Pullback Logic ---
-var int current_dir = 0
+// ============================================================================
+// SMC PULLBACK ENGINE (identifies swing highs/lows — matches smc_pullback.py)
+// ============================================================================
+var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
 var int ref_bar_index = na
 var float ref_high = na
 var float ref_low = na
@@ -158,9 +160,94 @@ if bar_index > 0
     is_sh := conf_sh
     is_sl := conf_sl
 
-// --- HTF Structure Logic ---
+// ============================================================================
+// SWING POINT HISTORY ARRAYS
+// ============================================================================
+var int[] sl_bars = array.new_int()
+var float[] sl_vals = array.new_float()
+var int[] sh_bars = array.new_int()
+var float[] sh_vals = array.new_float()
+
+if is_sl
+    array.push(sl_bars, last_confirmed_bar)
+    array.push(sl_vals, last_confirmed_val)
+
+if is_sh
+    array.push(sh_bars, last_confirmed_bar)
+    array.push(sh_vals, last_confirmed_val)
+
+// OHLC history arrays — for scanning leg min/max at BOS time (matches Python's df.loc slice)
+var float[] bar_lows = array.new_float()
+var float[] bar_highs = array.new_float()
+array.push(bar_lows, low)
+array.push(bar_highs, high)
+
+// Helper: find the last swing low within [after_bar, before_bar] inclusive
+find_last_sl(after_bar, before_bar) =>
+    int found_bar = na
+    float found_val = na
+    int sz = array.size(sl_bars)
+    if sz > 0
+        for i = sz - 1 to 0
+            b = array.get(sl_bars, i)
+            if b < after_bar
+                break
+            if b >= after_bar and b <= before_bar
+                found_bar := b
+                found_val := array.get(sl_vals, i)
+                break
+    [found_bar, found_val]
+
+// Helper: find the last swing high within [after_bar, before_bar] inclusive
+find_last_sh(after_bar, before_bar) =>
+    int found_bar = na
+    float found_val = na
+    int sz = array.size(sh_bars)
+    if sz > 0
+        for i = sz - 1 to 0
+            b = array.get(sh_bars, i)
+            if b < after_bar
+                break
+            if b >= after_bar and b <= before_bar
+                found_bar := b
+                found_val := array.get(sh_vals, i)
+                break
+    [found_bar, found_val]
+
+// Helper: find lowest low in bar range [from_bar, to_bar] inclusive
+// Matches Python's: leg_df = df.loc[proper_high_idx:idx]; leg_min_i = leg_df['low'].idxmin()
+find_leg_min(from_bar, to_bar) =>
+    float min_val = na
+    int min_bar = na
+    if from_bar >= 0 and to_bar >= from_bar
+        for b = from_bar to to_bar
+            float l = array.get(bar_lows, b)
+            if na(min_val) or l < min_val
+                min_val := l
+                min_bar := b
+    [min_bar, min_val]
+
+// Helper: find highest high in bar range [from_bar, to_bar] inclusive
+// Matches Python's: leg_df = df.loc[proper_low_idx:idx]; leg_max_i = leg_df['high'].idxmax()
+find_leg_max(from_bar, to_bar) =>
+    float max_val = na
+    int max_bar = na
+    if from_bar >= 0 and to_bar >= from_bar
+        for b = from_bar to to_bar
+            float h = array.get(bar_highs, b)
+            if na(max_val) or h > max_val
+                max_val := h
+                max_bar := b
+    [max_bar, max_val]
+
+// ============================================================================
+// HTF STRUCTURE ENGINE (mirrors bos_choch_inducement.py)
+//
+// The Python starts from the GLOBAL MIN LOW (np.argmin).
+// Pine uses "self-correcting start": resets on new ATL until first structural event locks it.
+// ============================================================================
 var int current_trend = 1
-var int cycle_start_idx = na
+var bool htf_locked = false
 
 var int proper_high_idx = na
 var float proper_high_val = na
@@ -168,10 +255,6 @@ var int proper_low_idx = na
 var float proper_low_val = na
 
 var bool inducement_done = false
-var int active_pb_low_idx = na
-var float active_pb_low_val = na
-var int active_pb_high_idx = na
-var float active_pb_high_val = na
 
 var int wick_high_idx = na
 var float wick_high_val = na
@@ -180,105 +263,116 @@ var float wick_low_val = na
 
 var int choch_idx = na
 var float choch_val = na
+var int cycle_start_idx = na
 
-// Tracking the active pullbacks
-var int last_sl_idx = na
-var float last_sl_val = na
-var int last_sh_idx = na
-var float last_sh_val = na
-
-// leg tracking for ChoCH
-var float leg_lowest = na
-var int leg_lowest_idx = na
-var float leg_highest = na
-var int leg_highest_idx = na
+// Self-correcting start: track all-time low
+var float atl_low = na
+var int atl_bar = na
 
 if bar_index == 0
+    atl_low := low
+    atl_bar := bar_index
     cycle_start_idx := bar_index
     choch_idx := bar_index
     choch_val := low
-    leg_lowest := low
-    leg_lowest_idx := bar_index
-    leg_highest := high
-    leg_highest_idx := bar_index
 
-// Update tracking arrays
-if is_sl
-    if last_confirmed_bar >= cycle_start_idx
-        last_sl_idx := last_confirmed_bar
-        last_sl_val := last_confirmed_val
-if is_sh
-    if last_confirmed_bar >= cycle_start_idx
-        last_sh_idx := last_confirmed_bar
-        last_sh_val := last_confirmed_val
+// Self-correcting reset: new ATL before first structural event
+if bar_index > 0 and not htf_locked
+    if low < atl_low
+        atl_low := low
+        atl_bar := bar_index
+        current_trend := 1
+        proper_high_idx := na
+        proper_high_val := na
+        proper_low_idx := na
+        proper_low_val := na
+        inducement_done := false
+        wick_high_idx := na
+        wick_high_val := na
+        wick_low_idx := na
+        wick_low_val := na
+        choch_idx := bar_index
+        choch_val := low
+        cycle_start_idx := bar_index
 
-if not na(proper_high_idx) and bar_index >= proper_high_idx
-    if na(leg_lowest) or low < leg_lowest
-        leg_lowest := low
-        leg_lowest_idx := bar_index
-if not na(proper_low_idx) and bar_index >= proper_low_idx
-    if na(leg_highest) or high > leg_highest
-        leg_highest := high
-        leg_highest_idx := bar_index
-
+// ============================================================================
+// MAIN STRUCTURE LOOP (up to 2 iterations for instant ChoCH→new trend)
+// ============================================================================
 int trends_processed = 0
 bool continue_loop = true
+
 while trends_processed < 2 and continue_loop
     int prev_trend = current_trend
     
     if current_trend == 1
+        // ---- UPTREND ----
+        // Initialize proper_high if not set
         if na(proper_high_val)
-            if is_sh
-                proper_high_idx := last_confirmed_bar
-                proper_high_val := last_confirmed_val
-        else
-            if not inducement_done
-                if high >= proper_high_val
-                    proper_high_idx := bar_index
-                    proper_high_val := high
-                    active_pb_low_idx := last_sl_idx
-                    active_pb_low_val := last_sl_val
-                    
-                if not na(active_pb_low_val) and low < active_pb_low_val
-                    inducement_done := true
-                    line.new(active_pb_low_idx, active_pb_low_val, bar_index, active_pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
-                    label.new(math.round((active_pb_low_idx + bar_index)/2), active_pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
-                    
-            else
-                if not na(wick_high_val)
-                    if not na(last_sl_val) and last_sl_idx <= wick_high_idx
-                        if low < last_sl_val
-                            proper_high_idx := wick_high_idx
-                            proper_high_val := wick_high_val
-                            line.new(last_sl_idx, last_sl_val, bar_index, last_sl_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
-                            label.new(math.round((last_sl_idx + bar_index)/2), last_sl_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
-                            wick_high_idx := na
-                            wick_high_val := na
-                            
-                float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
+            proper_high_idx := bar_index
+            proper_high_val := high
+        
+        if not inducement_done
+            // Update peak high (matches Python L89-91)
+            if high >= proper_high_val
+                proper_high_idx := bar_index
+                proper_high_val := high
+            
+            // Find last swing low within [cycle_start, proper_high] (matches Python L94-101)
+            [pb_low_bar, pb_low_val] = find_last_sl(cycle_start_idx, proper_high_idx)
+            
+            // Check Inducement (#) (matches Python L104-117)
+            if not na(pb_low_val) and low < pb_low_val
+                inducement_done := true
+                line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                 
-                if close > target_high
-                    line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
-                    label.new(math.round((proper_high_idx + bar_index)/2), proper_high_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
-                    choch_idx := leg_lowest_idx
-                    choch_val := leg_lowest
-                    inducement_done := false
+        else
+            // Post-inducement: check IS, BOS, wick breaks
+            
+            // Check IS first (matches Python L129-157)
+            if not na(wick_high_val)
+                [is_pb_bar, is_pb_val] = find_last_sl(cycle_start_idx, wick_high_idx)
+                
+                if not na(is_pb_val) and low < is_pb_val
+                    proper_high_idx := wick_high_idx
+                    proper_high_val := wick_high_val
+                    line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                    label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                     wick_high_idx := na
                     wick_high_val := na
-                    proper_high_idx := bar_index
-                    proper_high_val := high
-                    active_pb_low_idx := last_sl_idx
-                    active_pb_low_val := last_sl_val
-                    leg_lowest := low
-                    leg_lowest_idx := bar_index
                     
-                else if high > target_high and close <= target_high
-                    wick_high_idx := bar_index
-                    wick_high_val := high
-                    
+            float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
+            
+            // BOS: candle CLOSE above target high (matches Python L162-206)
+            if close > target_high
+                // Calculate ChoCH level: lowest low from proper_high to current bar
+                // This is the CRITICAL fix — matches Python L183-186 exactly
+                [leg_min_bar, leg_min_val] = find_leg_min(proper_high_idx, bar_index)
+                
+                line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
+                label.new(math.round((proper_high_idx + bar_index) / 2), proper_high_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                htf_locked := true
+                
+                choch_idx := leg_min_bar
+                choch_val := leg_min_val
+                
+                inducement_done := false
+                wick_high_idx := na
+                wick_high_val := na
+                proper_high_idx := bar_index
+                proper_high_val := high
+                
+            // Wick break: high > target but close <= target (matches Python L204-206)
+            else if high > target_high and close <= target_high
+                wick_high_idx := bar_index
+                wick_high_val := high
+                
+        // ChoCH check: low breaks structural level (matches Python L210-238)
         if not na(choch_val) and low < choch_val
             line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
-            label.new(math.round((choch_idx + bar_index)/2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+            label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+            htf_locked := true
+            
             current_trend := -1
             proper_low_idx := bar_index
             proper_low_val := low
@@ -288,64 +382,76 @@ while trends_processed < 2 and continue_loop
             choch_idx := proper_high_idx
             choch_val := proper_high_val
             cycle_start_idx := proper_high_idx
-            active_pb_high_idx := last_sh_idx
-            active_pb_high_val := last_sh_val
-            leg_highest := high
-            leg_highest_idx := bar_index
             
     else if current_trend == -1
+        // ---- DOWNTREND ----
+        // Initialize proper_low if not set
         if na(proper_low_val)
-            if is_sl
-                proper_low_idx := last_confirmed_bar
-                proper_low_val := last_confirmed_val
-        else
-            if not inducement_done
-                if low <= proper_low_val
-                    proper_low_idx := bar_index
-                    proper_low_val := low
-                    active_pb_high_idx := last_sh_idx
-                    active_pb_high_val := last_sh_val
-                    
-                if not na(active_pb_high_val) and high > active_pb_high_val
-                    inducement_done := true
-                    line.new(active_pb_high_idx, active_pb_high_val, bar_index, active_pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
-                    label.new(math.round((active_pb_high_idx + bar_index)/2), active_pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
-                    
-            else
-                if not na(wick_low_val)
-                    if not na(last_sh_val) and last_sh_idx <= wick_low_idx
-                        if high > last_sh_val
-                            proper_low_idx := wick_low_idx
-                            proper_low_val := wick_low_val
-                            line.new(last_sh_idx, last_sh_val, bar_index, last_sh_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
-                            label.new(math.round((last_sh_idx + bar_index)/2), last_sh_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
-                            wick_low_idx := na
-                            wick_low_val := na
-                            
-                float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
+            proper_low_idx := bar_index
+            proper_low_val := low
+            
+        if not inducement_done
+            // Update peak low (matches Python L249-251)
+            if low <= proper_low_val
+                proper_low_idx := bar_index
+                proper_low_val := low
+            
+            // Find last swing high within [cycle_start, proper_low] (matches Python L254-261)
+            [pb_high_bar, pb_high_val] = find_last_sh(cycle_start_idx, proper_low_idx)
+            
+            // Check Inducement (#) (matches Python L264-282)
+            if not na(pb_high_val) and high > pb_high_val
+                inducement_done := true
+                line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                 
-                if close < target_low
-                    line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
-                    label.new(math.round((proper_low_idx + bar_index)/2), proper_low_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
-                    choch_idx := leg_highest_idx
-                    choch_val := leg_highest
-                    inducement_done := false
+        else
+            // Post-inducement: check IS, BOS, wick breaks
+            
+            // Check IS first (matches Python L289-317)
+            if not na(wick_low_val)
+                [is_pb_bar, is_pb_val] = find_last_sh(cycle_start_idx, wick_low_idx)
+                
+                if not na(is_pb_val) and high > is_pb_val
+                    proper_low_idx := wick_low_idx
+                    proper_low_val := wick_low_val
+                    line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                    label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                     wick_low_idx := na
                     wick_low_val := na
-                    proper_low_idx := bar_index
-                    proper_low_val := low
-                    active_pb_high_idx := last_sh_idx
-                    active_pb_high_val := last_sh_val
-                    leg_highest := high
-                    leg_highest_idx := bar_index
                     
-                else if low < target_low and close >= target_low
-                    wick_low_idx := bar_index
-                    wick_low_val := low
-                    
+            float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
+            
+            // BOS: candle CLOSE below target low (matches Python L322-366)
+            if close < target_low
+                // Calculate ChoCH level: highest high from proper_low to current bar
+                // CRITICAL fix — matches Python L343-346 exactly
+                [leg_max_bar, leg_max_val] = find_leg_max(proper_low_idx, bar_index)
+                
+                line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
+                label.new(math.round((proper_low_idx + bar_index) / 2), proper_low_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                htf_locked := true
+                
+                choch_idx := leg_max_bar
+                choch_val := leg_max_val
+                
+                inducement_done := false
+                wick_low_idx := na
+                wick_low_val := na
+                proper_low_idx := bar_index
+                proper_low_val := low
+                
+            // Wick break (matches Python L364-366)
+            else if low < target_low and close >= target_low
+                wick_low_idx := bar_index
+                wick_low_val := low
+                
+        // ChoCH check: high breaks structural level (matches Python L370-398)
         if not na(choch_val) and high > choch_val
             line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
-            label.new(math.round((choch_idx + bar_index)/2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+            label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+            htf_locked := true
+            
             current_trend := 1
             proper_high_idx := bar_index
             proper_high_val := high
@@ -355,10 +461,6 @@ while trends_processed < 2 and continue_loop
             choch_idx := proper_low_idx
             choch_val := proper_low_val
             cycle_start_idx := proper_low_idx
-            active_pb_low_idx := last_sl_idx
-            active_pb_low_val := last_sl_val
-            leg_lowest := low
-            leg_lowest_idx := bar_index
             
     if current_trend == prev_trend
         continue_loop := false

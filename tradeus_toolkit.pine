@@ -1,0 +1,273 @@
+//@version=5
+indicator("TradeUS SMC Toolkit", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
+
+// ==========================================
+// MODULE TOGGLES
+// ==========================================
+show_inside_bars = input.bool(true, "Show Inside Bar Zones", group="Modules")
+show_fvgs        = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
+show_pullbacks   = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
+
+// ==========================================
+// INPUTS & STYLING (Inside Bars)
+// ==========================================
+zone_color      = input.color(color.new(#e91e63, 75), "Zone Color", group="Inside Bars")
+zone_border     = input.color(color.new(#e91e63, 50), "Zone Border Color", group="Inside Bars")
+border_width    = input.int(1, "Border Width", minval=1, maxval=4, group="Inside Bars")
+
+// ==========================================
+// INPUTS & STYLING (FVG)
+// ==========================================
+bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Fair Value Gaps")
+bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Fair Value Gaps")
+
+// ==========================================
+// INPUTS & STYLING (Pullbacks)
+// ==========================================
+zigzag_color  = input.color(#ff9800, "ZigZag Line Color", group="Pullbacks")
+
+// ==========================================
+// STATE VARIABLES
+// ==========================================
+// Shared Reference Bar
+var float ref_high = na
+var float ref_low  = na
+var int   ref_bar  = na
+
+// Inside Bars State
+var int   inside_count = 0
+var int   last_inside_bar = na
+
+// FVG State
+var float ref1_high = na
+var float ref1_low  = na
+var int   ref1_bar  = na
+
+var float ref2_high = na
+var float ref2_low  = na
+var int   ref2_bar  = na
+
+var box[] active_fvgs = array.new_box()
+var string[] active_fvg_types = array.new_string()
+
+// Pullbacks State
+var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
+var int swing_high_bar = na
+var float swing_high_val = na
+var int swing_low_bar = na
+var float swing_low_val = na
+var int last_confirmed_bar = na
+var float last_confirmed_val = na
+
+// ==========================================
+// PULLBACK HELPER FUNCTIONS
+// ==========================================
+add_zigzag_line(x1, y1, x2, y2, col) =>
+    if show_pullbacks and not na(x1) and not na(y1) and not na(x2) and not na(y2)
+        line.new(x1, y1, x2, y2, xloc=xloc.bar_index, color=col, width=2)
+
+process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
+    int n_dir = c_dir
+    int n_sh_b = sh_b
+    float n_sh_v = sh_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+
+    if c_dir == -1
+        add_zigzag_line(lc_b, lc_v, sl_b, sl_v, zigzag_color)
+        n_lc_b := sl_b
+        n_lc_v := sl_v
+        
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+    else if c_dir == 1
+        if h_val >= sh_v
+            n_sh_b := b_idx
+            n_sh_v := h_val
+    else
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+        
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v]
+
+process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
+    int n_dir = c_dir
+    int n_sl_b = sl_b
+    float n_sl_v = sl_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+
+    if c_dir == 1
+        add_zigzag_line(lc_b, lc_v, sh_b, sh_v, zigzag_color)
+        n_lc_b := sh_b
+        n_lc_v := sh_v
+        
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+    else if c_dir == -1
+        if l_val <= sl_v
+            n_sl_b := b_idx
+            n_sl_v := l_val
+    else
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+        
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v]
+
+// ==========================================
+// FVG MITIGATION (Runs on all bars)
+// ==========================================
+if show_fvgs and array.size(active_fvgs) > 0
+    for i = array.size(active_fvgs) - 1 to 0
+        bx = array.get(active_fvgs, i)
+        fvg_type = array.get(active_fvg_types, i)
+        
+        top = box.get_top(bx)
+        bottom = box.get_bottom(bx)
+        
+        box.set_right(bx, bar_index)
+        
+        bool mitigated = false
+        if fvg_type == "bull"
+            if low <= bottom
+                mitigated := true
+            else if low < top
+                box.set_top(bx, low)
+        else if fvg_type == "bear"
+            if high >= top
+                mitigated := true
+            else if high > bottom
+                box.set_bottom(bx, high)
+                
+        if mitigated
+            array.remove(active_fvgs, i)
+            array.remove(active_fvg_types, i)
+
+// ==========================================
+// MAIN LOOP
+// ==========================================
+if bar_index == 0
+    ref_bar := bar_index
+    ref_high := high
+    ref_low := low
+    
+    swing_high_bar := bar_index
+    swing_high_val := high
+    swing_low_bar := bar_index
+    swing_low_val := low
+
+if bar_index > 0
+    curr_open = open
+    curr_high = high
+    curr_low = low
+    
+    open_broke_high = curr_open > ref_high
+    open_broke_low = curr_open < ref_low
+    
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low = (curr_low < ref_low) or open_broke_low
+
+    if broke_high or broke_low
+        // ----------------------------------------------------
+        // 1. INSIDE BARS: Close active sequence
+        // ----------------------------------------------------
+        if show_inside_bars and inside_count > 0
+            box.new(left=ref_bar, top=ref_high, right=last_inside_bar, bottom=ref_low, xloc=xloc.bar_index, bgcolor=zone_color, border_color=zone_border, border_width=border_width)
+        
+        // ----------------------------------------------------
+        // 2. FVG: Detect new gaps
+        // ----------------------------------------------------
+        ref1_high := ref2_high
+        ref1_low  := ref2_low
+        ref1_bar  := ref2_bar
+        
+        ref2_high := ref_high
+        ref2_low  := ref_low
+        ref2_bar  := ref_bar
+        
+        if show_fvgs and not na(ref1_bar)
+            if curr_low > ref1_high
+                bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100))
+                array.push(active_fvgs, bx)
+                array.push(active_fvg_types, "bull")
+                
+            if curr_high < ref1_low
+                bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100))
+                array.push(active_fvgs, bx)
+                array.push(active_fvg_types, "bear")
+
+        // ----------------------------------------------------
+        // 3. PULLBACKS: Process directional swings
+        // ----------------------------------------------------
+        if broke_high and broke_low
+            int taken_first = 0
+            if open_broke_high
+                taken_first := 1
+            else if open_broke_low
+                taken_first := -1
+            else
+                dist_high = math.abs(curr_open - ref_high)
+                dist_low = math.abs(curr_open - ref_low)
+                if dist_low < dist_high
+                    taken_first := -1
+                else
+                    taken_first := 1
+                    
+            if taken_first == 1
+                [d1, sh_b1, sh_v1, lc_b1, lc_v1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1
+                
+                [d2, sl_b2, sl_v2, lc_b2, lc_v2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2
+            else
+                [d1, sl_b1, sl_v1, lc_b1, lc_v1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1
+                
+                [d2, sh_b2, sh_v2, lc_b2, lc_v2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2
+        else
+            if current_dir == 1
+                if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                else if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+            else if current_dir == -1
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+            else
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+
+        // ----------------------------------------------------
+        // 4. UPDATE SHARED REFERENCE BAR
+        // ----------------------------------------------------
+        ref_high := curr_high
+        ref_low  := curr_low
+        ref_bar  := bar_index
+        
+        inside_count := 0
+        last_inside_bar := na
+    else
+        // Inside bar detected
+        inside_count += 1
+        last_inside_bar := bar_index
+
+// ==========================================
+// END OF CHART CLEANUP
+// ==========================================
+if barstate.islast and inside_count > 0 and show_inside_bars
+    box.new(left=ref_bar, top=ref_high, right=last_inside_bar, bottom=ref_low, xloc=xloc.bar_index, bgcolor=zone_color, border_color=zone_border, border_width=border_width)

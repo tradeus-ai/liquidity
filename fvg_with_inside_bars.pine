@@ -1,0 +1,118 @@
+//@version=5
+indicator("FVG with Inside Bars [TradeUS AI]", overlay=true, max_boxes_count=500)
+
+// ==========================================
+// INPUTS & STYLING
+// ==========================================
+bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Style")
+bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Style")
+
+// ==========================================
+// STATE VARIABLES FOR VALID BARS
+// ==========================================
+var float ref1_high = na
+var float ref1_low = na
+var int   ref1_bar = na
+
+var float ref2_high = na
+var float ref2_low = na
+var int   ref2_bar = na
+
+var float ref3_high = na
+var float ref3_low = na
+var int   ref3_bar = na
+
+// Arrays to keep track of active FVG boxes for mitigation
+var box[] active_fvgs = array.new_box()
+var string[] active_fvg_types = array.new_string() // "bull" or "bear"
+
+// ==========================================
+// FVG MITIGATION LOGIC (Runs on all bars)
+// ==========================================
+if array.size(active_fvgs) > 0
+    for i = array.size(active_fvgs) - 1 to 0
+        bx = array.get(active_fvgs, i)
+        fvg_type = array.get(active_fvg_types, i)
+        
+        top = box.get_top(bx)
+        bottom = box.get_bottom(bx)
+        
+        // Extend the box to the current bar
+        box.set_right(bx, bar_index)
+        
+        // Mitigation check
+        bool mitigated = false
+        if fvg_type == "bull"
+            if low <= bottom
+                mitigated := true
+            else if low < top
+                // Partially mitigated, adjust the top
+                box.set_top(bx, low)
+        else if fvg_type == "bear"
+            if high >= top
+                mitigated := true
+            else if high > bottom
+                // Partially mitigated, adjust the bottom
+                box.set_bottom(bx, high)
+                
+        // If fully mitigated, remove from active tracking
+        if mitigated
+            array.remove(active_fvgs, i)
+            array.remove(active_fvg_types, i)
+
+// ==========================================
+// REFERENCE BAR (VALID BAR) TRACKING
+// ==========================================
+if bar_index == 0
+    ref3_high := high
+    ref3_low  := low
+    ref3_bar  := bar_index
+
+if bar_index > 0
+    // Check if current bar breaks the mother bar (ref3)
+    broke_high = high > ref3_high
+    broke_low  = low  < ref3_low
+
+    if broke_high or broke_low
+        // Shift history to accommodate the new valid bar
+        ref1_high := ref2_high
+        ref1_low  := ref2_low
+        ref1_bar  := ref2_bar
+        
+        ref2_high := ref3_high
+        ref2_low  := ref3_low
+        ref2_bar  := ref3_bar
+        
+        ref3_high := high
+        ref3_low  := low
+        ref3_bar  := bar_index
+        
+        // ==========================================
+        // FVG IDENTIFICATION (Using Valid Bars Only)
+        // ==========================================
+        if not na(ref1_bar)
+            // Bullish FVG: ref1 high is lower than ref3 low
+            if ref3_low > ref1_high
+                bx = box.new(
+                     left=ref1_bar, 
+                     top=ref3_low, 
+                     right=bar_index, 
+                     bottom=ref1_high, 
+                     bgcolor=bull_fvg_color, 
+                     border_color=color.new(color.white, 100)
+                     )
+                array.push(active_fvgs, bx)
+                array.push(active_fvg_types, "bull")
+                
+            // Bearish FVG: ref1 low is higher than ref3 high
+            if ref3_high < ref1_low
+                bx = box.new(
+                     left=ref1_bar, 
+                     top=ref1_low, 
+                     right=bar_index, 
+                     bottom=ref3_high, 
+                     bgcolor=bear_fvg_color, 
+                     border_color=color.new(color.white, 100)
+                     )
+                array.push(active_fvgs, bx)
+                array.push(active_fvg_types, "bear")
