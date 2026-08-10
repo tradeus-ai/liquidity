@@ -27,13 +27,24 @@ def process_symbol(sym):
         return None
 
 def get_screener_data(force_refresh=False):
+    import datetime
+    
     # Check cache first
     if not force_refresh and os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, 'r', encoding='utf-8') as f:
                 cached_data = json.load(f)
+                
+            # Check if cache is from today
+            cache_ts = cached_data.get('timestamp', 0)
+            cache_date = datetime.datetime.fromtimestamp(cache_ts).date()
+            today_date = datetime.date.today()
+            
+            if cache_date == today_date:
                 cached_data['cached'] = True
                 return cached_data
+            else:
+                print(f"Cache is from {cache_date}, but today is {today_date}. Forcing refresh.")
         except Exception as e:
             print(f"Error reading screener cache: {e}")
 

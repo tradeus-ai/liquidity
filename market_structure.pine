@@ -1,4 +1,4 @@
-//@version=5
+//@version=6
 indicator("Market Structure [TradeUS AI]", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
 
 // ============================================================================
@@ -192,7 +192,7 @@ find_last_sl(after_bar, before_bar) =>
             b = array.get(sl_bars, i)
             if b < after_bar
                 break
-            if b >= after_bar and b <= before_bar
+            if b >= after_bar and b < before_bar
                 found_bar := b
                 found_val := array.get(sl_vals, i)
                 break
@@ -208,7 +208,7 @@ find_last_sh(after_bar, before_bar) =>
             b = array.get(sh_bars, i)
             if b < after_bar
                 break
-            if b >= after_bar and b <= before_bar
+            if b >= after_bar and b < before_bar
                 found_bar := b
                 found_val := array.get(sh_vals, i)
                 break
@@ -303,6 +303,8 @@ bool continue_loop = true
 
 while trends_processed < 2 and continue_loop
     int prev_trend = current_trend
+    bool inducement_triggered_now = false
+    bool event_triggered_this_candle = false
     
     if current_trend == 1
         // ---- UPTREND ----
@@ -323,6 +325,8 @@ while trends_processed < 2 and continue_loop
             // Check Inducement (#) (matches Python L104-117)
             if not na(pb_low_val) and low < pb_low_val
                 inducement_done := true
+                inducement_triggered_now := true
+                event_triggered_this_candle := true
                 line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                 label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                 
@@ -336,6 +340,7 @@ while trends_processed < 2 and continue_loop
                 if not na(is_pb_val) and low < is_pb_val
                     proper_high_idx := wick_high_idx
                     proper_high_val := wick_high_val
+                    event_triggered_this_candle := true
                     line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
                     label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                     wick_high_idx := na
@@ -344,7 +349,8 @@ while trends_processed < 2 and continue_loop
             float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
             
             // BOS: candle CLOSE above target high (matches Python L162-206)
-            if close > target_high
+            if close > target_high and not event_triggered_this_candle
+                event_triggered_this_candle := true
                 // Calculate ChoCH level: lowest low from proper_high to current bar
                 // This is the CRITICAL fix — matches Python L183-186 exactly
                 [leg_min_bar, leg_min_val] = find_leg_min(proper_high_idx, bar_index)
@@ -368,7 +374,8 @@ while trends_processed < 2 and continue_loop
                 wick_high_val := high
                 
         // ChoCH check: low breaks structural level (matches Python L210-238)
-        if not na(choch_val) and low < choch_val
+        if not na(choch_val) and not event_triggered_this_candle and low < choch_val
+            event_triggered_this_candle := true
             line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
             label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
             htf_locked := true
@@ -402,6 +409,8 @@ while trends_processed < 2 and continue_loop
             // Check Inducement (#) (matches Python L264-282)
             if not na(pb_high_val) and high > pb_high_val
                 inducement_done := true
+                inducement_triggered_now := true
+                event_triggered_this_candle := true
                 line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                 label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                 
@@ -415,6 +424,7 @@ while trends_processed < 2 and continue_loop
                 if not na(is_pb_val) and high > is_pb_val
                     proper_low_idx := wick_low_idx
                     proper_low_val := wick_low_val
+                    event_triggered_this_candle := true
                     line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
                     label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                     wick_low_idx := na
@@ -423,7 +433,8 @@ while trends_processed < 2 and continue_loop
             float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
             
             // BOS: candle CLOSE below target low (matches Python L322-366)
-            if close < target_low
+            if close < target_low and not event_triggered_this_candle
+                event_triggered_this_candle := true
                 // Calculate ChoCH level: highest high from proper_low to current bar
                 // CRITICAL fix — matches Python L343-346 exactly
                 [leg_max_bar, leg_max_val] = find_leg_max(proper_low_idx, bar_index)
@@ -447,7 +458,8 @@ while trends_processed < 2 and continue_loop
                 wick_low_val := low
                 
         // ChoCH check: high breaks structural level (matches Python L370-398)
-        if not na(choch_val) and high > choch_val
+        if not na(choch_val) and not event_triggered_this_candle and high > choch_val
+            event_triggered_this_candle := true
             line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
             label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
             htf_locked := true
@@ -462,6 +474,16 @@ while trends_processed < 2 and continue_loop
             choch_val := proper_low_val
             cycle_start_idx := proper_low_idx
             
-    if current_trend == prev_trend
+    if current_trend == prev_trend or event_triggered_this_candle
         continue_loop := false
     trends_processed += 1
+
+// ============================================================================
+// CANDLE STRENGTH
+// ============================================================================
+candle_range = high - low
+sellers_strength = candle_range == 0 ? 0 : ((high - close) / candle_range) * 100
+buyers_strength  = candle_range == 0 ? 0 : ((close - low) / candle_range) * 100
+
+plot(sellers_strength, title="Sellers Strength %", color=color.red, display=display.data_window)
+plot(buyers_strength, title="Buyers Strength %", color=color.green, display=display.data_window)

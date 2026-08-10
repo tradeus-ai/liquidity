@@ -1,4 +1,4 @@
-//@version=5
+//@version=6
 indicator("TradeUS SMC Toolkit", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
 
 // ==========================================
@@ -8,6 +8,18 @@ show_inside_bars   = input.bool(true, "Show Inside Bar Zones", group="Modules")
 show_fvgs          = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
 show_pullbacks     = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
 show_market_struct = input.bool(true, "Show Market Structure (BOS/ChoCH/#/IS)", group="Modules")
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+get_decimals() =>
+    is_forex = syminfo.type == "forex" or syminfo.ticker == "XAUUSD" or syminfo.ticker == "XAGUSD"
+    is_forex ? 5 : 2
+
+round_price(val) =>
+    mult = math.pow(10, get_decimals())
+    math.round(val * mult) / mult
+
 
 // ==========================================
 // INPUTS & STYLING (Inside Bars)
@@ -31,6 +43,7 @@ zigzag_color  = input.color(#ff9800, "ZigZag Line Color", group="Pullbacks")
 // STATE VARIABLES
 // ==========================================
 // Shared Reference Bar
+var int current_trend = 1
 var float ref_high = na
 var float ref_low  = na
 var int   ref_bar  = na
@@ -164,18 +177,20 @@ bool is_sl = false
 // ==========================================
 if bar_index == 0
     ref_bar := bar_index
-    ref_high := high
-    ref_low := low
+    ref_high := round_price(high)
+    ref_low := round_price(low)
     
     swing_high_bar := bar_index
-    swing_high_val := high
+    swing_high_val := round_price(high)
     swing_low_bar := bar_index
-    swing_low_val := low
+    swing_low_val := round_price(low)
+
+curr_open = round_price(open)
+curr_high = round_price(high)
+curr_low = round_price(low)
+curr_close = round_price(close)
 
 if bar_index > 0
-    curr_open = open
-    curr_high = high
-    curr_low = low
     
     open_broke_high = curr_open > ref_high
     open_broke_low = curr_open < ref_low
@@ -202,12 +217,12 @@ if bar_index > 0
         ref2_bar  := ref_bar
         
         if show_fvgs and not na(ref1_bar)
-            if curr_low > ref1_high
+            if curr_low > ref1_high and current_trend == 1
                 bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100))
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bull")
                 
-            if curr_high < ref1_low
+            if curr_high < ref1_low and current_trend == -1
                 bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100))
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bear")
@@ -314,8 +329,8 @@ if is_sh
 // OHLC history arrays — for scanning leg min/max at BOS time
 var float[] bar_lows = array.new_float()
 var float[] bar_highs = array.new_float()
-array.push(bar_lows, low)
-array.push(bar_highs, high)
+array.push(bar_lows, round_price(low))
+array.push(bar_highs, round_price(high))
 
 // Helper: find the last swing low within [after_bar, before_bar] inclusive
 find_last_sl(after_bar, before_bar) =>
@@ -327,7 +342,7 @@ find_last_sl(after_bar, before_bar) =>
             b = array.get(sl_bars, i)
             if b < after_bar
                 break
-            if b >= after_bar and b <= before_bar
+            if b >= after_bar and b < before_bar
                 found_bar := b
                 found_val := array.get(sl_vals, i)
                 break
@@ -343,7 +358,7 @@ find_last_sh(after_bar, before_bar) =>
             b = array.get(sh_bars, i)
             if b < after_bar
                 break
-            if b >= after_bar and b <= before_bar
+            if b >= after_bar and b < before_bar
                 found_bar := b
                 found_val := array.get(sh_vals, i)
                 break
@@ -374,7 +389,7 @@ find_leg_max(from_bar, to_bar) =>
     [max_bar, max_val]
 
 // HTF Structure State
-var int current_trend = 1
+
 var bool htf_locked = false
 
 var int proper_high_idx = na
@@ -398,16 +413,17 @@ var float atl_low = na
 var int atl_bar = na
 
 if bar_index == 0
-    atl_low := low
+    atl_low := round_price(low)
     atl_bar := bar_index
     cycle_start_idx := bar_index
     choch_idx := bar_index
-    choch_val := low
+    choch_val := round_price(low)
 
 // Self-correcting reset: new ATL before first structural event
 if bar_index > 0 and not htf_locked
-    if low < atl_low
-        atl_low := low
+    curr_low_r = round_price(low)
+    if curr_low_r < atl_low
+        atl_low := curr_low_r
         atl_bar := bar_index
         current_trend := 1
         proper_high_idx := na
@@ -420,7 +436,7 @@ if bar_index > 0 and not htf_locked
         wick_low_idx := na
         wick_low_val := na
         choch_idx := bar_index
-        choch_val := low
+        choch_val := curr_low_r
         cycle_start_idx := bar_index
 
 // ============================================================================
@@ -433,25 +449,29 @@ if show_market_struct
     
     while trends_processed < 2 and continue_loop
         int prev_trend = current_trend
+        bool inducement_triggered_now = false
+        bool event_triggered_this_candle = false
         
         if current_trend == 1
             // ---- UPTREND ----
             if na(proper_high_val)
                 proper_high_idx := bar_index
-                proper_high_val := high
+                proper_high_val := curr_high
             
             if not inducement_done
                 // Update peak high
-                if high >= proper_high_val
+                if curr_high >= proper_high_val
                     proper_high_idx := bar_index
-                    proper_high_val := high
+                    proper_high_val := curr_high
                 
                 // Find last swing low within [cycle_start, proper_high]
                 [pb_low_bar, pb_low_val] = find_last_sl(cycle_start_idx, proper_high_idx)
                 
                 // Check Inducement (#)
-                if not na(pb_low_val) and low < pb_low_val
+                if not na(pb_low_val) and curr_low < pb_low_val
                     inducement_done := true
+                    inducement_triggered_now := true
+                    event_triggered_this_candle := true
                     line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                     label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                     
@@ -460,9 +480,10 @@ if show_market_struct
                 if not na(wick_high_val)
                     [is_pb_bar, is_pb_val] = find_last_sl(cycle_start_idx, wick_high_idx)
                     
-                    if not na(is_pb_val) and low < is_pb_val
+                    if not na(is_pb_val) and curr_low < is_pb_val
                         proper_high_idx := wick_high_idx
                         proper_high_val := wick_high_val
+                        event_triggered_this_candle := true
                         line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
                         label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                         wick_high_idx := na
@@ -471,7 +492,8 @@ if show_market_struct
                 float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
                 
                 // BOS: candle CLOSE above target high
-                if close > target_high
+                if curr_close > target_high and not event_triggered_this_candle
+                    event_triggered_this_candle := true
                     [leg_min_bar, leg_min_val] = find_leg_min(proper_high_idx, bar_index)
                     
                     line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
@@ -485,22 +507,23 @@ if show_market_struct
                     wick_high_idx := na
                     wick_high_val := na
                     proper_high_idx := bar_index
-                    proper_high_val := high
+                    proper_high_val := curr_high
                     
                 // Wick break: high > target but close <= target
-                else if high > target_high and close <= target_high
+                else if curr_high > target_high and curr_close <= target_high
                     wick_high_idx := bar_index
-                    wick_high_val := high
+                    wick_high_val := curr_high
                     
             // ChoCH check: low breaks structural level
-            if not na(choch_val) and low < choch_val
+            if not na(choch_val) and not event_triggered_this_candle and curr_low < choch_val
+                event_triggered_this_candle := true
                 line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
                 label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
                 htf_locked := true
                 
                 current_trend := -1
                 proper_low_idx := bar_index
-                proper_low_val := low
+                proper_low_val := curr_low
                 inducement_done := false
                 wick_high_idx := na
                 wick_high_val := na
@@ -512,20 +535,22 @@ if show_market_struct
             // ---- DOWNTREND ----
             if na(proper_low_val)
                 proper_low_idx := bar_index
-                proper_low_val := low
+                proper_low_val := curr_low
                 
             if not inducement_done
                 // Update peak low
-                if low <= proper_low_val
+                if curr_low <= proper_low_val
                     proper_low_idx := bar_index
-                    proper_low_val := low
+                    proper_low_val := curr_low
                 
                 // Find last swing high within [cycle_start, proper_low]
                 [pb_high_bar, pb_high_val] = find_last_sh(cycle_start_idx, proper_low_idx)
                 
                 // Check Inducement (#)
-                if not na(pb_high_val) and high > pb_high_val
+                if not na(pb_high_val) and curr_high > pb_high_val
                     inducement_done := true
+                    inducement_triggered_now := true
+                    event_triggered_this_candle := true
                     line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                     label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                     
@@ -534,9 +559,10 @@ if show_market_struct
                 if not na(wick_low_val)
                     [is_pb_bar, is_pb_val] = find_last_sh(cycle_start_idx, wick_low_idx)
                     
-                    if not na(is_pb_val) and high > is_pb_val
+                    if not na(is_pb_val) and curr_high > is_pb_val
                         proper_low_idx := wick_low_idx
                         proper_low_val := wick_low_val
+                        event_triggered_this_candle := true
                         line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
                         label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                         wick_low_idx := na
@@ -545,7 +571,8 @@ if show_market_struct
                 float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
                 
                 // BOS: candle CLOSE below target low
-                if close < target_low
+                if curr_close < target_low and not event_triggered_this_candle
+                    event_triggered_this_candle := true
                     [leg_max_bar, leg_max_val] = find_leg_max(proper_low_idx, bar_index)
                     
                     line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
@@ -559,22 +586,23 @@ if show_market_struct
                     wick_low_idx := na
                     wick_low_val := na
                     proper_low_idx := bar_index
-                    proper_low_val := low
+                    proper_low_val := curr_low
                     
                 // Wick break
-                else if low < target_low and close >= target_low
+                else if curr_low < target_low and curr_close >= target_low
                     wick_low_idx := bar_index
-                    wick_low_val := low
+                    wick_low_val := curr_low
                     
             // ChoCH check: high breaks structural level
-            if not na(choch_val) and high > choch_val
+            if not na(choch_val) and not event_triggered_this_candle and curr_high > choch_val
+                event_triggered_this_candle := true
                 line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
                 label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
                 htf_locked := true
                 
                 current_trend := 1
                 proper_high_idx := bar_index
-                proper_high_val := high
+                proper_high_val := curr_high
                 inducement_done := false
                 wick_low_idx := na
                 wick_low_val := na
@@ -582,6 +610,18 @@ if show_market_struct
                 choch_val := proper_low_val
                 cycle_start_idx := proper_low_idx
                 
-        if current_trend == prev_trend
+        if current_trend == prev_trend or event_triggered_this_candle
             continue_loop := false
         trends_processed += 1
+
+// ============================================================================
+// CANDLE STRENGTH
+// ============================================================================
+// ==========================================
+// BUYER-SELLER STRENGTH (STATUS LINE)
+// ==========================================
+sellers = (high-close)/(high-low)*100
+buyers  = (low-close)/(high-low)*100
+
+plot(sellers, title="sellers", color=color.red, display=display.status_line + display.data_window, linewidth=3, style=plot.style_histogram)
+plot(buyers, title="buyers", color=color.lime, display=display.status_line + display.data_window, linewidth=3, style=plot.style_histogram)

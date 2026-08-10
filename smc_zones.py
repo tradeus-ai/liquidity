@@ -45,31 +45,73 @@ def extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx
     leg_df = df.loc[cycle_start_idx:proper_high_idx]
     sl_rows = leg_df[leg_df['is_swing_low'] == True]
     sl_rows = sl_rows[sl_rows.index < active_pb_low_idx]
-    raw_zones = []
+    
+    valid_zones = []
     for z_idx, row in sl_rows.iterrows():
-        raw_zones.append({
-            'start_time': z_idx,
-            'bottom': float(row['low']),
-            'top': float(row['high']),
-            'peak': float(row['low']),
-            'type': 'demand'
-        })
-    return merge_zones(raw_zones, threshold)
+        zone_bottom = float(row['low'])
+        zone_top = float(row['high'])
+        
+        # Check if the zone was mitigated in the future of this leg
+        future_df = leg_df.loc[z_idx:]
+        future_df = future_df.iloc[1:] # exclude the swing low bar itself
+        
+        mitigated = False
+        if len(future_df) > 0:
+            lowest_future = future_df['low'].min()
+            if lowest_future <= zone_bottom:
+                mitigated = True
+            else:
+                # If pierced but not broken, shave the top down
+                touches = future_df[future_df['low'] < zone_top]
+                if len(touches) > 0:
+                    zone_top = float(touches['low'].min())
+                    
+        if not mitigated:
+            valid_zones.append({
+                'start_time': z_idx,
+                'bottom': zone_bottom,
+                'top': zone_top,
+                'peak': zone_bottom,
+                'type': 'demand'
+            })
+            
+    return merge_zones(valid_zones, threshold)
 
 def extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx, threshold=0.003):
     leg_df = df.loc[cycle_start_idx:proper_low_idx]
     sh_rows = leg_df[leg_df['is_swing_high'] == True]
     sh_rows = sh_rows[sh_rows.index < active_pb_high_idx]
-    raw_zones = []
+    
+    valid_zones = []
     for z_idx, row in sh_rows.iterrows():
-        raw_zones.append({
-            'start_time': z_idx,
-            'bottom': float(row['low']),
-            'top': float(row['high']),
-            'peak': float(row['high']),
-            'type': 'supply'
-        })
-    return merge_zones(raw_zones, threshold)
+        zone_bottom = float(row['low'])
+        zone_top = float(row['high'])
+        
+        # Check if the zone was mitigated in the future of this leg
+        future_df = leg_df.loc[z_idx:]
+        future_df = future_df.iloc[1:] # exclude the swing high bar itself
+        
+        mitigated = False
+        if len(future_df) > 0:
+            highest_future = future_df['high'].max()
+            if highest_future >= zone_top:
+                mitigated = True
+            else:
+                # If pierced but not broken, shave the bottom up
+                touches = future_df[future_df['high'] > zone_bottom]
+                if len(touches) > 0:
+                    zone_bottom = float(touches['high'].max())
+                    
+        if not mitigated:
+            valid_zones.append({
+                'start_time': z_idx,
+                'bottom': zone_bottom,
+                'top': zone_top,
+                'peak': zone_top,
+                'type': 'supply'
+            })
+            
+    return merge_zones(valid_zones, threshold)
 
 def mitigate_zones(active_demand_zones, active_supply_zones, historical_zones, c_low, c_high, idx):
     # Demand Zones (touched if low dips into top)

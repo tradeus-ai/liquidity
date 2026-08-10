@@ -73,8 +73,11 @@ def analyze_htf_structure(df):
         
         # We loop up to 2 times to allow a ChoCH on this candle to immediately 
         # trigger the new trend's Inducement/BOS logic on the same candle.
+        event_triggered_this_candle = False
         trends_processed = 0
         while trends_processed < 2:
+            if event_triggered_this_candle:
+                break
             prev_trend = current_trend
             
             if current_trend == 1:
@@ -91,7 +94,7 @@ def analyze_htf_structure(df):
                             proper_high_val = c_high
                             
                             # Only look for swing lows AFTER cycle_start_idx
-                            sub_df = df.loc[cycle_start_idx:proper_high_idx]
+                            sub_df = df.loc[cycle_start_idx:proper_high_idx].iloc[:-1]
                             sl_rows = sub_df[sub_df['is_swing_low'] == True]
                             if len(sl_rows) > 0:
                                 active_pb_low_idx = sl_rows.index[-1]
@@ -105,6 +108,7 @@ def analyze_htf_structure(df):
                             inducement_done = True
                             label = "#"
                             evt_type = "IDM"
+                            event_triggered_this_candle = True
                             
                             structure_events.append({
                                 'type': evt_type,
@@ -129,7 +133,7 @@ def analyze_htf_structure(df):
                         if wick_high_val is not None:
                             # Check for Inducement Shift (IS)
                             # IS pullback low must be prior to the wick high (left of the high)
-                            sub_df = df.loc[cycle_start_idx:wick_high_idx]
+                            sub_df = df.loc[cycle_start_idx:wick_high_idx].iloc[:-1]
                             sl_rows = sub_df[sub_df['is_swing_low'] == True]
                             if len(sl_rows) > 0:
                                 current_pb_low_idx = sl_rows.index[-1]
@@ -142,6 +146,7 @@ def analyze_htf_structure(df):
                                 # IS occurred! The wick high is now confirmed as the new proper high.
                                 proper_high_idx = wick_high_idx
                                 proper_high_val = wick_high_val
+                                event_triggered_this_candle = True
                                 
                                 structure_events.append({
                                     'type': 'IS',
@@ -159,7 +164,8 @@ def analyze_htf_structure(df):
                         target_high = wick_high_val if wick_high_val is not None else proper_high_val
                         
                         # Check BOS: Candle CLOSE above Proper High / Wick High
-                        if c_close > target_high:
+                        if c_close > target_high and not event_triggered_this_candle:
+                            event_triggered_this_candle = True
                             structure_events.append({
                                 'type': 'BOS',
                                 'label': 'BOS',
@@ -191,7 +197,7 @@ def analyze_htf_structure(df):
                             proper_high_idx = idx
                             proper_high_val = c_high
                             # Fetch active pullback for the new leg immediately
-                            sub_df = df.loc[cycle_start_idx:proper_high_idx]
+                            sub_df = df.loc[cycle_start_idx:proper_high_idx].iloc[:-1]
                             sl_rows = sub_df[sub_df['is_swing_low'] == True]
                             if len(sl_rows) > 0:
                                 active_pb_low_idx = sl_rows.index[-1]
@@ -207,7 +213,8 @@ def analyze_htf_structure(df):
                             # IS check happens on next candles
                                 
                 # Check ChoCH: Low breaks structural ChoCH level
-                if choch_val is not None and c_low < choch_val:
+                if choch_val is not None and not event_triggered_this_candle and c_low < choch_val:
+                    event_triggered_this_candle = True
                     structure_events.append({
                         'type': 'CHOCH',
                         'label': 'ChoCH',
@@ -228,7 +235,7 @@ def analyze_htf_structure(df):
                     # New cycle starts here (from peak high)
                     cycle_start_idx = proper_high_idx
                     # Fetch active pullback for the new leg immediately
-                    sub_df = df.loc[cycle_start_idx:proper_low_idx]
+                    sub_df = df.loc[cycle_start_idx:proper_low_idx].iloc[:-1]
                     sh_rows = sub_df[sub_df['is_swing_high'] == True]
                     if len(sh_rows) > 0:
                         active_pb_high_idx = sh_rows.index[-1]
@@ -251,7 +258,7 @@ def analyze_htf_structure(df):
                             proper_low_val = c_low
                             
                             # Only look for swing highs AFTER cycle_start_idx
-                            sub_df = df.loc[cycle_start_idx:proper_low_idx]
+                            sub_df = df.loc[cycle_start_idx:proper_low_idx].iloc[:-1]
                             sh_rows = sub_df[sub_df['is_swing_high'] == True]
                             if len(sh_rows) > 0:
                                 active_pb_high_idx = sh_rows.index[-1]
@@ -265,6 +272,7 @@ def analyze_htf_structure(df):
                             inducement_done = True
                             label = "#"
                             evt_type = "IDM"
+                            event_triggered_this_candle = True
                             
                             structure_events.append({
                                 'type': evt_type,
@@ -289,7 +297,7 @@ def analyze_htf_structure(df):
                         if wick_low_val is not None:
                             # Check for Inducement Shift (IS)
                             # IS pullback high must be prior to the wick low (left of the low)
-                            sub_df = df.loc[cycle_start_idx:wick_low_idx]
+                            sub_df = df.loc[cycle_start_idx:wick_low_idx].iloc[:-1]
                             sh_rows = sub_df[sub_df['is_swing_high'] == True]
                             if len(sh_rows) > 0:
                                 current_pb_high_idx = sh_rows.index[-1]
@@ -302,6 +310,7 @@ def analyze_htf_structure(df):
                                 # IS occurred! The wick low is now confirmed as the new proper low.
                                 proper_low_idx = wick_low_idx
                                 proper_low_val = wick_low_val
+                                event_triggered_this_candle = True
                                 
                                 structure_events.append({
                                     'type': 'IS',
@@ -319,7 +328,8 @@ def analyze_htf_structure(df):
                         target_low = wick_low_val if wick_low_val is not None else proper_low_val
                         
                         # Check BOS: Candle CLOSE below Proper Low / Wick Low
-                        if c_close < target_low:
+                        if c_close < target_low and not event_triggered_this_candle:
+                            event_triggered_this_candle = True
                             structure_events.append({
                                 'type': 'BOS',
                                 'label': 'BOS',
@@ -351,7 +361,7 @@ def analyze_htf_structure(df):
                             proper_low_idx = idx
                             proper_low_val = c_low
                             # Fetch active pullback for the new leg immediately
-                            sub_df = df.loc[cycle_start_idx:proper_low_idx]
+                            sub_df = df.loc[cycle_start_idx:proper_low_idx].iloc[:-1]
                             sh_rows = sub_df[sub_df['is_swing_high'] == True]
                             if len(sh_rows) > 0:
                                 active_pb_high_idx = sh_rows.index[-1]
@@ -367,7 +377,8 @@ def analyze_htf_structure(df):
                             # IS check happens on next candles
                                 
                 # Check ChoCH: High breaks structural ChoCH level
-                if choch_val is not None and c_high > choch_val:
+                if choch_val is not None and not event_triggered_this_candle and c_high > choch_val:
+                    event_triggered_this_candle = True
                     structure_events.append({
                         'type': 'CHOCH',
                         'label': 'ChoCH',
@@ -388,7 +399,7 @@ def analyze_htf_structure(df):
                     # New cycle starts here (from peak low)
                     cycle_start_idx = proper_low_idx
                     # Fetch active pullback for the new leg immediately
-                    sub_df = df.loc[cycle_start_idx:proper_high_idx]
+                    sub_df = df.loc[cycle_start_idx:proper_high_idx].iloc[:-1]
                     sl_rows = sub_df[sub_df['is_swing_low'] == True]
                     if len(sl_rows) > 0:
                         active_pb_low_idx = sl_rows.index[-1]

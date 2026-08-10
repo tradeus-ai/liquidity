@@ -35,6 +35,45 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     if is_forex_metals:
         chart.precision(5)
     
+    # Force the JS handler to use the correct precision for the legend OHLC formatting
+    chart.run_script(f"{chart.id}.precision = {decimals_val};")
+
+    # Add custom candle strength overlay on hover
+    chart.run_script(f"""
+        let strengthContainer = document.createElement('div');
+        strengthContainer.style.position = 'absolute';
+        strengthContainer.style.top = '50px';
+        strengthContainer.style.left = '12px';
+        strengthContainer.style.zIndex = '1000';
+        strengthContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif';
+        strengthContainer.style.fontSize = '14px';
+        strengthContainer.style.pointerEvents = 'none';
+        document.body.appendChild(strengthContainer);
+
+        {chart.id}.chart.subscribeCrosshairMove((param) => {{
+            if (!param.time || !param.seriesData) {{
+                strengthContainer.innerHTML = '';
+                return;
+            }}
+            let data = param.seriesData.get({chart.id}.series);
+            if (data) {{
+                let high = data.high;
+                let low = data.low;
+                let close = data.close;
+                let range = high - low;
+                let sellers = range === 0 ? 0 : ((high - close) / range) * 100;
+                let buyers = range === 0 ? 0 : ((close - low) / range) * 100;
+                strengthContainer.innerHTML = `
+                    <div style="display: flex; gap: 15px; background: rgba(19, 23, 34, 0.8); padding: 4px 8px; border-radius: 4px;">
+                        <span style="color: #4caf50; font-weight: bold;">Buyers: ${{buyers.toFixed(1)}}%</span>
+                        <span style="color: #f44336; font-weight: bold;">Sellers: ${{sellers.toFixed(1)}}%</span>
+                    </div>
+                `;
+            }} else {{
+                strengthContainer.innerHTML = '';
+            }}
+        }});
+    """)
     # Format candle dataframe for lightweight-charts safely
     candles_df = pd.DataFrame(data['candles'])
     if not candles_df.empty:

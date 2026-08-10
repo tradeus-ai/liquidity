@@ -140,6 +140,15 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
 
 if __name__ == "__main__":
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from screener_service import get_screener_data
+
+    # Schedule daily screener cache recalculation in the background
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=lambda: get_screener_data(force_refresh=True), trigger="cron", hour=0, minute=0)
+    scheduler.start()
+    print("⏰ Background scheduler started for daily screener cache updates.")
+
     with ThreadedTCPServer(("", PORT), LiquidityDashboardHandler) as httpd:
         print(f"=" * 80)
         print(f"🚀 Liquidity Dashboard running at http://127.0.0.1:{PORT}")
@@ -149,3 +158,4 @@ if __name__ == "__main__":
             httpd.serve_forever()
         except KeyboardInterrupt:
             print("\nShutting down server.")
+            scheduler.shutdown()

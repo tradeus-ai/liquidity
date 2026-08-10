@@ -63,6 +63,7 @@ class MarketStructureAnalyzer:
                 extreme_low_idx = idx
             
             if trend == 1:
+                inducement_triggered_now = False
                 # 1. Inducement Check
                 if market_high is None and last_swing_low is not None:
                     if row['low'] < last_swing_low:
@@ -74,9 +75,10 @@ class MarketStructureAnalyzer:
                         self.df.loc[idx, 'event_start_val'] = last_swing_low
                         self.df.loc[idx, 'event_end_idx'] = idx
                         self.df.loc[idx, 'event_end_val'] = last_swing_low
+                        inducement_triggered_now = True
                 
                 # 2. ChoCH Check
-                if market_low is not None and row['low'] < market_low:
+                if market_low is not None and not inducement_triggered_now and row['low'] < market_low:
                     self.df.loc[idx, 'structure_event'] = 'CHOCH_DOWN'
                     self.df.loc[idx, 'event_start_idx'] = market_low_idx
                     self.df.loc[idx, 'event_start_val'] = market_low
@@ -92,7 +94,7 @@ class MarketStructureAnalyzer:
                     continue
                     
                 # 3. BOS Check
-                if market_high is not None and row['close'] > market_high:
+                if market_high is not None and not inducement_triggered_now and row['close'] > market_high:
                     self.df.loc[idx, 'structure_event'] = 'BOS_UP'
                     self.df.loc[idx, 'event_start_idx'] = market_high_idx
                     self.df.loc[idx, 'event_start_val'] = market_high
@@ -115,6 +117,7 @@ class MarketStructureAnalyzer:
                     extreme_low_idx = idx
                     
             elif trend == -1:
+                inducement_triggered_now = False
                 # 1. Inducement Check
                 if market_low is None and last_swing_high is not None:
                     if row['high'] > last_swing_high:
@@ -126,9 +129,10 @@ class MarketStructureAnalyzer:
                         self.df.loc[idx, 'event_start_val'] = last_swing_high
                         self.df.loc[idx, 'event_end_idx'] = idx
                         self.df.loc[idx, 'event_end_val'] = last_swing_high
+                        inducement_triggered_now = True
                 
                 # 2. ChoCH Check
-                if market_high is not None and row['high'] > market_high:
+                if market_high is not None and not inducement_triggered_now and row['high'] > market_high:
                     self.df.loc[idx, 'structure_event'] = 'CHOCH_UP'
                     self.df.loc[idx, 'event_start_idx'] = market_high_idx
                     self.df.loc[idx, 'event_start_val'] = market_high
@@ -144,7 +148,7 @@ class MarketStructureAnalyzer:
                     continue
                     
                 # 3. BOS Check
-                if market_low is not None and row['close'] < market_low:
+                if market_low is not None and not inducement_triggered_now and row['close'] < market_low:
                     self.df.loc[idx, 'structure_event'] = 'BOS_DOWN'
                     self.df.loc[idx, 'event_start_idx'] = market_low_idx
                     self.df.loc[idx, 'event_start_val'] = market_low
