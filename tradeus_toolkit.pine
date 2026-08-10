@@ -4,9 +4,10 @@ indicator("TradeUS SMC Toolkit", overlay=true, max_lines_count=500, max_boxes_co
 // ==========================================
 // MODULE TOGGLES
 // ==========================================
-show_inside_bars = input.bool(true, "Show Inside Bar Zones", group="Modules")
-show_fvgs        = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
-show_pullbacks   = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
+show_inside_bars   = input.bool(true, "Show Inside Bar Zones", group="Modules")
+show_fvgs          = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
+show_pullbacks     = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
+show_market_struct = input.bool(true, "Show Market Structure (BOS/ChoCH/#/IS)", group="Modules")
 
 // ==========================================
 // INPUTS & STYLING (Inside Bars)
@@ -61,6 +62,7 @@ var float last_confirmed_val = na
 
 // ==========================================
 // PULLBACK HELPER FUNCTIONS
+// (Merged: draws zigzag AND returns confirmed_sl/confirmed_sh for HTF engine)
 // ==========================================
 add_zigzag_line(x1, y1, x2, y2, col) =>
     if show_pullbacks and not na(x1) and not na(y1) and not na(x2) and not na(y2)
@@ -72,12 +74,14 @@ process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
     float n_sh_v = sh_v
     int n_lc_b = lc_b
     float n_lc_v = lc_v
+    bool confirmed_sl = false
 
     if c_dir == -1
+        // Zigzag: draw line from last confirmed to swing low
         add_zigzag_line(lc_b, lc_v, sl_b, sl_v, zigzag_color)
+        confirmed_sl := true
         n_lc_b := sl_b
         n_lc_v := sl_v
-        
         n_dir := 1
         n_sh_b := b_idx
         n_sh_v := h_val
@@ -90,7 +94,7 @@ process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
         n_sh_b := b_idx
         n_sh_v := h_val
         
-    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v]
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v, confirmed_sl]
 
 process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
     int n_dir = c_dir
@@ -98,12 +102,14 @@ process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
     float n_sl_v = sl_v
     int n_lc_b = lc_b
     float n_lc_v = lc_v
+    bool confirmed_sh = false
 
     if c_dir == 1
+        // Zigzag: draw line from last confirmed to swing high
         add_zigzag_line(lc_b, lc_v, sh_b, sh_v, zigzag_color)
+        confirmed_sh := true
         n_lc_b := sh_b
         n_lc_v := sh_v
-        
         n_dir := -1
         n_sl_b := b_idx
         n_sl_v := l_val
@@ -116,7 +122,7 @@ process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
         n_sl_b := b_idx
         n_sl_v := l_val
         
-    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v]
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v, confirmed_sh]
 
 // ==========================================
 // FVG MITIGATION (Runs on all bars)
@@ -148,7 +154,13 @@ if show_fvgs and array.size(active_fvgs) > 0
             array.remove(active_fvg_types, i)
 
 // ==========================================
-// MAIN LOOP
+// SWING CONFIRMATION FLAGS (used by HTF engine)
+// ==========================================
+bool is_sh = false
+bool is_sl = false
+
+// ==========================================
+// MAIN LOOP (Unified: Inside Bars + FVG + Pullbacks)
 // ==========================================
 if bar_index == 0
     ref_bar := bar_index
@@ -202,7 +214,11 @@ if bar_index > 0
 
         // ----------------------------------------------------
         // 3. PULLBACKS: Process directional swings
+        // (Returns confirmed_sl / confirmed_sh for HTF engine)
         // ----------------------------------------------------
+        bool conf_sl = false
+        bool conf_sh = false
+
         if broke_high and broke_low
             int taken_first = 0
             if open_broke_high
@@ -218,39 +234,39 @@ if bar_index > 0
                     taken_first := 1
                     
             if taken_first == 1
-                [d1, sh_b1, sh_v1, lc_b1, lc_v1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
-                current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1
+                [d1, sh_b1, sh_v1, lc_b1, lc_v1, csl1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sl := csl1
                 
-                [d2, sl_b2, sl_v2, lc_b2, lc_v2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
-                current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2
+                [d2, sl_b2, sl_v2, lc_b2, lc_v2, csh2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sh := csh2
             else
-                [d1, sl_b1, sl_v1, lc_b1, lc_v1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
-                current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1
+                [d1, sl_b1, sl_v1, lc_b1, lc_v1, csh1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sh := csh1
                 
-                [d2, sh_b2, sh_v2, lc_b2, lc_v2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
-                current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2
+                [d2, sh_b2, sh_v2, lc_b2, lc_v2, csl2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sl := csl2
         else
             if current_dir == 1
                 if broke_low
-                    [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
-                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
                 else if broke_high
-                    [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
-                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
             else if current_dir == -1
                 if broke_high
-                    [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
-                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
                 else if broke_low
-                    [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
-                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
             else
                 if broke_high
-                    [d, sh_b, sh_v, lc_b, lc_v] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
-                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
                 else if broke_low
-                    [d, sl_b, sl_v, lc_b, lc_v] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
-                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
 
         // ----------------------------------------------------
         // 4. UPDATE SHARED REFERENCE BAR
@@ -261,13 +277,311 @@ if bar_index > 0
         
         inside_count := 0
         last_inside_bar := na
+        
+        // Set swing flags for HTF engine
+        is_sh := conf_sh
+        is_sl := conf_sl
     else
         // Inside bar detected
         inside_count += 1
         last_inside_bar := bar_index
 
 // ==========================================
-// END OF CHART CLEANUP
+// END OF CHART CLEANUP (Inside Bars)
 // ==========================================
 if barstate.islast and inside_count > 0 and show_inside_bars
     box.new(left=ref_bar, top=ref_high, right=last_inside_bar, bottom=ref_low, xloc=xloc.bar_index, bgcolor=zone_color, border_color=zone_border, border_width=border_width)
+
+// ============================================================================
+// MARKET STRUCTURE ENGINE — BOS / ChoCH / Inducement / Inducement Shift
+// (mirrors bos_choch_inducement.py via structure_service.py)
+// ============================================================================
+
+// Swing Point History Arrays (fed by is_sh / is_sl from pullback engine)
+var int[] sl_bars = array.new_int()
+var float[] sl_vals = array.new_float()
+var int[] sh_bars = array.new_int()
+var float[] sh_vals = array.new_float()
+
+if is_sl
+    array.push(sl_bars, last_confirmed_bar)
+    array.push(sl_vals, last_confirmed_val)
+
+if is_sh
+    array.push(sh_bars, last_confirmed_bar)
+    array.push(sh_vals, last_confirmed_val)
+
+// OHLC history arrays — for scanning leg min/max at BOS time
+var float[] bar_lows = array.new_float()
+var float[] bar_highs = array.new_float()
+array.push(bar_lows, low)
+array.push(bar_highs, high)
+
+// Helper: find the last swing low within [after_bar, before_bar] inclusive
+find_last_sl(after_bar, before_bar) =>
+    int found_bar = na
+    float found_val = na
+    int sz = array.size(sl_bars)
+    if sz > 0
+        for i = sz - 1 to 0
+            b = array.get(sl_bars, i)
+            if b < after_bar
+                break
+            if b >= after_bar and b <= before_bar
+                found_bar := b
+                found_val := array.get(sl_vals, i)
+                break
+    [found_bar, found_val]
+
+// Helper: find the last swing high within [after_bar, before_bar] inclusive
+find_last_sh(after_bar, before_bar) =>
+    int found_bar = na
+    float found_val = na
+    int sz = array.size(sh_bars)
+    if sz > 0
+        for i = sz - 1 to 0
+            b = array.get(sh_bars, i)
+            if b < after_bar
+                break
+            if b >= after_bar and b <= before_bar
+                found_bar := b
+                found_val := array.get(sh_vals, i)
+                break
+    [found_bar, found_val]
+
+// Helper: find lowest low in bar range [from_bar, to_bar] inclusive
+find_leg_min(from_bar, to_bar) =>
+    float min_val = na
+    int min_bar = na
+    if from_bar >= 0 and to_bar >= from_bar
+        for b = from_bar to to_bar
+            float l = array.get(bar_lows, b)
+            if na(min_val) or l < min_val
+                min_val := l
+                min_bar := b
+    [min_bar, min_val]
+
+// Helper: find highest high in bar range [from_bar, to_bar] inclusive
+find_leg_max(from_bar, to_bar) =>
+    float max_val = na
+    int max_bar = na
+    if from_bar >= 0 and to_bar >= from_bar
+        for b = from_bar to to_bar
+            float h = array.get(bar_highs, b)
+            if na(max_val) or h > max_val
+                max_val := h
+                max_bar := b
+    [max_bar, max_val]
+
+// HTF Structure State
+var int current_trend = 1
+var bool htf_locked = false
+
+var int proper_high_idx = na
+var float proper_high_val = na
+var int proper_low_idx = na
+var float proper_low_val = na
+
+var bool inducement_done = false
+
+var int wick_high_idx = na
+var float wick_high_val = na
+var int wick_low_idx = na
+var float wick_low_val = na
+
+var int choch_idx = na
+var float choch_val = na
+var int cycle_start_idx = na
+
+// Self-correcting start: track all-time low
+var float atl_low = na
+var int atl_bar = na
+
+if bar_index == 0
+    atl_low := low
+    atl_bar := bar_index
+    cycle_start_idx := bar_index
+    choch_idx := bar_index
+    choch_val := low
+
+// Self-correcting reset: new ATL before first structural event
+if bar_index > 0 and not htf_locked
+    if low < atl_low
+        atl_low := low
+        atl_bar := bar_index
+        current_trend := 1
+        proper_high_idx := na
+        proper_high_val := na
+        proper_low_idx := na
+        proper_low_val := na
+        inducement_done := false
+        wick_high_idx := na
+        wick_high_val := na
+        wick_low_idx := na
+        wick_low_val := na
+        choch_idx := bar_index
+        choch_val := low
+        cycle_start_idx := bar_index
+
+// ============================================================================
+// MAIN STRUCTURE LOOP (up to 2 iterations for instant ChoCH→new trend)
+// Only runs when show_market_struct is enabled
+// ============================================================================
+if show_market_struct
+    int trends_processed = 0
+    bool continue_loop = true
+    
+    while trends_processed < 2 and continue_loop
+        int prev_trend = current_trend
+        
+        if current_trend == 1
+            // ---- UPTREND ----
+            if na(proper_high_val)
+                proper_high_idx := bar_index
+                proper_high_val := high
+            
+            if not inducement_done
+                // Update peak high
+                if high >= proper_high_val
+                    proper_high_idx := bar_index
+                    proper_high_val := high
+                
+                // Find last swing low within [cycle_start, proper_high]
+                [pb_low_bar, pb_low_val] = find_last_sl(cycle_start_idx, proper_high_idx)
+                
+                // Check Inducement (#)
+                if not na(pb_low_val) and low < pb_low_val
+                    inducement_done := true
+                    line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                    label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    
+            else
+                // Post-inducement: check IS, BOS, wick breaks
+                if not na(wick_high_val)
+                    [is_pb_bar, is_pb_val] = find_last_sl(cycle_start_idx, wick_high_idx)
+                    
+                    if not na(is_pb_val) and low < is_pb_val
+                        proper_high_idx := wick_high_idx
+                        proper_high_val := wick_high_val
+                        line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                        label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                        wick_high_idx := na
+                        wick_high_val := na
+                        
+                float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
+                
+                // BOS: candle CLOSE above target high
+                if close > target_high
+                    [leg_min_bar, leg_min_val] = find_leg_min(proper_high_idx, bar_index)
+                    
+                    line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
+                    label.new(math.round((proper_high_idx + bar_index) / 2), proper_high_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                    htf_locked := true
+                    
+                    choch_idx := leg_min_bar
+                    choch_val := leg_min_val
+                    
+                    inducement_done := false
+                    wick_high_idx := na
+                    wick_high_val := na
+                    proper_high_idx := bar_index
+                    proper_high_val := high
+                    
+                // Wick break: high > target but close <= target
+                else if high > target_high and close <= target_high
+                    wick_high_idx := bar_index
+                    wick_high_val := high
+                    
+            // ChoCH check: low breaks structural level
+            if not na(choch_val) and low < choch_val
+                line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
+                label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+                htf_locked := true
+                
+                current_trend := -1
+                proper_low_idx := bar_index
+                proper_low_val := low
+                inducement_done := false
+                wick_high_idx := na
+                wick_high_val := na
+                choch_idx := proper_high_idx
+                choch_val := proper_high_val
+                cycle_start_idx := proper_high_idx
+                
+        else if current_trend == -1
+            // ---- DOWNTREND ----
+            if na(proper_low_val)
+                proper_low_idx := bar_index
+                proper_low_val := low
+                
+            if not inducement_done
+                // Update peak low
+                if low <= proper_low_val
+                    proper_low_idx := bar_index
+                    proper_low_val := low
+                
+                // Find last swing high within [cycle_start, proper_low]
+                [pb_high_bar, pb_high_val] = find_last_sh(cycle_start_idx, proper_low_idx)
+                
+                // Check Inducement (#)
+                if not na(pb_high_val) and high > pb_high_val
+                    inducement_done := true
+                    line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                    label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    
+            else
+                // Post-inducement: check IS, BOS, wick breaks
+                if not na(wick_low_val)
+                    [is_pb_bar, is_pb_val] = find_last_sh(cycle_start_idx, wick_low_idx)
+                    
+                    if not na(is_pb_val) and high > is_pb_val
+                        proper_low_idx := wick_low_idx
+                        proper_low_val := wick_low_val
+                        line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                        label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                        wick_low_idx := na
+                        wick_low_val := na
+                        
+                float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
+                
+                // BOS: candle CLOSE below target low
+                if close < target_low
+                    [leg_max_bar, leg_max_val] = find_leg_max(proper_low_idx, bar_index)
+                    
+                    line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
+                    label.new(math.round((proper_low_idx + bar_index) / 2), proper_low_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                    htf_locked := true
+                    
+                    choch_idx := leg_max_bar
+                    choch_val := leg_max_val
+                    
+                    inducement_done := false
+                    wick_low_idx := na
+                    wick_low_val := na
+                    proper_low_idx := bar_index
+                    proper_low_val := low
+                    
+                // Wick break
+                else if low < target_low and close >= target_low
+                    wick_low_idx := bar_index
+                    wick_low_val := low
+                    
+            // ChoCH check: high breaks structural level
+            if not na(choch_val) and high > choch_val
+                line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
+                label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+                htf_locked := true
+                
+                current_trend := 1
+                proper_high_idx := bar_index
+                proper_high_val := high
+                inducement_done := false
+                wick_low_idx := na
+                wick_low_val := na
+                choch_idx := proper_low_idx
+                choch_val := proper_low_val
+                cycle_start_idx := proper_low_idx
+                
+        if current_trend == prev_trend
+            continue_loop := false
+        trends_processed += 1
