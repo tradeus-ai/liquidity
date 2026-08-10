@@ -66,6 +66,7 @@ mplfinance
 git+https://github.com/rongardF/tvdatafeed.git
 pyarrow
 lightweight_charts
+APScheduler
 EOF
 
 pip install -r requirements.txt

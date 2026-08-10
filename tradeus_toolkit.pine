@@ -43,7 +43,6 @@ zigzag_color  = input.color(#ff9800, "ZigZag Line Color", group="Pullbacks")
 // STATE VARIABLES
 // ==========================================
 // Shared Reference Bar
-var int current_trend = 1
 var float ref_high = na
 var float ref_low  = na
 var int   ref_bar  = na
@@ -217,12 +216,12 @@ if bar_index > 0
         ref2_bar  := ref_bar
         
         if show_fvgs and not na(ref1_bar)
-            if curr_low > ref1_high and current_trend == 1
+            if curr_low > ref1_high
                 bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100))
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bull")
                 
-            if curr_high < ref1_low and current_trend == -1
+            if curr_high < ref1_low
                 bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100))
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bear")
@@ -389,6 +388,7 @@ find_leg_max(from_bar, to_bar) =>
     [max_bar, max_val]
 
 // HTF Structure State
+var int current_trend = 1
 
 var bool htf_locked = false
 
@@ -617,6 +617,7 @@ if show_market_struct
 // ============================================================================
 // CANDLE STRENGTH
 // ============================================================================
+
 // ==========================================
 // BUYER-SELLER STRENGTH (STATUS LINE)
 // ==========================================
