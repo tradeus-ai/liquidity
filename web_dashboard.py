@@ -65,8 +65,8 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
                 let buyers = range === 0 ? 0 : ((close - low) / range) * 100;
                 strengthContainer.innerHTML = `
                     <div style="display: flex; gap: 15px; background: rgba(19, 23, 34, 0.8); padding: 4px 8px; border-radius: 4px;">
-                        <span style="color: #4caf50; font-weight: bold;">Buyers: ${{buyers.toFixed(1)}}%</span>
-                        <span style="color: #f44336; font-weight: bold;">Sellers: ${{sellers.toFixed(1)}}%</span>
+                        <span style="color: #4caf50; font-weight: bold;">Buyers: ${{buyers.toFixed(5)}}%</span>
+                        <span style="color: #f44336; font-weight: bold;">Sellers: ${{sellers.toFixed(5)}}%</span>
                     </div>
                 `;
             }} else {{
@@ -339,6 +339,9 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         const lwSeries = lwHandler.series;
         
         if (!lwChart || !lwSeries) return;
+        
+        // Scroll to the most recent candle
+        lwChart.timeScale().scrollToRealTime();
         
         const urlParams = new URLSearchParams(window.location.search);
         const currentTimeframe = urlParams.get('timeframe') || '1d';

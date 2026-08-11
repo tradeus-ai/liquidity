@@ -38,15 +38,15 @@ fi
 echo "[1/6] Updating system and installing dependencies..."
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
-sudo -E apt-get update
-sudo -E apt-get install -y python3 python3-venv python3-pip git curl htop
+sudo timedatectl set-timezone Asia/Kolkata
 
 # 2. Setup Application Directory
 echo "[2/6] Setting up application directory at $APP_DIR..."
 sudo mkdir -p $APP_DIR
 # Assuming we are running this from the repository root, copy files
 sudo cp -r $APP_REPO_DIR/* $APP_DIR/
-# Copy the hidden files like .env and .venv might be too much, but we need config.py (it's not hidden)
+# Clean up structure cache so it recomputes on restart
+sudo rm -rf $APP_DIR/data/structure_cache/*
 sudo chown -R $USERNAME:$USERNAME $APP_DIR
 
 # 3. Setup Virtual Environment and Install Python Dependencies
