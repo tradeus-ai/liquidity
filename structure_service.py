@@ -118,8 +118,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     candles = []
     for _, row in df_plot.iterrows():
         dt = pd.to_datetime(row['time'])
-        ts_val = dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt.strftime('%Y-%m-%d')
-        
+        ts_val = int(dt.timestamp())
         candles.append({
             'time': ts_val,
             'open': float(row['open']),
@@ -134,14 +133,18 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         is_high = row.get('is_swing_high', False)
         is_low = row.get('is_swing_low', False)
         dt = pd.to_datetime(idx)
-        ts_val = dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt.strftime('%Y-%m-%d')
+        ts_val = int(dt.timestamp())
         
         if is_high and is_low:
             if last_swing == 'HIGH':
-                pullback_points.append({'time': ts_val, 'value': float(row['high'])})
+                # We need a LOW, then a HIGH
+                pullback_points.append({'time': ts_val, 'value': float(row['low'])})
+                pullback_points.append({'time': ts_val + 1, 'value': float(row['high'])})
                 last_swing = 'HIGH'
             else:
-                pullback_points.append({'time': ts_val, 'value': float(row['low'])})
+                # We need a HIGH, then a LOW
+                pullback_points.append({'time': ts_val, 'value': float(row['high'])})
+                pullback_points.append({'time': ts_val + 1, 'value': float(row['low'])})
                 last_swing = 'LOW'
         elif is_high:
             pullback_points.append({'time': ts_val, 'value': float(row['high'])})
@@ -155,11 +158,9 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     for z in inside_zones_raw:
         st_dt = pd.to_datetime(z['start_time'])
         et_dt = pd.to_datetime(z['end_time'])
-        st_val = st_dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else st_dt.strftime('%Y-%m-%d')
-        et_val = et_dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else et_dt.strftime('%Y-%m-%d')
         inside_zones.append({
-            'start_time': st_val,
-            'end_time': et_val,
+            'start_time': int(st_dt.timestamp()),
+            'end_time': int(et_dt.timestamp()),
             'high': float(z['high']),
             'low': float(z['low'])
         })
@@ -178,19 +179,31 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     for ev in raw_events:
         dt_st = pd.to_datetime(ev['start_time'])
         dt_et = pd.to_datetime(ev['end_time'])
-        st_ts = dt_st.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt_st.strftime('%Y-%m-%d')
-        et_ts = dt_et.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt_et.strftime('%Y-%m-%d')
         htf_events.append({
             'type': ev['type'],
             'label': ev['label'],
-            'start_time': st_ts,
+            'start_time': int(dt_st.timestamp()),
             'start_val': float(ev['start_val']),
-            'end_time': et_ts,
+            'end_time': int(dt_et.timestamp()),
             'end_val': float(ev['end_val']),
             'color': ev['color']
         })
         
     htf_zones = []
+    for z in res.get('zones', []):
+        # Only include active zones (still visible on chart)
+        if z.get('status') != 'active':
+            continue
+        dt_st = pd.to_datetime(z['start_time'])
+        dt_et = pd.to_datetime(z.get('end_time', df.index[-1]))
+        htf_zones.append({
+            'type': z['type'],
+            'start_time': int(dt_st.timestamp()),
+            'end_time': int(dt_et.timestamp()),
+            'top': float(z['top']),
+            'bottom': float(z['bottom']),
+            'status': z.get('status', 'active')
+        })
         
     payload = {
         'symbol': symbol_raw,

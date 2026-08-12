@@ -8,7 +8,7 @@ import sys
 from symbol_loader import get_symbol_list
 from web_dashboard import render_dashboard
 
-PORT = int(os.environ.get("PORT", 80))
+PORT = int(os.environ.get("PORT", 8080))
 FEEDBACK_FILE = "chart_feedback.json"
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):

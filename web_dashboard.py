@@ -124,6 +124,22 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             end_time=et_date, end_value=z['low'],
             color='pink', fill_color='rgba(255, 105, 180, 0.2)', width=1
         )
+    
+    # Supply/Demand zones (teal for demand, red for supply)
+    for z in data.get('htf_zones', []):
+        st_date = z['start_time']
+        et_date = z['end_time']
+        if z['type'] == 'demand':
+            box_color = 'rgba(38, 166, 154, 0.6)'
+            fill_color = 'rgba(38, 166, 154, 0.15)'
+        else:
+            box_color = 'rgba(239, 83, 80, 0.6)'
+            fill_color = 'rgba(239, 83, 80, 0.15)'
+        chart.box(
+            start_time=st_date, start_value=z['top'],
+            end_time=et_date, end_value=z['bottom'],
+            color=box_color, fill_color=fill_color, width=1
+        )
         
     chart.load()
     

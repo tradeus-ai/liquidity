@@ -14,7 +14,7 @@ RULE: BOS can NEVER occur without a preceding Inducement in the same cycle.
 
 import pandas as pd
 import numpy as np
-from smc_zones import extract_demand_zones, extract_supply_zones, mitigate_zones, finalize_zones, add_zone
+from zone_service import ZoneManager
 
 
 
@@ -27,9 +27,7 @@ def analyze_htf_structure(df):
     if len(df) < 5:
         return []
     structure_events = []
-    active_demand_zones = []
-    active_supply_zones = []
-    historical_zones = []
+    zm = ZoneManager(0.003)
 
     
     # 1 = UPTREND, -1 = DOWNTREND
@@ -70,6 +68,9 @@ def analyze_htf_structure(df):
         c_close = float(df['close'].iloc[i])
         is_sh = df['is_swing_high'].iloc[i]
         is_sl = df['is_swing_low'].iloc[i]
+        
+        # Mitigate existing zones with current candle
+        zm.process_candle(idx, c_low, c_high)
         
         # We loop up to 2 times to allow a ChoCH on this candle to immediately 
         # trigger the new trend's Inducement/BOS logic on the same candle.
@@ -122,14 +123,9 @@ def analyze_htf_structure(df):
                             
                             # Uptrend Confirmed: Identify Demand Zones
                             if evt_type == 'IDM':
-                                merged_zones = extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx, 0.003)
-                                active_demand_zones.extend(merged_zones)
+                                zm.handle_idm_uptrend(df, choch_idx, proper_high_idx, active_pb_low_idx)
 
                     else:
-                        # Once trend is confirmed by IDM, every new valid swing low is a Demand Zone
-                        if is_sl:
-                            add_zone(active_demand_zones, idx, c_low, c_high, c_low, 'demand', 0.003)
-
                         if wick_high_val is not None:
                             # Check for Inducement Shift (IS)
                             # IS pullback low must be prior to the wick high (left of the high)
@@ -143,6 +139,7 @@ def analyze_htf_structure(df):
                                 current_pb_low_val = None
                                 
                             if current_pb_low_val is not None and c_low < current_pb_low_val:
+                                old_proper_high_idx = proper_high_idx
                                 # IS occurred! The wick high is now confirmed as the new proper high.
                                 proper_high_idx = wick_high_idx
                                 proper_high_val = wick_high_val
@@ -157,6 +154,9 @@ def analyze_htf_structure(df):
                                     'end_val': current_pb_low_val,
                                     'color': '#00e5ff'
                                 })
+                                
+                                # NEW REQUIREMENT: draw zones on the left side of inducement shift
+                                zm.handle_is_uptrend(df, old_proper_high_idx, proper_high_idx, current_pb_low_idx)
                                 
                                 wick_high_idx = None
                                 wick_high_val = None
@@ -175,16 +175,7 @@ def analyze_htf_structure(df):
                                 'end_val': proper_high_val,
                                 'color': '#2962ff'
                             })
-                            for z in active_demand_zones:
-                                z['end_time'] = idx
-                                z['status'] = 'invalidated_by_bos'
-                                historical_zones.append(z)
-                            active_demand_zones.clear()
-                            for z in active_supply_zones:
-                                z['end_time'] = idx
-                                z['status'] = 'invalidated_by_bos'
-                                historical_zones.append(z)
-                            active_supply_zones.clear()
+                            zm.clear_on_bos(idx)
                             # Lowest low in this BOS leg becomes the new ChoCH level
                             leg_df = df.loc[proper_high_idx:idx]
                             leg_min_i = leg_df['low'].idxmin()
@@ -224,6 +215,9 @@ def analyze_htf_structure(df):
                         'end_val': choch_val,
                         'color': '#e91e63'
                     })
+                    # Clear all active zones on ChoCH
+                    zm.clear_on_choch(idx)
+                    
                     current_trend = -1
                     proper_low_idx = idx
                     proper_low_val = c_low
@@ -286,14 +280,9 @@ def analyze_htf_structure(df):
                             
                             # Downtrend Confirmed: Identify Supply Zones
                             if evt_type == 'IDM':
-                                merged_zones = extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx, 0.003)
-                                active_supply_zones.extend(merged_zones)
+                                zm.handle_idm_downtrend(df, choch_idx, proper_low_idx, active_pb_high_idx)
 
                     else:
-                        # Once trend is confirmed by IDM, every new valid swing high is a Supply Zone
-                        if is_sh:
-                            add_zone(active_supply_zones, idx, c_low, c_high, c_high, 'supply', 0.003)
-
                         if wick_low_val is not None:
                             # Check for Inducement Shift (IS)
                             # IS pullback high must be prior to the wick low (left of the low)
@@ -307,6 +296,7 @@ def analyze_htf_structure(df):
                                 current_pb_high_val = None
                                 
                             if current_pb_high_val is not None and c_high > current_pb_high_val:
+                                old_proper_low_idx = proper_low_idx
                                 # IS occurred! The wick low is now confirmed as the new proper low.
                                 proper_low_idx = wick_low_idx
                                 proper_low_val = wick_low_val
@@ -321,6 +311,9 @@ def analyze_htf_structure(df):
                                     'end_val': current_pb_high_val,
                                     'color': '#00e5ff'
                                 })
+                                
+                                # NEW REQUIREMENT: draw zones on the left side of inducement shift
+                                zm.handle_is_downtrend(df, old_proper_low_idx, proper_low_idx, current_pb_high_idx)
                                 
                                 wick_low_idx = None
                                 wick_low_val = None
@@ -339,16 +332,7 @@ def analyze_htf_structure(df):
                                 'end_val': proper_low_val,
                                 'color': '#2962ff'
                             })
-                            for z in active_demand_zones:
-                                z['end_time'] = idx
-                                z['status'] = 'invalidated_by_bos'
-                                historical_zones.append(z)
-                            active_demand_zones.clear()
-                            for z in active_supply_zones:
-                                z['end_time'] = idx
-                                z['status'] = 'invalidated_by_bos'
-                                historical_zones.append(z)
-                            active_supply_zones.clear()
+                            zm.clear_on_bos(idx)
                             # Highest high in this BOS leg becomes the new ChoCH level
                             leg_df = df.loc[proper_low_idx:idx]
                             leg_max_i = leg_df['high'].idxmax()
@@ -388,6 +372,9 @@ def analyze_htf_structure(df):
                         'end_val': choch_val,
                         'color': '#e91e63'
                     })
+                    # Clear all active zones on ChoCH
+                    zm.clear_on_choch(idx)
+                    
                     current_trend = 1
                     proper_high_idx = idx
                     proper_high_val = c_high
@@ -411,10 +398,15 @@ def analyze_htf_structure(df):
             if current_trend == prev_trend:
                 break
             trends_processed += 1
+    
+    # Finalize remaining active zones
+    if len(df) > 0:
+        last_idx = df.index[-1]
+        zm.finalize(last_idx)
             
     return {
         'events': structure_events,
-        'zones': [],
+        'zones': zm.get_all_zones(),
         'current_state': {
             'trend': current_trend,
             'inducement_done': inducement_done

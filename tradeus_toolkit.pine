@@ -8,6 +8,7 @@ show_inside_bars   = input.bool(true, "Show Inside Bar Zones", group="Modules")
 show_fvgs          = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
 show_pullbacks     = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
 show_market_struct = input.bool(true, "Show Market Structure (BOS/ChoCH/#/IS)", group="Modules")
+show_zones         = input.bool(false, "Show Supply/Demand Zones", group="Modules")
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -31,8 +32,18 @@ border_width    = input.int(1, "Border Width", minval=1, maxval=4, group="Inside
 // ==========================================
 // INPUTS & STYLING (FVG)
 // ==========================================
+show_bull_fvgs = input.bool(true, "Show Bullish FVGs (Buy)", group="Fair Value Gaps")
+show_bear_fvgs = input.bool(true, "Show Bearish FVGs (Sell)", group="Fair Value Gaps")
 bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Fair Value Gaps")
 bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Fair Value Gaps")
+
+// ==========================================
+// INPUTS & STYLING (Supply/Demand Zones)
+// ==========================================
+demand_zone_color  = input.color(color.new(#26a69a, 75), "Demand Zone Color", group="Supply/Demand Zones")
+demand_border_clr  = input.color(color.new(#26a69a, 40), "Demand Zone Border", group="Supply/Demand Zones")
+supply_zone_color  = input.color(color.new(#ef5350, 75), "Supply Zone Color", group="Supply/Demand Zones")
+supply_border_clr  = input.color(color.new(#ef5350, 40), "Supply Zone Border", group="Supply/Demand Zones")
 
 // ==========================================
 // INPUTS & STYLING (Pullbacks)
@@ -62,6 +73,10 @@ var int   ref2_bar  = na
 
 var box[] active_fvgs = array.new_box()
 var string[] active_fvg_types = array.new_string()
+
+// Supply/Demand Zone State
+var box[] active_sd_zones = array.new_box()
+var int[] active_sd_types = array.new_int()
 
 // Pullbacks State
 var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
@@ -216,12 +231,12 @@ if bar_index > 0
         ref2_bar  := ref_bar
         
         if show_fvgs and not na(ref1_bar)
-            if curr_low > ref1_high
+            if show_bull_fvgs and curr_low > ref1_high
                 bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100))
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bull")
                 
-            if curr_high < ref1_low
+            if show_bear_fvgs and curr_high < ref1_low
                 bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100))
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bear")
@@ -330,6 +345,148 @@ var float[] bar_lows = array.new_float()
 var float[] bar_highs = array.new_float()
 array.push(bar_lows, round_price(low))
 array.push(bar_highs, round_price(high))
+
+// ==========================================
+// ZONE HELPER FUNCTIONS
+// ==========================================
+clear_all_zones() =>
+    if array.size(active_sd_zones) > 0
+        for i = array.size(active_sd_zones) - 1 to 0
+            box.delete(array.get(active_sd_zones, i))
+        array.clear(active_sd_zones)
+        array.clear(active_sd_types)
+
+// Find ALL swing lows in [from_bar, to_bar) and draw demand zones for unbroken ones
+draw_demand_zones_in_range(c_start, from_bar, to_bar, broken_bar) =>
+    int sz = array.size(sl_bars)
+    if sz > 0
+        for i = 0 to sz - 1
+            int b = array.get(sl_bars, i)
+            if b >= from_bar and b < to_bar and b < broken_bar
+                add_demand_zone(c_start, b)
+
+add_demand_zone(c_start, z_bar) =>
+    if show_zones and z_bar >= 0 and z_bar < array.size(bar_highs)
+        float z_bot = array.get(bar_lows, z_bar)
+        
+        // Rule 6 (Option C): top boundary is the previous swing high peak
+        float z_top = na
+        if z_bar > c_start
+            [prev_sh_bar, prev_sh_val] = find_last_sh(c_start, z_bar - 1)
+            if not na(prev_sh_val)
+                z_top := prev_sh_val
+            else
+                float highest_h = na
+                for b = c_start to z_bar - 1
+                    int offset = bar_index - b
+                    if offset >= 0
+                        float h = high[offset]
+                        if na(highest_h) or h > highest_h
+                            highest_h := h
+                z_top := na(highest_h) ? array.get(bar_highs, z_bar) : highest_h
+        else
+            z_top := array.get(bar_highs, z_bar)
+        
+        // Gap logic: if next candle gaps up, the gap itself becomes the zone
+        if z_bar < bar_index
+            int next_offset = bar_index - (z_bar + 1)
+            if next_offset >= 0
+                float next_low = low[next_offset]
+                if next_low > z_top
+                    z_bot := z_top
+                    z_top := next_low
+        
+        bool mitigated = false
+        if z_bar < bar_index
+            for b = z_bar + 1 to bar_index
+                int offset = bar_index - b
+                if offset >= 0
+                    float l = low[offset]
+                    if l <= z_bot
+                        mitigated := true
+                        break
+                    else if l < z_top
+                        z_top := l
+                        
+        if not mitigated
+            bx = box.new(z_bar, z_top, bar_index, z_bot, xloc=xloc.bar_index, bgcolor=demand_zone_color, border_color=demand_border_clr, border_width=1)
+            array.push(active_sd_zones, bx)
+            array.push(active_sd_types, 1)
+
+// Find ALL swing highs in [from_bar, to_bar) and draw supply zones for unbroken ones
+draw_supply_zones_in_range(c_start, from_bar, to_bar, broken_bar) =>
+    int sz = array.size(sh_bars)
+    if sz > 0
+        for i = 0 to sz - 1
+            int b = array.get(sh_bars, i)
+            if b >= from_bar and b < to_bar and b < broken_bar
+                add_supply_zone(c_start, b)
+
+add_supply_zone(c_start, z_bar) =>
+    if show_zones and z_bar >= 0 and z_bar < array.size(bar_highs)
+        float z_top = array.get(bar_highs, z_bar)
+        
+        // Rule 7 (Option C): bottom boundary is the previous swing low trough
+        float z_bot = na
+        if z_bar > c_start
+            [prev_sl_bar, prev_sl_val] = find_last_sl(c_start, z_bar - 1)
+            if not na(prev_sl_val)
+                z_bot := prev_sl_val
+            else
+                float lowest_l = na
+                for b = c_start to z_bar - 1
+                    int offset = bar_index - b
+                    if offset >= 0
+                        float l = low[offset]
+                        if na(lowest_l) or l < lowest_l
+                            lowest_l := l
+                z_bot := na(lowest_l) ? array.get(bar_lows, z_bar) : lowest_l
+        else
+            z_bot := array.get(bar_lows, z_bar)
+        
+        // Gap logic: if next candle gaps down, the gap itself becomes the zone
+        if z_bar < bar_index
+            int next_offset = bar_index - (z_bar + 1)
+            if next_offset >= 0
+                float next_high = high[next_offset]
+                if next_high < z_bot
+                    z_top := z_bot
+                    z_bot := next_high
+        
+        bool mitigated = false
+        if z_bar < bar_index
+            for b = z_bar + 1 to bar_index
+                int offset = bar_index - b
+                if offset >= 0
+                    float h = high[offset]
+                    if h >= z_top
+                        mitigated := true
+                        break
+                    else if h > z_bot
+                        z_bot := h
+
+        if not mitigated
+            bx = box.new(z_bar, z_top, bar_index, z_bot, xloc=xloc.bar_index, bgcolor=supply_zone_color, border_color=supply_border_clr, border_width=1)
+            array.push(active_sd_zones, bx)
+            array.push(active_sd_types, -1)
+
+// Find ALL swing lows in [from_bar, to_bar) and draw demand zones for unbroken ones
+draw_demand_zones_in_range(from_bar, to_bar, broken_bar) =>
+    int sz = array.size(sl_bars)
+    if sz > 0
+        for i = 0 to sz - 1
+            int b = array.get(sl_bars, i)
+            if b >= from_bar and b < to_bar and b < broken_bar
+                add_demand_zone(b)
+
+// Find ALL swing highs in [from_bar, to_bar) and draw supply zones for unbroken ones
+draw_supply_zones_in_range(from_bar, to_bar, broken_bar) =>
+    int sz = array.size(sh_bars)
+    if sz > 0
+        for i = 0 to sz - 1
+            int b = array.get(sh_bars, i)
+            if b >= from_bar and b < to_bar and b < broken_bar
+                add_supply_zone(b)
 
 // Helper: find the last swing low within [after_bar, before_bar] inclusive
 find_last_sl(after_bar, before_bar) =>
@@ -474,6 +631,8 @@ if show_market_struct
                     event_triggered_this_candle := true
                     line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                     label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    // Draw demand zones for all existing swing lows in this cycle (excluding the broken one)
+                    draw_demand_zones_in_range(choch_bar, choch_bar, proper_high_idx, pb_low_bar)
                     
             else
                 // Post-inducement: check IS, BOS, wick breaks
@@ -481,11 +640,16 @@ if show_market_struct
                     [is_pb_bar, is_pb_val] = find_last_sl(cycle_start_idx, wick_high_idx)
                     
                     if not na(is_pb_val) and curr_low < is_pb_val
+                        old_proper_high_idx = proper_high_idx
                         proper_high_idx := wick_high_idx
                         proper_high_val := wick_high_val
                         event_triggered_this_candle := true
                         line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
                         label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                        
+                        // NEW REQUIREMENT: draw zones on the left side of inducement shift
+                        draw_demand_zones_in_range(choch_bar, old_proper_high_idx, proper_high_idx, is_pb_bar)
+                        
                         wick_high_idx := na
                         wick_high_val := na
                         
@@ -499,6 +663,8 @@ if show_market_struct
                     line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
                     label.new(math.round((proper_high_idx + bar_index) / 2), proper_high_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
                     htf_locked := true
+                    // Clear all active zones on BOS
+                    clear_all_zones()
                     
                     choch_idx := leg_min_bar
                     choch_val := leg_min_val
@@ -520,6 +686,8 @@ if show_market_struct
                 line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
                 label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
                 htf_locked := true
+                // Clear all active zones on ChoCH
+                clear_all_zones()
                 
                 current_trend := -1
                 proper_low_idx := bar_index
@@ -553,6 +721,8 @@ if show_market_struct
                     event_triggered_this_candle := true
                     line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                     label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    // Draw supply zones for all existing swing highs in this cycle (excluding the broken one)
+                    draw_supply_zones_in_range(choch_bar, choch_bar, proper_low_idx, pb_high_bar)
                     
             else
                 // Post-inducement: check IS, BOS, wick breaks
@@ -560,11 +730,16 @@ if show_market_struct
                     [is_pb_bar, is_pb_val] = find_last_sh(cycle_start_idx, wick_low_idx)
                     
                     if not na(is_pb_val) and curr_high > is_pb_val
+                        old_proper_low_idx = proper_low_idx
                         proper_low_idx := wick_low_idx
                         proper_low_val := wick_low_val
                         event_triggered_this_candle := true
                         line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
                         label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                        
+                        // NEW REQUIREMENT: draw zones on the left side of inducement shift
+                        draw_supply_zones_in_range(choch_bar, old_proper_low_idx, proper_low_idx, is_pb_bar)
+                        
                         wick_low_idx := na
                         wick_low_val := na
                         
@@ -578,6 +753,8 @@ if show_market_struct
                     line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
                     label.new(math.round((proper_low_idx + bar_index) / 2), proper_low_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
                     htf_locked := true
+                    // Clear all active zones on BOS
+                    clear_all_zones()
                     
                     choch_idx := leg_max_bar
                     choch_val := leg_max_val
@@ -599,6 +776,8 @@ if show_market_struct
                 line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
                 label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
                 htf_locked := true
+                // Clear all active zones on ChoCH
+                clear_all_zones()
                 
                 current_trend := 1
                 proper_high_idx := bar_index
@@ -613,6 +792,35 @@ if show_market_struct
         if current_trend == prev_trend or event_triggered_this_candle
             continue_loop := false
         trends_processed += 1
+
+// Extend all active supply/demand zones rightward to current bar and apply shaving
+if show_zones and array.size(active_sd_zones) > 0
+    for i = array.size(active_sd_zones) - 1 to 0
+        box bx = array.get(active_sd_zones, i)
+        int z_type = array.get(active_sd_types, i)
+        float z_top = box.get_top(bx)
+        float z_bot = box.get_bottom(bx)
+        
+        bool mitigated_fully = false
+        
+        if z_type == 1 // Demand
+            if low < z_top
+                if low <= z_bot
+                    mitigated_fully := true
+                else
+                    box.set_top(bx, low)
+        else if z_type == -1 // Supply
+            if high > z_bot
+                if high >= z_top
+                    mitigated_fully := true
+                else
+                    box.set_bottom(bx, high)
+                    
+        if mitigated_fully
+            array.remove(active_sd_zones, i)
+            array.remove(active_sd_types, i)
+        else
+            box.set_right(bx, bar_index)
 
 // ============================================================================
 // CANDLE STRENGTH
