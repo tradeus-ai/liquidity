@@ -1,0 +1,221 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 9,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "GEMINI.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 28,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "LIQUIDITY Finding",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Timeframes",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "Data",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "Market structure in higher timeframe",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "Zones",
+          "level": 1,
+          "line": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 56,
+      "nonEmptyLines": 40,
+      "sections": [
+        {
+          "heading": "Liquidity Market Structure Analyzer",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "Features",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Installation",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Quick Start",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Usage Example",
+          "level": 2,
+          "line": 41
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "chat_summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 24,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "Session Summary: Liquidity Finder & SMC Pullback Logic Sync",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Objective",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Key Discoveries & Fixes",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "1. Synchronizing the Pullback Engine (`smc_pullback.py`)",
+          "level": 3,
+          "line": 8
+        },
+        {
+          "heading": "2. Fixing the Extraction Logic (`structure_service.py`)",
+          "level": 3,
+          "line": 14
+        },
+        {
+          "heading": "3. Solving the Lightweight-Charts Rendering Issue",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Result",
+          "level": 2,
+          "line": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "dashboard.html",
+      "language": "html",
+      "fileCategory": "markup",
+      "totalLines": 570,
+      "nonEmptyLines": 503,
+      "metrics": {}
+    },
+    {
+      "path": "deploy.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 108,
+      "nonEmptyLines": 90,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "deploy_to_oci.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 64,
+      "nonEmptyLines": 49,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "requirements.txt",
+      "language": "txt",
+      "fileCategory": "docs",
+      "totalLines": 36,
+      "nonEmptyLines": 36,
+      "metrics": {}
+    },
+    {
+      "path": "screener.html",
+      "language": "html",
+      "fileCategory": "markup",
+      "totalLines": 497,
+      "nonEmptyLines": 433,
+      "metrics": {}
+    },
+    {
+      "path": "walkthrough.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 20,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "SMC Pullback Implementation Walkthrough",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "What changed?",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    }
+  ]
+}

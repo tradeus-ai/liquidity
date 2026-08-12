@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "document:GEMINI.md",
+      "type": "document",
+      "name": "GEMINI.md",
+      "filePath": "GEMINI.md",
+      "summary": "Docs file: GEMINI.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Docs file: README.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:chat_summary.md",
+      "type": "document",
+      "name": "chat_summary.md",
+      "filePath": "chat_summary.md",
+      "summary": "Docs file: chat_summary.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:dashboard.html",
+      "type": "file",
+      "name": "dashboard.html",
+      "filePath": "dashboard.html",
+      "summary": "Markup file: dashboard.html",
+      "tags": [
+        "markup",
+        "html"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:deploy.sh",
+      "type": "file",
+      "name": "deploy.sh",
+      "filePath": "deploy.sh",
+      "summary": "Script file: deploy.sh",
+      "tags": [
+        "script",
+        "shell"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:deploy_to_oci.sh",
+      "type": "file",
+      "name": "deploy_to_oci.sh",
+      "filePath": "deploy_to_oci.sh",
+      "summary": "Script file: deploy_to_oci.sh",
+      "tags": [
+        "script",
+        "shell"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:requirements.txt",
+      "type": "document",
+      "name": "requirements.txt",
+      "filePath": "requirements.txt",
+      "summary": "Docs file: requirements.txt",
+      "tags": [
+        "docs",
+        "txt"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:screener.html",
+      "type": "file",
+      "name": "screener.html",
+      "filePath": "screener.html",
+      "summary": "Markup file: screener.html",
+      "tags": [
+        "markup",
+        "html"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:walkthrough.md",
+      "type": "document",
+      "name": "walkthrough.md",
+      "filePath": "walkthrough.md",
+      "summary": "Docs file: walkthrough.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

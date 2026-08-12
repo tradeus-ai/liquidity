@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {
+      "id": "config:.ua/fingerprints.json",
+      "type": "config",
+      "name": "fingerprints.json",
+      "filePath": ".ua/fingerprints.json",
+      "summary": "Config file: .ua/fingerprints.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:.ua/knowledge-graph.json",
+      "type": "config",
+      "name": "knowledge-graph.json",
+      "filePath": ".ua/knowledge-graph.json",
+      "summary": "Config file: .ua/knowledge-graph.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:.ua/meta.json",
+      "type": "config",
+      "name": "meta.json",
+      "filePath": ".ua/meta.json",
+      "summary": "Config file: .ua/meta.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

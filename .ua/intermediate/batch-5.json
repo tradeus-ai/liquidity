@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/ARCHITECTURE.md",
+      "type": "document",
+      "name": "ARCHITECTURE.md",
+      "filePath": "docs/ARCHITECTURE.md",
+      "summary": "Docs file: docs/ARCHITECTURE.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/CONFIGURATION.md",
+      "type": "document",
+      "name": "CONFIGURATION.md",
+      "filePath": "docs/CONFIGURATION.md",
+      "summary": "Docs file: docs/CONFIGURATION.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/DEPLOYMENT-OCI.md",
+      "type": "document",
+      "name": "DEPLOYMENT-OCI.md",
+      "filePath": "docs/DEPLOYMENT-OCI.md",
+      "summary": "Docs file: docs/DEPLOYMENT-OCI.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/DEVELOPMENT.md",
+      "type": "document",
+      "name": "DEVELOPMENT.md",
+      "filePath": "docs/DEVELOPMENT.md",
+      "summary": "Docs file: docs/DEVELOPMENT.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/GETTING-STARTED.md",
+      "type": "document",
+      "name": "GETTING-STARTED.md",
+      "filePath": "docs/GETTING-STARTED.md",
+      "summary": "Docs file: docs/GETTING-STARTED.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/LEARNINGS.md",
+      "type": "document",
+      "name": "LEARNINGS.md",
+      "filePath": "docs/LEARNINGS.md",
+      "summary": "Docs file: docs/LEARNINGS.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/SERVER_MANAGEMENT.md",
+      "type": "document",
+      "name": "SERVER_MANAGEMENT.md",
+      "filePath": "docs/SERVER_MANAGEMENT.md",
+      "summary": "Docs file: docs/SERVER_MANAGEMENT.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/SESSION_SUMMARY.md",
+      "type": "document",
+      "name": "SESSION_SUMMARY.md",
+      "filePath": "docs/SESSION_SUMMARY.md",
+      "summary": "Docs file: docs/SESSION_SUMMARY.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/SMC-MARKET-STRUCTURE.md",
+      "type": "document",
+      "name": "SMC-MARKET-STRUCTURE.md",
+      "filePath": "docs/SMC-MARKET-STRUCTURE.md",
+      "summary": "Docs file: docs/SMC-MARKET-STRUCTURE.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/TESTING.md",
+      "type": "document",
+      "name": "TESTING.md",
+      "filePath": "docs/TESTING.md",
+      "summary": "Docs file: docs/TESTING.md",
+      "tags": [
+        "docs",
+        "markdown"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

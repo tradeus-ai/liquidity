@@ -1,0 +1,162 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "infrastructure/main.tf",
+      "language": "terraform",
+      "fileCategory": "infra",
+      "totalLines": 130,
+      "nonEmptyLines": 110,
+      "resources": [
+        {
+          "name": "oci_core_vcn.liquidity_vcn",
+          "kind": "oci_core_vcn",
+          "startLine": 37,
+          "endLine": 41
+        },
+        {
+          "name": "oci_core_internet_gateway.liquidity_igw",
+          "kind": "oci_core_internet_gateway",
+          "startLine": 43,
+          "endLine": 48
+        },
+        {
+          "name": "oci_core_route_table.liquidity_route_table",
+          "kind": "oci_core_route_table",
+          "startLine": 50,
+          "endLine": 60
+        },
+        {
+          "name": "oci_core_security_list.liquidity_security_list",
+          "kind": "oci_core_security_list",
+          "startLine": 62,
+          "endLine": 91
+        },
+        {
+          "name": "oci_core_subnet.liquidity_public_subnet",
+          "kind": "oci_core_subnet",
+          "startLine": 93,
+          "endLine": 101
+        },
+        {
+          "name": "oci_core_instance.liquidity_instance",
+          "kind": "oci_core_instance",
+          "startLine": 105,
+          "endLine": 130
+        },
+        {
+          "name": "data.oci_identity_availability_domains.ads",
+          "kind": "data.oci_identity_availability_domains",
+          "startLine": 21,
+          "endLine": 23
+        },
+        {
+          "name": "data.oci_core_images.ubuntu_24_04_minimal",
+          "kind": "data.oci_core_images",
+          "startLine": 26,
+          "endLine": 33
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0,
+        "resourceCount": 8
+      }
+    },
+    {
+      "path": "infrastructure/outputs.tf",
+      "language": "terraform",
+      "fileCategory": "infra",
+      "totalLines": 4,
+      "nonEmptyLines": 4,
+      "definitions": [
+        {
+          "name": "instance_public_ip",
+          "kind": "output",
+          "fields": [],
+          "startLine": 1,
+          "endLine": 4
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1,
+        "resourceCount": 0
+      }
+    },
+    {
+      "path": "infrastructure/variables.tf",
+      "language": "terraform",
+      "fileCategory": "infra",
+      "totalLines": 35,
+      "nonEmptyLines": 29,
+      "definitions": [
+        {
+          "name": "tenancy_ocid",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 1,
+          "endLine": 4
+        },
+        {
+          "name": "user_ocid",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "name": "fingerprint",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 11,
+          "endLine": 14
+        },
+        {
+          "name": "private_key_path",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 16,
+          "endLine": 19
+        },
+        {
+          "name": "compartment_ocid",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 21,
+          "endLine": 24
+        },
+        {
+          "name": "region",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 26,
+          "endLine": 29
+        },
+        {
+          "name": "ssh_public_key_path",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 31,
+          "endLine": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 7,
+        "resourceCount": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,607 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 10,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 75,
+      "nonEmptyLines": 64,
+      "sections": [
+        {
+          "heading": "Architecture",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "System Overview",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Component Diagram",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Module Reference",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Data Flow",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Directory Structure",
+          "level": 2,
+          "line": 56
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 21,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "Configuration",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "Environment Variables",
+          "level": 2,
+          "line": 4
+        },
+        {
+          "heading": "Config File Format",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Required vs Optional Settings",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "Defaults",
+          "level": 2,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/DEPLOYMENT-OCI.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 82,
+      "nonEmptyLines": 58,
+      "sections": [
+        {
+          "heading": "OCI Terraform Deployment Guide",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "1. Install Terraform",
+          "level": 3,
+          "line": 9
+        },
+        {
+          "heading": "2. Configure OCI Credentials",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Launching the Infrastructure",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Deploying the Code",
+          "level": 2,
+          "line": 65
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 43,
+      "nonEmptyLines": 35,
+      "sections": [
+        {
+          "heading": "Development",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Local Setup",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Commands",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "Web Dashboard Features",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "API Endpoints",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Code Style",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "PR Process",
+          "level": 2,
+          "line": 39
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/GETTING-STARTED.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 36,
+      "nonEmptyLines": 31,
+      "sections": [
+        {
+          "heading": "Getting Started",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 4
+        },
+        {
+          "heading": "Installation Steps",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "First Run",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "Common Setup Issues",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Next Steps",
+          "level": 2,
+          "line": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/LEARNINGS.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 147,
+      "nonEmptyLines": 113,
+      "sections": [
+        {
+          "heading": "Learnings & Gotchas",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Lightweight-Charts Layout Rules",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Container Height Constraint",
+          "level": 3,
+          "line": 9
+        },
+        {
+          "heading": "DOM Order vs CSS Position",
+          "level": 3,
+          "line": 24
+        },
+        {
+          "heading": "Time Scale Visibility",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "SMC Pullback Logic (`smc_pullback.py`)",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "Open Gap Breaks",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "Open Proximity for Outside Bars",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "SMC Structure: BOS / ChoCH / Inducement (`bos_choch_inducement.py`)",
+          "level": 2,
+          "line": 82
+        },
+        {
+          "heading": "State Machine Flow",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "BOS Requires Candle CLOSE",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "Color Disambiguation",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Structure Caching (`structure_service.py`)",
+          "level": 2,
+          "line": 108
+        },
+        {
+          "heading": "Cache Strategy",
+          "level": 3,
+          "line": 110
+        },
+        {
+          "heading": "When to Invalidate",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Web Dashboard Tips",
+          "level": 2,
+          "line": 126
+        },
+        {
+          "heading": "Master Toggle Pattern",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Chart Resize Handling",
+          "level": 3,
+          "line": 140
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 18
+      }
+    },
+    {
+      "path": "docs/SERVER_MANAGEMENT.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 47,
+      "nonEmptyLines": 30,
+      "sections": [
+        {
+          "heading": "Liquidity App Server Management",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "🔄 Restarting the Server",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "📊 Viewing the Server Logs",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "🛑 Stopping and Starting",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "🔍 Checking Status",
+          "level": 2,
+          "line": 39
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/SESSION_SUMMARY.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 218,
+      "nonEmptyLines": 162,
+      "sections": [
+        {
+          "heading": "Liquidity Dashboard — Full Session Summary",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Overview",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "1. Pullback Logic Enhancements",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Problem: Open of candle can break prev high/low",
+          "level": 3,
+          "line": 17
+        },
+        {
+          "heading": "2. Date Scale & Layout Fixes",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Problem: Date scale not visible on the chart",
+          "level": 3,
+          "line": 34
+        },
+        {
+          "heading": "Problem: Topbar (symbol selector) appeared at the bottom (footer)",
+          "level": 3,
+          "line": 48
+        },
+        {
+          "heading": "3. Structure Caching Engine",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "Problem: Pullback and market structure was recalculated for every request (slow)",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "4. BOS, ChoCH & Inducement Module",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Created `bos_choch_inducement.py` — HTF State Machine",
+          "level": 3,
+          "line": 87
+        },
+        {
+          "heading": "Chart Lines Drawn",
+          "level": 3,
+          "line": 103
+        },
+        {
+          "heading": "5. Web Dashboard (Interactive)",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "`app.py` — HTTP Server",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "`web_dashboard.py` — Chart Renderer",
+          "level": 3,
+          "line": 120
+        },
+        {
+          "heading": "`dashboard.html` — Standalone SPA",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "6. Layer Toggle Controls",
+          "level": 2,
+          "line": 133
+        },
+        {
+          "heading": "7. Color Disambiguation Fix",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "8. Files Created / Modified",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "9. Market Structure Rules (Reference)",
+          "level": 2,
+          "line": 192
+        },
+        {
+          "heading": "10. How to Run",
+          "level": 2,
+          "line": 203
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "docs/SMC-MARKET-STRUCTURE.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 55,
+      "nonEmptyLines": 41,
+      "sections": [
+        {
+          "heading": "Smart Money Concepts (SMC) Market Structure",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The Problem",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "The Approach",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Trade-offs",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Reference: `analyze_htf_structure`",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Inputs",
+          "level": 3,
+          "line": 28
+        },
+        {
+          "heading": "Outputs",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "Event Format",
+          "level": 3,
+          "line": 37
+        },
+        {
+          "heading": "Color Conventions",
+          "level": 3,
+          "line": 51
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/TESTING.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 22,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "Testing",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "Test Framework and Setup",
+          "level": 2,
+          "line": 4
+        },
+        {
+          "heading": "Running Tests",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Coverage Requirements",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "CI Integration",
+          "level": 2,
+          "line": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    }
+  ]
+}

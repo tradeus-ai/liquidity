@@ -1,0 +1,53 @@
+{
+  "nodes": [
+    {
+      "id": "config:.ua/.trash-1785038995/tmp/batch-0-input.json",
+      "type": "config",
+      "name": "batch-0-input.json",
+      "filePath": ".ua/.trash-1785038995/tmp/batch-0-input.json",
+      "summary": "Config file: .ua/.trash-1785038995/tmp/batch-0-input.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.ua/.trash-1785038995/tmp/batch-1-input.json",
+      "type": "config",
+      "name": "batch-1-input.json",
+      "filePath": ".ua/.trash-1785038995/tmp/batch-1-input.json",
+      "summary": "Config file: .ua/.trash-1785038995/tmp/batch-1-input.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.ua/.trash-1785038995/tmp/batch-2-input.json",
+      "type": "config",
+      "name": "batch-2-input.json",
+      "filePath": ".ua/.trash-1785038995/tmp/batch-2-input.json",
+      "summary": "Config file: .ua/.trash-1785038995/tmp/batch-2-input.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.ua/.trash-1785038995/tmp/batch-3-input.json",
+      "type": "config",
+      "name": "batch-3-input.json",
+      "filePath": ".ua/.trash-1785038995/tmp/batch-3-input.json",
+      "summary": "Config file: .ua/.trash-1785038995/tmp/batch-3-input.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

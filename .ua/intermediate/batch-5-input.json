@@ -1,0 +1,77 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchFiles": [
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "language": "markdown",
+      "sizeLines": 75,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/DEPLOYMENT-OCI.md",
+      "language": "markdown",
+      "sizeLines": 82,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "language": "markdown",
+      "sizeLines": 43,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/GETTING-STARTED.md",
+      "language": "markdown",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/LEARNINGS.md",
+      "language": "markdown",
+      "sizeLines": 147,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/SERVER_MANAGEMENT.md",
+      "language": "markdown",
+      "sizeLines": 47,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/SESSION_SUMMARY.md",
+      "language": "markdown",
+      "sizeLines": 218,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/SMC-MARKET-STRUCTURE.md",
+      "language": "markdown",
+      "sizeLines": 55,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/TESTING.md",
+      "language": "markdown",
+      "sizeLines": 22,
+      "fileCategory": "docs"
+    }
+  ],
+  "batchImportData": {
+    "docs/ARCHITECTURE.md": [],
+    "docs/CONFIGURATION.md": [],
+    "docs/DEPLOYMENT-OCI.md": [],
+    "docs/DEVELOPMENT.md": [],
+    "docs/GETTING-STARTED.md": [],
+    "docs/LEARNINGS.md": [],
+    "docs/SERVER_MANAGEMENT.md": [],
+    "docs/SESSION_SUMMARY.md": [],
+    "docs/SMC-MARKET-STRUCTURE.md": [],
+    "docs/TESTING.md": []
+  }
+}

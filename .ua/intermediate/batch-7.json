@@ -1,0 +1,530 @@
+{
+  "nodes": [
+    {
+      "id": "config:.planning/tmp/docs-work-manifest.json",
+      "type": "config",
+      "name": "docs-work-manifest.json",
+      "filePath": ".planning/tmp/docs-work-manifest.json",
+      "summary": "Config file: .planning/tmp/docs-work-manifest.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.ua/.trash-1785038995/tmp/ua-inline-validate.cjs",
+      "type": "file",
+      "name": "ua-inline-validate.cjs",
+      "filePath": ".ua/.trash-1785038995/tmp/ua-inline-validate.cjs",
+      "summary": "Code file: .ua/.trash-1785038995/tmp/ua-inline-validate.cjs",
+      "tags": [
+        "code",
+        "javascript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.ua/.understandignore",
+      "type": "file",
+      "name": ".understandignore",
+      "filePath": ".ua/.understandignore",
+      "summary": "Code file: .ua/.understandignore",
+      "tags": [
+        "code",
+        "unknown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.ua/intermediate/scan-result.json",
+      "type": "config",
+      "name": "scan-result.json",
+      "filePath": ".ua/intermediate/scan-result.json",
+      "summary": "Config file: .ua/intermediate/scan-result.json",
+      "tags": [
+        "config",
+        "json"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app.py",
+      "type": "file",
+      "name": "app.py",
+      "filePath": "app.py",
+      "summary": "Code file: app.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:app.py:ThreadedTCPServer",
+      "type": "class",
+      "name": "ThreadedTCPServer",
+      "filePath": "app.py",
+      "summary": "Class ThreadedTCPServer in app.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:app.py:LiquidityDashboardHandler",
+      "type": "class",
+      "name": "LiquidityDashboardHandler",
+      "filePath": "app.py",
+      "summary": "Class LiquidityDashboardHandler in app.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:bos_choch_inducement.py",
+      "type": "file",
+      "name": "bos_choch_inducement.py",
+      "filePath": "bos_choch_inducement.py",
+      "summary": "Code file: bos_choch_inducement.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:bos_choch_inducement.py:analyze_htf_structure",
+      "type": "function",
+      "name": "analyze_htf_structure",
+      "filePath": "bos_choch_inducement.py",
+      "summary": "Function analyze_htf_structure in bos_choch_inducement.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "config.py",
+      "summary": "Code file: config.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data_fetcher.py",
+      "type": "file",
+      "name": "data_fetcher.py",
+      "filePath": "data_fetcher.py",
+      "summary": "Code file: data_fetcher.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:data_fetcher.py:DataFetcher",
+      "type": "class",
+      "name": "DataFetcher",
+      "filePath": "data_fetcher.py",
+      "summary": "Class DataFetcher in data_fetcher.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:feedback_server.py",
+      "type": "file",
+      "name": "feedback_server.py",
+      "filePath": "feedback_server.py",
+      "summary": "Code file: feedback_server.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:feedback_server.py:FeedbackHandler",
+      "type": "class",
+      "name": "FeedbackHandler",
+      "filePath": "feedback_server.py",
+      "summary": "Class FeedbackHandler in feedback_server.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:fvg_with_inside_bars.pine",
+      "type": "file",
+      "name": "fvg_with_inside_bars.pine",
+      "filePath": "fvg_with_inside_bars.pine",
+      "summary": "Code file: fvg_with_inside_bars.pine",
+      "tags": [
+        "code",
+        "pine"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:gap_test.py",
+      "type": "file",
+      "name": "gap_test.py",
+      "filePath": "gap_test.py",
+      "summary": "Code file: gap_test.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:infrastructure/.terraform.lock.hcl",
+      "type": "file",
+      "name": ".terraform.lock.hcl",
+      "filePath": "infrastructure/.terraform.lock.hcl",
+      "summary": "Code file: infrastructure/.terraform.lock.hcl",
+      "tags": [
+        "code",
+        "hcl"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:inside_bars.pine",
+      "type": "file",
+      "name": "inside_bars.pine",
+      "filePath": "inside_bars.pine",
+      "summary": "Code file: inside_bars.pine",
+      "tags": [
+        "code",
+        "pine"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:inside_bars.py",
+      "type": "file",
+      "name": "inside_bars.py",
+      "filePath": "inside_bars.py",
+      "summary": "Code file: inside_bars.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:inside_bars.py:identify_inside_bar_zones",
+      "type": "function",
+      "name": "identify_inside_bar_zones",
+      "filePath": "inside_bars.py",
+      "summary": "Function identify_inside_bar_zones in inside_bars.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "main.py",
+      "summary": "Code file: main.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:main.py:plot_structure",
+      "type": "function",
+      "name": "plot_structure",
+      "filePath": "main.py",
+      "summary": "Function plot_structure in main.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:main.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "main.py",
+      "summary": "Function main in main.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:market_structure.pine",
+      "type": "file",
+      "name": "market_structure.pine",
+      "filePath": "market_structure.pine",
+      "summary": "Code file: market_structure.pine",
+      "tags": [
+        "code",
+        "pine"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:market_structure.py",
+      "type": "file",
+      "name": "market_structure.py",
+      "filePath": "market_structure.py",
+      "summary": "Code file: market_structure.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:market_structure.py:MarketStructureAnalyzer",
+      "type": "class",
+      "name": "MarketStructureAnalyzer",
+      "filePath": "market_structure.py",
+      "summary": "Class MarketStructureAnalyzer in market_structure.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:screener_service.py",
+      "type": "file",
+      "name": "screener_service.py",
+      "filePath": "screener_service.py",
+      "summary": "Code file: screener_service.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:screener_service.py:process_symbol",
+      "type": "function",
+      "name": "process_symbol",
+      "filePath": "screener_service.py",
+      "summary": "Function process_symbol in screener_service.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:screener_service.py:get_screener_data",
+      "type": "function",
+      "name": "get_screener_data",
+      "filePath": "screener_service.py",
+      "summary": "Function get_screener_data in screener_service.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:smc_pullback.pine",
+      "type": "file",
+      "name": "smc_pullback.pine",
+      "filePath": "smc_pullback.pine",
+      "summary": "Code file: smc_pullback.pine",
+      "tags": [
+        "code",
+        "pine"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:smc_pullback.py",
+      "type": "file",
+      "name": "smc_pullback.py",
+      "filePath": "smc_pullback.py",
+      "summary": "Code file: smc_pullback.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:smc_pullback.py:round_price",
+      "type": "function",
+      "name": "round_price",
+      "filePath": "smc_pullback.py",
+      "summary": "Function round_price in smc_pullback.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:smc_pullback.py:find_swings",
+      "type": "function",
+      "name": "find_swings",
+      "filePath": "smc_pullback.py",
+      "summary": "Function find_swings in smc_pullback.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:smc_pullbacks.pine",
+      "type": "file",
+      "name": "smc_pullbacks.pine",
+      "filePath": "smc_pullbacks.pine",
+      "summary": "Code file: smc_pullbacks.pine",
+      "tags": [
+        "code",
+        "pine"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:smc_zones.py",
+      "type": "file",
+      "name": "smc_zones.py",
+      "filePath": "smc_zones.py",
+      "summary": "Code file: smc_zones.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:stocks list/Futures.csv",
+      "type": "file",
+      "name": "Futures.csv",
+      "filePath": "stocks list/Futures.csv",
+      "summary": "Data file: stocks list/Futures.csv",
+      "tags": [
+        "data",
+        "csv"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:stocks list/NSE_all_stocks.csv",
+      "type": "file",
+      "name": "NSE_all_stocks.csv",
+      "filePath": "stocks list/NSE_all_stocks.csv",
+      "summary": "Data file: stocks list/NSE_all_stocks.csv",
+      "tags": [
+        "data",
+        "csv"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:structure_service.py",
+      "type": "file",
+      "name": "structure_service.py",
+      "filePath": "structure_service.py",
+      "summary": "Code file: structure_service.py",
+      "tags": [
+        "code",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:structure_service.py:get_chart_data",
+      "type": "function",
+      "name": "get_chart_data",
+      "filePath": "structure_service.py",
+      "summary": "Function get_chart_data in structure_service.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:app.py",
+      "target": "class:app.py:ThreadedTCPServer",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.py",
+      "target": "class:app.py:LiquidityDashboardHandler",
+      "type": "contains"
+    },
+    {
+      "source": "file:bos_choch_inducement.py",
+      "target": "function:bos_choch_inducement.py:analyze_htf_structure",
+      "type": "contains"
+    },
+    {
+      "source": "file:data_fetcher.py",
+      "target": "class:data_fetcher.py:DataFetcher",
+      "type": "contains"
+    },
+    {
+      "source": "file:feedback_server.py",
+      "target": "class:feedback_server.py:FeedbackHandler",
+      "type": "contains"
+    },
+    {
+      "source": "file:inside_bars.py",
+      "target": "function:inside_bars.py:identify_inside_bar_zones",
+      "type": "contains"
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:plot_structure",
+      "type": "contains"
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:main",
+      "type": "contains"
+    },
+    {
+      "source": "file:market_structure.py",
+      "target": "class:market_structure.py:MarketStructureAnalyzer",
+      "type": "contains"
+    },
+    {
+      "source": "file:screener_service.py",
+      "target": "function:screener_service.py:process_symbol",
+      "type": "contains"
+    },
+    {
+      "source": "file:screener_service.py",
+      "target": "function:screener_service.py:get_screener_data",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_pullback.py",
+      "target": "function:smc_pullback.py:round_price",
+      "type": "contains"
+    },
+    {
+      "source": "file:smc_pullback.py",
+      "target": "function:smc_pullback.py:find_swings",
+      "type": "contains"
+    },
+    {
+      "source": "file:structure_service.py",
+      "target": "function:structure_service.py:get_chart_data",
+      "type": "contains"
+    }
+  ]
+}

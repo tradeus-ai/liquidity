@@ -1,0 +1,84 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchFiles": [
+    {
+      "path": ".ua/.trash-1785038995/assemble-review.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/assembled-graph.json",
+      "language": "json",
+      "sizeLines": 1144,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-0.json",
+      "language": "json",
+      "sizeLines": 101,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-1.json",
+      "language": "json",
+      "sizeLines": 89,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-2.json",
+      "language": "json",
+      "sizeLines": 610,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-3.json",
+      "language": "json",
+      "sizeLines": 154,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batches.json",
+      "language": "json",
+      "sizeLines": 441,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/fingerprint-input.json",
+      "language": "json",
+      "sizeLines": 52,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/layers.json",
+      "language": "json",
+      "sizeLines": 106,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/review.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tour.json",
+      "language": "json",
+      "sizeLines": 58,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    ".ua/.trash-1785038995/assemble-review.json": [],
+    ".ua/.trash-1785038995/assembled-graph.json": [],
+    ".ua/.trash-1785038995/batch-0.json": [],
+    ".ua/.trash-1785038995/batch-1.json": [],
+    ".ua/.trash-1785038995/batch-2.json": [],
+    ".ua/.trash-1785038995/batch-3.json": [],
+    ".ua/.trash-1785038995/batches.json": [],
+    ".ua/.trash-1785038995/fingerprint-input.json": [],
+    ".ua/.trash-1785038995/layers.json": [],
+    ".ua/.trash-1785038995/review.json": [],
+    ".ua/.trash-1785038995/tour.json": []
+  }
+}

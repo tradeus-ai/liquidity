@@ -1,8 +1,408 @@
 {
   "version": "1.0.0",
-  "gitCommitHash": "01da0d8408c242246e75aad2f19c9d07d22ae114",
-  "generatedAt": "2026-07-26T04:09:55.742Z",
+  "gitCommitHash": "71a893ced5577bf4b52f4acb1fb527ba18a5a9b0",
+  "generatedAt": "2026-08-12T18:20:19.558Z",
   "files": {
+    ".ua/.trash-1785038995/assemble-review.json": {
+      "filePath": ".ua/.trash-1785038995/assemble-review.json",
+      "contentHash": "a9f14534e64a6c68c8bea3f2886321fd5e12d6f9ae1b1149148877c8cc85747e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/assembled-graph.json": {
+      "filePath": ".ua/.trash-1785038995/assembled-graph.json",
+      "contentHash": "922f3b9e3755eb6a9d7c3a56ae0fdac3fd3f629b65b662fa96e8ae427db7ea9b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1145,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/batch-0.json": {
+      "filePath": ".ua/.trash-1785038995/batch-0.json",
+      "contentHash": "fd24df2b99c25ea397f74084024c34ae17bf0aab1a4586bfd70a03de54500980",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 102,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/batch-1.json": {
+      "filePath": ".ua/.trash-1785038995/batch-1.json",
+      "contentHash": "9700b11ed97b058a7f8f277958de0984bc156927728bd27814f9b8dea34a0b1c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 90,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/batch-2.json": {
+      "filePath": ".ua/.trash-1785038995/batch-2.json",
+      "contentHash": "7bc8fbda2e7b977776378cadc19f65ae04c1000b50e4cbc00055f3a920c3fd08",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 611,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/batch-3.json": {
+      "filePath": ".ua/.trash-1785038995/batch-3.json",
+      "contentHash": "19061b8e779774397d652820dcef24c04e1e123b8841a08b9a1b981b1918ef21",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 155,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/batches.json": {
+      "filePath": ".ua/.trash-1785038995/batches.json",
+      "contentHash": "a60b87b43e5dbb95d59e24fb42120fa67852c2581650c773d57950923de4224e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 442,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/fingerprint-input.json": {
+      "filePath": ".ua/.trash-1785038995/fingerprint-input.json",
+      "contentHash": "70de9257a6fd337973e174095415ca0fd5f47a36004b3af537e0a70de005a562",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 53,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/layers.json": {
+      "filePath": ".ua/.trash-1785038995/layers.json",
+      "contentHash": "8918da6138959cd33677e58b189e9d7ba422a41785aa14f0486896a7bd0e680e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 107,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/review.json": {
+      "filePath": ".ua/.trash-1785038995/review.json",
+      "contentHash": "97ae65f7b57b31d2b31d0144b49c9d771bad67ea92fb74221ca5ac0e9d440646",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 49,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/tour.json": {
+      "filePath": ".ua/.trash-1785038995/tour.json",
+      "contentHash": "9a649f72e6260caad48bd6ae0820d43a1fe25999200ea06fe14043834cce10d7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 59,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/tmp/batch-0-input.json": {
+      "filePath": ".ua/.trash-1785038995/tmp/batch-0-input.json",
+      "contentHash": "e9c0df146824574b9c8ad30e0871bfd1c82fd424ddceeb1b12d04f1d1dab2329",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 55,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/tmp/batch-1-input.json": {
+      "filePath": ".ua/.trash-1785038995/tmp/batch-1-input.json",
+      "contentHash": "e511d2927237d2560080ed6dd15f5111e40eb48147e04e882e21cf8ada7b6d10",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 49,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/tmp/batch-2-input.json": {
+      "filePath": ".ua/.trash-1785038995/tmp/batch-2-input.json",
+      "contentHash": "5c81f5e63802037b05fba3a4693c80dd9a07b60a0869204b4582371e84ad98bf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 157,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/tmp/batch-3-input.json": {
+      "filePath": ".ua/.trash-1785038995/tmp/batch-3-input.json",
+      "contentHash": "5135f9d5b6f351242ce6e17531ad9e17ce114813ae635fca935ae5f0d0d76600",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 49,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/fingerprints.json": {
+      "filePath": ".ua/fingerprints.json",
+      "contentHash": "d610cbbbd3d652a3c7629ff23d652e77a2836f49e65f7b67c8b9daecd5edec29",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1185,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/knowledge-graph.json": {
+      "filePath": ".ua/knowledge-graph.json",
+      "contentHash": "c53b4db2fae81bbac37b31c954aa10ff67750e2aa910c0a4b7dbcff5d3987e39",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1859,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/meta.json": {
+      "filePath": ".ua/meta.json",
+      "contentHash": "ab90f4e0e83a7c329b9bfce2e0efa54e6a46ae264270e6d494fee805b283fdf5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "GEMINI.md": {
+      "filePath": "GEMINI.md",
+      "contentHash": "55a0ba8b55e254c7b205518b315e4cec28422636a7caf8eed4e86e3108d35588",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "2419fe669927c9e6fc06918a7094a70436d93d15a6aab1fc79688af14495effa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 57,
+      "hasStructuralAnalysis": true
+    },
+    "chat_summary.md": {
+      "filePath": "chat_summary.md",
+      "contentHash": "955c442a543888b08e86fccd69374cd1e5bfc8f03c7e35b44bd9c6647e6312cf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": true
+    },
+    "dashboard.html": {
+      "filePath": "dashboard.html",
+      "contentHash": "758573491741d310b8f6fe94b50c17780c13e2da6fdc774199044e208c4358d9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 571,
+      "hasStructuralAnalysis": false
+    },
+    "deploy.sh": {
+      "filePath": "deploy.sh",
+      "contentHash": "6e68391aa84311dac221b4758615776e040a53d9fcccc1428f8c71ebbcde7dd1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 109,
+      "hasStructuralAnalysis": true
+    },
+    "deploy_to_oci.sh": {
+      "filePath": "deploy_to_oci.sh",
+      "contentHash": "45483b73a46162238a5ec89a25cae8c62e77951c1ffa87460011bfd76e578e80",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 65,
+      "hasStructuralAnalysis": true
+    },
+    "requirements.txt": {
+      "filePath": "requirements.txt",
+      "contentHash": "5421aaf7b60aa99e749c6fb33f417001921999fe5a2a106bb5542f81f74ce1d0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": false
+    },
+    "screener.html": {
+      "filePath": "screener.html",
+      "contentHash": "2db82e20bda25dd8d779745cc8de22225e7e17978893478f556bdfb715a2f7ea",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 498,
+      "hasStructuralAnalysis": false
+    },
+    "walkthrough.md": {
+      "filePath": "walkthrough.md",
+      "contentHash": "7ff5445cad3b0f38c2238d65cc6df583bf6f90601ee5a3537c07d789f77701c2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 21,
+      "hasStructuralAnalysis": true
+    },
+    "docs/ARCHITECTURE.md": {
+      "filePath": "docs/ARCHITECTURE.md",
+      "contentHash": "e1fa221f5d373a6c3a3810afda7e00b745a3d45832839c333b4a8c913a8ba04f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 76,
+      "hasStructuralAnalysis": true
+    },
+    "docs/CONFIGURATION.md": {
+      "filePath": "docs/CONFIGURATION.md",
+      "contentHash": "347f536ddda1acce1062e1bd79670eec35872d018cb466fea34b22850c1f7432",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "docs/DEPLOYMENT-OCI.md": {
+      "filePath": "docs/DEPLOYMENT-OCI.md",
+      "contentHash": "3af2a12a0ff7b294b266c0f04206371f849033a6a39b3c0bc2e87aab6088ef3e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 83,
+      "hasStructuralAnalysis": true
+    },
+    "docs/DEVELOPMENT.md": {
+      "filePath": "docs/DEVELOPMENT.md",
+      "contentHash": "2f2472d66ceb6e2a0c81b198263fcd2bd862118d32e0fa4b6859af185331d1ef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": true
+    },
+    "docs/GETTING-STARTED.md": {
+      "filePath": "docs/GETTING-STARTED.md",
+      "contentHash": "f54644128c6a550b972c297e63509723d390c99c196a3c47e6c6f41e26211610",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    },
+    "docs/LEARNINGS.md": {
+      "filePath": "docs/LEARNINGS.md",
+      "contentHash": "a07c5d0c13fe37b337b70c30ee578fc24a9cfce0c8c7568efa8fd7991e296885",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 148,
+      "hasStructuralAnalysis": true
+    },
+    "docs/SERVER_MANAGEMENT.md": {
+      "filePath": "docs/SERVER_MANAGEMENT.md",
+      "contentHash": "40245a571f8fba557a6def8366496e27cb16283c7962287a06376affc716f71c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 48,
+      "hasStructuralAnalysis": true
+    },
+    "docs/SESSION_SUMMARY.md": {
+      "filePath": "docs/SESSION_SUMMARY.md",
+      "contentHash": "93dd21f9437e5c2ae93a4932eba3a1015625e7ac3cf88fdbee6f5f367affde13",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 219,
+      "hasStructuralAnalysis": true
+    },
+    "docs/SMC-MARKET-STRUCTURE.md": {
+      "filePath": "docs/SMC-MARKET-STRUCTURE.md",
+      "contentHash": "a80af58515efd8d59b38c38102df492a0284be96c31dcbc4a321bd0d7d7dd0b9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "docs/TESTING.md": {
+      "filePath": "docs/TESTING.md",
+      "contentHash": "c07fdb2deace2a2bfaa18f42517f517b43e0b3860cb74665e9909ac240df9f77",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": true
+    },
+    "infrastructure/main.tf": {
+      "filePath": "infrastructure/main.tf",
+      "contentHash": "5afb1a202ba5f11d61d235b343b1a0899b87843f2e2e60913437644daa0ce8ad",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 131,
+      "hasStructuralAnalysis": true
+    },
+    "infrastructure/outputs.tf": {
+      "filePath": "infrastructure/outputs.tf",
+      "contentHash": "c1bb031d5e34b2e8b5f6b7463ba32690881f382c40d1f3dbfc259f6f33365af6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "infrastructure/variables.tf": {
+      "filePath": "infrastructure/variables.tf",
+      "contentHash": "18a7f1ff178f721fd828aff99f2618b94b67fddc58a0c27a5b6df3cb1561b22e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 36,
+      "hasStructuralAnalysis": true
+    },
     ".planning/tmp/docs-work-manifest.json": {
       "filePath": ".planning/tmp/docs-work-manifest.json",
       "contentHash": "dd75db1c7362a49f1d41e7fc2aeb18f18585d2156e1029efd526b5d54e6dfd56",
@@ -11,6 +411,16 @@
       "imports": [],
       "exports": [],
       "totalLines": 67,
+      "hasStructuralAnalysis": true
+    },
+    ".ua/.trash-1785038995/tmp/ua-inline-validate.cjs": {
+      "filePath": ".ua/.trash-1785038995/tmp/ua-inline-validate.cjs",
+      "contentHash": "7f3d01e1718bb8804f712d17dd48c9f2818b941c535f487ce55d22333957e3f1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 63,
       "hasStructuralAnalysis": true
     },
     ".ua/.understandignore": {
@@ -23,11 +433,28 @@
       "totalLines": 47,
       "hasStructuralAnalysis": false
     },
+    ".ua/intermediate/scan-result.json": {
+      "filePath": ".ua/intermediate/scan-result.json",
+      "contentHash": "9642a3fc3c2539a471d4e4fb796287c94d7c3374f6f7237ab637bb9920db366a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 658,
+      "hasStructuralAnalysis": true
+    },
     "app.py": {
       "filePath": "app.py",
-      "contentHash": "ee7f34909e70f1fe402157bf051022e85f769de374e7fc87a870e8edc953871e",
+      "contentHash": "76e8d051c5639940c54f1d612e9a3f11100da4c60cff3e0fd89ab2afc6e65789",
       "functions": [],
       "classes": [
+        {
+          "name": "ThreadedTCPServer",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        },
         {
           "name": "LiquidityDashboardHandler",
           "methods": [
@@ -36,7 +463,7 @@
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 82
+          "lineCount": 123
         }
       ],
       "imports": [
@@ -90,14 +517,15 @@
         }
       ],
       "exports": [
+        "ThreadedTCPServer",
         "LiquidityDashboardHandler"
       ],
-      "totalLines": 108,
+      "totalLines": 162,
       "hasStructuralAnalysis": true
     },
     "bos_choch_inducement.py": {
       "filePath": "bos_choch_inducement.py",
-      "contentHash": "af3084ba2ae62ba61afa8cfd6dee1371affef47b1a34531f122898568c83c8db",
+      "contentHash": "840577c7e3f098f3e4c2dbe99df23921d66678c2c935870383990f670f56872e",
       "functions": [
         {
           "name": "analyze_htf_structure",
@@ -105,7 +533,7 @@
             "df"
           ],
           "exported": true,
-          "lineCount": 335
+          "lineCount": 394
         }
       ],
       "classes": [],
@@ -123,55 +551,31 @@
           ]
         },
         {
-          "source": "smc_zones",
+          "source": "zone_service",
           "specifiers": [
-            "extract_demand_zones",
-            "extract_supply_zones",
-            "mitigate_zones",
-            "finalize_zones",
-            "add_zone"
+            "ZoneManager"
           ]
         }
       ],
       "exports": [
         "analyze_htf_structure"
       ],
-      "totalLines": 357,
+      "totalLines": 416,
       "hasStructuralAnalysis": true
     },
-    "chart_15m.html": {
-      "filePath": "chart_15m.html",
-      "contentHash": "76ae5ab3f59ac7e34484b7c2f8483c46beaa43c676c030040ae4a66b645f7cca",
+    "config.py": {
+      "filePath": "config.py",
+      "contentHash": "5323670073db5b8d43ac419cdeb31e683ec1a99488e36b495d3662a3fb31181f",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 63149,
-      "hasStructuralAnalysis": false
-    },
-    "chart_1d.html": {
-      "filePath": "chart_1d.html",
-      "contentHash": "0585edc61af43aa5e2297ac85589a840d51125aa709dfaf943feb308c845f2e9",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 52132,
-      "hasStructuralAnalysis": false
-    },
-    "dashboard.html": {
-      "filePath": "dashboard.html",
-      "contentHash": "4a7c57603ded5f317ff101c3c511c0f00fed259dc3e26c3a4b7bd3f223e8a35e",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 707,
-      "hasStructuralAnalysis": false
+      "totalLines": 4,
+      "hasStructuralAnalysis": true
     },
     "data_fetcher.py": {
       "filePath": "data_fetcher.py",
-      "contentHash": "8cdd6977319f1cb998997bb21b1d7107d3ae3011b8e4833c1fc074c5cd89b952",
+      "contentHash": "d835c889aff69eb42de6128110dbd00eefb8f69721d88f47f1bc5c24806bef15",
       "functions": [],
       "classes": [
         {
@@ -179,11 +583,12 @@
           "methods": [
             "__init__",
             "_get_file_path",
+            "_safe_get_hist",
             "fetch_data"
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 50
+          "lineCount": 68
         }
       ],
       "imports": [
@@ -202,85 +607,22 @@
         {
           "source": "tvDatafeed",
           "specifiers": [
-            "TvDatafeed",
+            "TvDatafeedLive",
             "Interval"
+          ]
+        },
+        {
+          "source": "config",
+          "specifiers": [
+            "TV_USERNAME",
+            "TV_PASSWORD"
           ]
         }
       ],
       "exports": [
         "DataFetcher"
       ],
-      "totalLines": 55,
-      "hasStructuralAnalysis": true
-    },
-    "docs/ARCHITECTURE.md": {
-      "filePath": "docs/ARCHITECTURE.md",
-      "contentHash": "f1ce4a46ad1ae75ac976ba4b8e798b2c9f7e51aa2ad3fa279f9b56c6730f0707",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 76,
-      "hasStructuralAnalysis": true
-    },
-    "docs/CONFIGURATION.md": {
-      "filePath": "docs/CONFIGURATION.md",
-      "contentHash": "347f536ddda1acce1062e1bd79670eec35872d018cb466fea34b22850c1f7432",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 22,
-      "hasStructuralAnalysis": true
-    },
-    "docs/DEVELOPMENT.md": {
-      "filePath": "docs/DEVELOPMENT.md",
-      "contentHash": "2f2472d66ceb6e2a0c81b198263fcd2bd862118d32e0fa4b6859af185331d1ef",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 44,
-      "hasStructuralAnalysis": true
-    },
-    "docs/GETTING-STARTED.md": {
-      "filePath": "docs/GETTING-STARTED.md",
-      "contentHash": "f54644128c6a550b972c297e63509723d390c99c196a3c47e6c6f41e26211610",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 37,
-      "hasStructuralAnalysis": true
-    },
-    "docs/LEARNINGS.md": {
-      "filePath": "docs/LEARNINGS.md",
-      "contentHash": "a07c5d0c13fe37b337b70c30ee578fc24a9cfce0c8c7568efa8fd7991e296885",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 148,
-      "hasStructuralAnalysis": true
-    },
-    "docs/SESSION_SUMMARY.md": {
-      "filePath": "docs/SESSION_SUMMARY.md",
-      "contentHash": "93dd21f9437e5c2ae93a4932eba3a1015625e7ac3cf88fdbee6f5f367affde13",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 219,
-      "hasStructuralAnalysis": true
-    },
-    "docs/TESTING.md": {
-      "filePath": "docs/TESTING.md",
-      "contentHash": "c07fdb2deace2a2bfaa18f42517f517b43e0b3860cb74665e9909ac240df9f77",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 23,
+      "totalLines": 74,
       "hasStructuralAnalysis": true
     },
     "feedback_server.py": {
@@ -337,55 +679,65 @@
       "totalLines": 65,
       "hasStructuralAnalysis": true
     },
-    "fix_issues.py": {
-      "filePath": "fix_issues.py",
-      "contentHash": "2d07c8796ff183fa742e696cf03ba942ec252abf23d2600cf043ba65f5aedb9f",
-      "functions": [
-        {
-          "name": "inject_invalidation",
-          "params": [
-            "code",
-            "trigger_line",
-            "invalidation_label"
-          ],
-          "exported": true,
-          "lineCount": 15
-        }
-      ],
+    "fvg_with_inside_bars.pine": {
+      "filePath": "fvg_with_inside_bars.pine",
+      "contentHash": "5697482ed8307cc1fef88f8cf2acaf4cbea38a1cda1d7126d2142fad974733a1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 119,
+      "hasStructuralAnalysis": false
+    },
+    "gap_test.py": {
+      "filePath": "gap_test.py",
+      "contentHash": "91e9d6c6cc8c9673d3772412409d16d394f1654293c4d785e4871d06f41f58b8",
+      "functions": [],
       "classes": [],
       "imports": [
         {
-          "source": "re",
+          "source": "pandas",
           "specifiers": [
-            "re"
+            "pd"
+          ]
+        },
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "TvDatafeed",
+            "Interval"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
           ]
         }
       ],
-      "exports": [
-        "inject_invalidation"
-      ],
-      "totalLines": 87,
+      "exports": [],
+      "totalLines": 14,
       "hasStructuralAnalysis": true
     },
-    "Futures.csv": {
-      "filePath": "Futures.csv",
-      "contentHash": "64ec2a02279af3e121d9ebe39bc830b571ae52e7a3c778a4a8497d5198603b0b",
+    "infrastructure/.terraform.lock.hcl": {
+      "filePath": "infrastructure/.terraform.lock.hcl",
+      "contentHash": "09aef1aff240e8d0fbe1d87d43ce35147057eb0c9e95e1900fe4baa36d36adf2",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 216,
+      "totalLines": 25,
       "hasStructuralAnalysis": false
     },
-    "GEMINI.md": {
-      "filePath": "GEMINI.md",
-      "contentHash": "55a0ba8b55e254c7b205518b315e4cec28422636a7caf8eed4e86e3108d35588",
+    "inside_bars.pine": {
+      "filePath": "inside_bars.pine",
+      "contentHash": "a43cc7f398828775b13563d41f5387db3431cc9c21049c1c08427be8e8d130c8",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 29,
-      "hasStructuralAnalysis": true
+      "totalLines": 75,
+      "hasStructuralAnalysis": false
     },
     "inside_bars.py": {
       "filePath": "inside_bars.py",
@@ -494,9 +846,19 @@
       "totalLines": 264,
       "hasStructuralAnalysis": true
     },
+    "market_structure.pine": {
+      "filePath": "market_structure.pine",
+      "contentHash": "402fbb5c69c30d76db4beecc0cca9f8c0d6b7944e92983d0e0ac61c469431e6f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 490,
+      "hasStructuralAnalysis": false
+    },
     "market_structure.py": {
       "filePath": "market_structure.py",
-      "contentHash": "01a6bc10d63be61db2ae3dc25404651c59254713c9b0e354125660015bea2f13",
+      "contentHash": "9f89fac292d7c4fa0317b7772b905acfa25d8c43d4bda0b9d22055f0662c6ca8",
       "functions": [],
       "classes": [
         {
@@ -508,7 +870,7 @@
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 164
+          "lineCount": 168
         }
       ],
       "imports": [
@@ -534,166 +896,108 @@
       "exports": [
         "MarketStructureAnalyzer"
       ],
-      "totalLines": 169,
+      "totalLines": 173,
       "hasStructuralAnalysis": true
     },
-    "patch_bos_choch.py": {
-      "filePath": "patch_bos_choch.py",
-      "contentHash": "b09cdb9db653c37eb4d6c740dadbfa5a65f3887d95c6c54cdb7e42ef1a817692",
-      "functions": [],
+    "screener_service.py": {
+      "filePath": "screener_service.py",
+      "contentHash": "920335e3d808f39e176a8a23271c8e670ef61265fc704ee798da6f192380137f",
+      "functions": [
+        {
+          "name": "process_symbol",
+          "params": [
+            "sym"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "get_screener_data",
+          "params": [
+            "force_refresh"
+          ],
+          "exported": true,
+          "lineCount": 52
+        }
+      ],
       "classes": [],
       "imports": [
         {
-          "source": "re",
+          "source": "os",
           "specifiers": [
-            "re"
+            "os"
           ]
-        }
-      ],
-      "exports": [],
-      "totalLines": 159,
-      "hasStructuralAnalysis": true
-    },
-    "patch_bos_live_zones.py": {
-      "filePath": "patch_bos_live_zones.py",
-      "contentHash": "06d1638bc4aa62f8abd653bdd204b45ba20d1eb09512924506d37ab7d5279ba3",
-      "functions": [],
-      "classes": [],
-      "imports": [
+        },
         {
-          "source": "re",
+          "source": "json",
           "specifiers": [
-            "re"
+            "json"
           ]
-        }
-      ],
-      "exports": [],
-      "totalLines": 37,
-      "hasStructuralAnalysis": true
-    },
-    "patch_dashboard.py": {
-      "filePath": "patch_dashboard.py",
-      "contentHash": "fd102f37ca9f8acb45a18edfde5b6dadab31e20a446067e86f9c9f7308e4ac88",
-      "functions": [],
-      "classes": [],
-      "imports": [
+        },
         {
-          "source": "re",
+          "source": "time",
           "specifiers": [
-            "re"
+            "time"
           ]
-        }
-      ],
-      "exports": [],
-      "totalLines": 127,
-      "hasStructuralAnalysis": true
-    },
-    "patch_invalidation.py": {
-      "filePath": "patch_invalidation.py",
-      "contentHash": "2469ee48341c9e06af4af0b9df1ccf5009090a5f182e878c8b154da0687cb35e",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 87,
-      "hasStructuralAnalysis": true
-    },
-    "patch_main_app.py": {
-      "filePath": "patch_main_app.py",
-      "contentHash": "d60d0ca0fb34bef764614a93d12a77d91727cce204772cfd1eb16d8878f3eb34",
-      "functions": [],
-      "classes": [],
-      "imports": [
+        },
         {
-          "source": "re",
+          "source": "concurrent.futures",
           "specifiers": [
-            "re"
+            "concurrent.futures"
           ]
-        }
-      ],
-      "exports": [],
-      "totalLines": 39,
-      "hasStructuralAnalysis": true
-    },
-    "patch_smc_zones_mitigate.py": {
-      "filePath": "patch_smc_zones_mitigate.py",
-      "contentHash": "448c131f5688cd3d8d76757c294ecb364be970894e1eb3b976fbf6d469be08a4",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 16,
-      "hasStructuralAnalysis": true
-    },
-    "patch_structure_service.py": {
-      "filePath": "patch_structure_service.py",
-      "contentHash": "db2da20c82543df1f91bc92bd5149b553c214c43c5e4b13c73e84874d19e8708",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 96,
-      "hasStructuralAnalysis": true
-    },
-    "patch_zones.py": {
-      "filePath": "patch_zones.py",
-      "contentHash": "ba25d376b0ab6b821397ba10a6f5383dda6e6d4c7ef465b695a40b7bfa30e90c",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 36,
-      "hasStructuralAnalysis": true
-    },
-    "README.md": {
-      "filePath": "README.md",
-      "contentHash": "2419fe669927c9e6fc06918a7094a70436d93d15a6aab1fc79688af14495effa",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 57,
-      "hasStructuralAnalysis": true
-    },
-    "rewrite_bos.py": {
-      "filePath": "rewrite_bos.py",
-      "contentHash": "8c7a5e3710372aac0394cdf4834d3169a92f8d56e769b50416ac49bc81333d77",
-      "functions": [],
-      "classes": [],
-      "imports": [
+        },
         {
-          "source": "re",
+          "source": "symbol_loader",
           "specifiers": [
-            "re"
+            "get_symbol_list"
+          ]
+        },
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
           ]
         }
       ],
-      "exports": [],
-      "totalLines": 110,
+      "exports": [
+        "process_symbol",
+        "get_screener_data"
+      ],
+      "totalLines": 91,
       "hasStructuralAnalysis": true
     },
-    "scratch.py": {
-      "filePath": "scratch.py",
-      "contentHash": "4da30a0da39a9c2486a67993afd488a960e7855d919b3ae34122275f8ff4d761",
+    "smc_pullback.pine": {
+      "filePath": "smc_pullback.pine",
+      "contentHash": "8658e4756b7b64e1c48f756ecf9dd8f7b5556b27daf0bb24626b9bad413b0a9c",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 2,
-      "hasStructuralAnalysis": true
+      "totalLines": 178,
+      "hasStructuralAnalysis": false
     },
     "smc_pullback.py": {
       "filePath": "smc_pullback.py",
-      "contentHash": "31c41e3173a043f12d692a5d928937cc35117f2e9b5b5b51320ea62e92d93217",
+      "contentHash": "cb62b7a2b7e08ecd17ba0c14670870d58f1f100172076b362195c482bdc62284",
       "functions": [
+        {
+          "name": "round_price",
+          "params": [
+            "val",
+            "is_forex"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
         {
           "name": "find_swings",
           "params": [
             "df",
-            "ltf_df"
+            "ltf_df",
+            "symbol"
           ],
           "exported": true,
-          "lineCount": 204
+          "lineCount": 113
         }
       ],
       "classes": [],
@@ -718,112 +1022,76 @@
         }
       ],
       "exports": [
+        "round_price",
         "find_swings"
       ],
-      "totalLines": 238,
+      "totalLines": 136,
       "hasStructuralAnalysis": true
+    },
+    "smc_pullbacks.pine": {
+      "filePath": "smc_pullbacks.pine",
+      "contentHash": "7a5faa0ecf0cac533ea14778aa0fd80ac8de95ef3a2530149c7d0f2d934e75f3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 182,
+      "hasStructuralAnalysis": false
     },
     "smc_zones.py": {
       "filePath": "smc_zones.py",
-      "contentHash": "ce1116b09168f77f7324f799fb24eecf2feb78989033d42b652703d170f6ca89",
-      "functions": [
+      "contentHash": "7c2879a34175a9f49746e5e103aa119a09b68ca024e2859b1bb312f99aa6edd4",
+      "functions": [],
+      "classes": [],
+      "imports": [
         {
-          "name": "add_zone",
-          "params": [
-            "active_zones",
-            "start_time",
-            "bottom",
-            "top",
-            "peak",
-            "zone_type",
-            "threshold"
-          ],
-          "exported": true,
-          "lineCount": 22
-        },
-        {
-          "name": "merge_zones",
-          "params": [
-            "raw_zones",
-            "threshold"
-          ],
-          "exported": true,
-          "lineCount": 18
-        },
-        {
-          "name": "extract_demand_zones",
-          "params": [
-            "df",
-            "cycle_start_idx",
-            "proper_high_idx",
-            "active_pb_low_idx",
-            "threshold"
-          ],
-          "exported": true,
-          "lineCount": 14
-        },
-        {
-          "name": "extract_supply_zones",
-          "params": [
-            "df",
-            "cycle_start_idx",
-            "proper_low_idx",
-            "active_pb_high_idx",
-            "threshold"
-          ],
-          "exported": true,
-          "lineCount": 14
-        },
-        {
-          "name": "mitigate_zones",
-          "params": [
-            "active_demand_zones",
-            "active_supply_zones",
-            "historical_zones",
-            "c_low",
-            "c_high",
-            "idx"
-          ],
-          "exported": true,
-          "lineCount": 24
-        },
-        {
-          "name": "finalize_zones",
-          "params": [
-            "active_demand_zones",
-            "active_supply_zones",
-            "historical_zones",
-            "last_idx"
-          ],
-          "exported": true,
-          "lineCount": 10
+          "source": "zone_service",
+          "specifiers": [
+            "add_zone",
+            "merge_zones",
+            "extract_demand_zones",
+            "extract_supply_zones",
+            "ZoneManager"
+          ]
         }
       ],
+      "exports": [],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "stocks list/Futures.csv": {
+      "filePath": "stocks list/Futures.csv",
+      "contentHash": "64ec2a02279af3e121d9ebe39bc830b571ae52e7a3c778a4a8497d5198603b0b",
+      "functions": [],
       "classes": [],
       "imports": [],
-      "exports": [
-        "add_zone",
-        "merge_zones",
-        "extract_demand_zones",
-        "extract_supply_zones",
-        "mitigate_zones",
-        "finalize_zones"
-      ],
-      "totalLines": 109,
-      "hasStructuralAnalysis": true
+      "exports": [],
+      "totalLines": 216,
+      "hasStructuralAnalysis": false
+    },
+    "stocks list/NSE_all_stocks.csv": {
+      "filePath": "stocks list/NSE_all_stocks.csv",
+      "contentHash": "ecaff7ae79d2611f74b05ba6813a181020e8a4a53bd815f2b2bb1c63931dd6f2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2963,
+      "hasStructuralAnalysis": false
     },
     "structure_service.py": {
       "filePath": "structure_service.py",
-      "contentHash": "b368c19f2d63845309209513a12e2fab2b10190b57626a70ba7c4b8eff864053",
+      "contentHash": "a2db735c46a630d675e517aae0e1e95f5c5535d2c8a0c117b4f6222dbb6f97ca",
       "functions": [
         {
           "name": "get_chart_data",
           "params": [
             "symbol_raw",
-            "timeframe_raw"
+            "timeframe_raw",
+            "market_type"
           ],
           "exported": true,
-          "lineCount": 185
+          "lineCount": 202
         }
       ],
       "classes": [],
@@ -886,18 +1154,20 @@
       "exports": [
         "get_chart_data"
       ],
-      "totalLines": 216,
+      "totalLines": 235,
       "hasStructuralAnalysis": true
     },
     "symbol_loader.py": {
       "filePath": "symbol_loader.py",
-      "contentHash": "b85e87774f0fff3542d5243e40f466c6932891b68ae1ba75219427ac6744e823",
+      "contentHash": "7ca9d391f4e7d674df38fe5d831a7e4aa988a8208a3ff651ee36c07173233629",
       "functions": [
         {
           "name": "get_symbol_list",
-          "params": [],
+          "params": [
+            "market_type"
+          ],
           "exported": true,
-          "lineCount": 17
+          "lineCount": 47
         }
       ],
       "classes": [],
@@ -918,11 +1188,550 @@
       "exports": [
         "get_symbol_list"
       ],
-      "totalLines": 27,
+      "totalLines": 59,
       "hasStructuralAnalysis": true
     },
-    "test_fetch.py": {
-      "filePath": "test_fetch.py",
+    "test_4h.py": {
+      "filePath": "test_4h.py",
+      "contentHash": "3222cb57f18a82655e629d7a021677d14c9270361a23bfd3ea4ac071700a3825",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "test_browser_axis.py": {
+      "filePath": "test_browser_axis.py",
+      "contentHash": "88fe996b6a6a6e367b092f6ac70233fb880780f1568ddf648823194106b92b6e",
+      "functions": [
+        {
+          "name": "run_server",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "playwright.sync_api",
+          "specifiers": [
+            "sync_playwright"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        }
+      ],
+      "exports": [
+        "run_server"
+      ],
+      "totalLines": 21,
+      "hasStructuralAnalysis": true
+    },
+    "test_browser.py": {
+      "filePath": "test_browser.py",
+      "contentHash": "65a5f20699c3983fbd4330563c5646b6354bae793d43bbd5036ac8f8c45c174c",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "playwright.sync_api",
+          "specifiers": [
+            "sync_playwright"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 12,
+      "hasStructuralAnalysis": true
+    },
+    "test_check_swings.py": {
+      "filePath": "test_check_swings.py",
+      "contentHash": "95ff84b14f7341efb739382d86f39aed506c8e8ebd8d2211018de1658812a01a",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "test_compare_pullback.py": {
+      "filePath": "test_compare_pullback.py",
+      "contentHash": "1afd835ec82b1044ba15632ebd36fda4ceb6c180175c8f2810850a7ebb5fd2ae",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "smc_pullback",
+          "specifiers": [
+            "find_swings"
+          ]
+        },
+        {
+          "source": "data_fetcher",
+          "specifiers": [
+            "DataFetcher"
+          ]
+        },
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "Interval"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "test_compare_pullbacks.py": {
+      "filePath": "test_compare_pullbacks.py",
+      "contentHash": "400b9ddee57b2a026cc1593c3e7d02b25f5527c3365b9efa46f93c24cba0938f",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "test_events.py": {
+      "filePath": "test_events.py",
+      "contentHash": "7126f0c43456c5a284b5c35f049530e8de396750648e2ba4b766cab8cfd917a1",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "test_fetch_4h.py": {
+      "filePath": "test_fetch_4h.py",
+      "contentHash": "c150c1cc25326ecf385030d75586c9fd6a3296867fe925d5cd3c695eaf5940ab",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "TvDatafeed",
+            "Interval"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "test_lw_str.py": {
+      "filePath": "test_lw_str.py",
+      "contentHash": "0fd94b96d7d28c8a5734af0b674bbc6174dc9f23f20c05c9432339b9135190a1",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "lightweight_charts",
+          "specifiers": [
+            "Chart"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 33,
+      "hasStructuralAnalysis": true
+    },
+    "test_lw.py": {
+      "filePath": "test_lw.py",
+      "contentHash": "fe8df4b7e85043060246a78d4b3437a9865896b57219a25a7845b89a4cf30160",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "lightweight_charts",
+          "specifiers": [
+            "Chart"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 35,
+      "hasStructuralAnalysis": true
+    },
+    "test_ms.py": {
+      "filePath": "test_ms.py",
+      "contentHash": "6bc748edf01016aa431ec8068ccd4205eeaed8cafb4589c51b5c5e13dd8ec8e2",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "market_structure",
+          "specifiers": [
+            "MarketStructureAnalyzer"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "test_ohlc_aug.py": {
+      "filePath": "test_ohlc_aug.py",
+      "contentHash": "7c83750c08f670941d009837c8be5765174f3174a6d0ec50280eb2727f4632d7",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "test_ohlc_axis.py": {
+      "filePath": "test_ohlc_axis.py",
+      "contentHash": "6d9b6cc59253a20bed0b899a5513a427f54535aa73c4e945842b0997ba17e315",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "test_structure.py": {
+      "filePath": "test_structure.py",
+      "contentHash": "6670497cc26d99807d17f0b93449252e2bbdb3f59664f33efbe0423ec5dbfae7",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "test_time_offset.py": {
+      "filePath": "test_time_offset.py",
+      "contentHash": "7653ace0cf992bacd963961ac557f772d05c725064a0e7d1a91470933effbdf4",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "datetime",
+          "specifiers": [
+            "timedelta"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    "test_tv.py": {
+      "filePath": "test_tv.py",
+      "contentHash": "85ba0660256b934619783f1f12c66987e4f0a9ec914c255533d3ba838c14aeb6",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "tvDatafeed",
+          "specifiers": [
+            "TvDatafeed",
+            "Interval"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "test_unix.py": {
+      "filePath": "test_unix.py",
+      "contentHash": "6fef4590b6296dc5c4e4235643581df8d1939c296406d3a78f6f73dcfde4cd74",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 10,
+      "hasStructuralAnalysis": true
+    },
+    "test_zones.py": {
+      "filePath": "test_zones.py",
+      "contentHash": "fa808c68e30a2b081c18caf324786f0c1283271e70f9283b237418ccb6a7595e",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "requests",
+          "specifiers": [
+            "requests"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "test_zones2.py": {
+      "filePath": "test_zones2.py",
+      "contentHash": "27fa96d10a8ab23fdad67346bb0902e3ca627ebaa3bd79ece9b994515b648d45",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "test_zones3.py": {
+      "filePath": "test_zones3.py",
+      "contentHash": "27fa96d10a8ab23fdad67346bb0902e3ca627ebaa3bd79ece9b994515b648d45",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_analysis.py": {
+      "filePath": "tests/test_analysis.py",
+      "contentHash": "4be9a55fb320303b712333b1636c7796f8b416df31b83425bfcdd594fc90b63e",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_cache.py": {
+      "filePath": "tests/test_cache.py",
+      "contentHash": "3ae5c570442c74fa74f3e4cf269e97b49635b26b65901a514b71c4ce938fcd0c",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_downtrend_is.py": {
+      "filePath": "tests/test_downtrend_is.py",
+      "contentHash": "eabdf29bedb162ff3ac0ea8b78f80389f58f5ba94b0f8ed482f79416843767e0",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "bos_choch_inducement",
+          "specifiers": [
+            "analyze_htf_structure"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 18,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_edge_case.py": {
+      "filePath": "tests/test_edge_case.py",
+      "contentHash": "1d1f00854aa309f193f1ca7da69b49854877fce1257c01684201290f030b59a0",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "market_structure",
+          "specifiers": [
+            "MarketStructureAnalyzer"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_fetch.py": {
+      "filePath": "tests/test_fetch.py",
       "contentHash": "b31340bd5d3157eed5fec8577674a76a91b1a6a2ee8acc7a08f49d362f018d52",
       "functions": [
         {
@@ -954,8 +1763,8 @@
       "totalLines": 22,
       "hasStructuralAnalysis": true
     },
-    "test_fix_bos.py": {
-      "filePath": "test_fix_bos.py",
+    "tests/test_fix_bos.py": {
+      "filePath": "tests/test_fix_bos.py",
       "contentHash": "dbdf51c687f7f4d2d5ffef79763c4ea9762266bb2a0b39da1db9c30fd584d66a",
       "functions": [
         {
@@ -973,8 +1782,8 @@
       "totalLines": 7,
       "hasStructuralAnalysis": true
     },
-    "test_fix.py": {
-      "filePath": "test_fix.py",
+    "tests/test_fix.py": {
+      "filePath": "tests/test_fix.py",
       "contentHash": "d0be25f4244143d411bf179b0b5639d30eb8754f114f7ae5fd19f2cee5d86898",
       "functions": [
         {
@@ -1011,18 +1820,31 @@
       "totalLines": 24,
       "hasStructuralAnalysis": true
     },
-    "test_lwc_time.html": {
-      "filePath": "test_lwc_time.html",
-      "contentHash": "08077747ec868c51bcc05824fc60d68ced3fec1d0b97ae53ebf3c7d3c20c268e",
+    "tests/test_lw.py": {
+      "filePath": "tests/test_lw.py",
+      "contentHash": "442b3ff41b0d3f2934a104aa4f834d7f5ccfaa8c3957fa939bb2c71eb6beb607",
       "functions": [],
       "classes": [],
-      "imports": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "lightweight_charts.widgets",
+          "specifiers": [
+            "StaticLWC"
+          ]
+        }
+      ],
       "exports": [],
-      "totalLines": 340,
-      "hasStructuralAnalysis": false
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
     },
-    "test_lwc_time.py": {
-      "filePath": "test_lwc_time.py",
+    "tests/test_lwc_time.py": {
+      "filePath": "tests/test_lwc_time.py",
       "contentHash": "807727719fea032e46703290c55c6ce953d5109db283b69b73bf2e7e81fb1804",
       "functions": [],
       "classes": [],
@@ -1044,8 +1866,8 @@
       "totalLines": 20,
       "hasStructuralAnalysis": true
     },
-    "test_lwc_time2.py": {
-      "filePath": "test_lwc_time2.py",
+    "tests/test_lwc_time2.py": {
+      "filePath": "tests/test_lwc_time2.py",
       "contentHash": "7f67065f71eeab0100633b5dcbf0e9241b7bc20b160bad263d52be2aaf0434f6",
       "functions": [],
       "classes": [],
@@ -1067,8 +1889,8 @@
       "totalLines": 23,
       "hasStructuralAnalysis": true
     },
-    "test_merge.py": {
-      "filePath": "test_merge.py",
+    "tests/test_merge.py": {
+      "filePath": "tests/test_merge.py",
       "contentHash": "573353dd8cecf2d4ef1a6e75e51407ca6a74f535afb694efcb2c2d7b43715d75",
       "functions": [
         {
@@ -1089,8 +1911,89 @@
       "totalLines": 27,
       "hasStructuralAnalysis": true
     },
-    "test_zones.py": {
-      "filePath": "test_zones.py",
+    "tests/test_ms.py": {
+      "filePath": "tests/test_ms.py",
+      "contentHash": "3ff7fb77f057b2a08f2d143ea52e720ab21ea4ce714547597a252e250e0dbd78",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "market_structure",
+          "specifiers": [
+            "MarketStructureAnalyzer"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_structure.py": {
+      "filePath": "tests/test_structure.py",
+      "contentHash": "b8ee5c9a6f7ad8064b13b0e74fdbce85fedcf33e6c1f2f189c3a186babf53b8e",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "structure_service",
+          "specifiers": [
+            "get_chart_data"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_ts.py": {
+      "filePath": "tests/test_ts.py",
+      "contentHash": "968c408687d1c7ff9d2def0c2ac44c0403a8c25e131b485589148443051fd8eb",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_zones.py": {
+      "filePath": "tests/test_zones.py",
       "contentHash": "3953aac82b5ec4cf795171f672c515464dbdbc690fac23c2619946665e349e9d",
       "functions": [],
       "classes": [],
@@ -1118,28 +2021,29 @@
       "totalLines": 13,
       "hasStructuralAnalysis": true
     },
-    "walkthrough.md": {
-      "filePath": "walkthrough.md",
-      "contentHash": "7ff5445cad3b0f38c2238d65cc6df583bf6f90601ee5a3537c07d789f77701c2",
+    "tradeus_toolkit.pine": {
+      "filePath": "tradeus_toolkit.pine",
+      "contentHash": "aee22aac3016ff0aa23fa8607cc55c0af4c093157e82eea23714314d576a0245",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 21,
-      "hasStructuralAnalysis": true
+      "totalLines": 837,
+      "hasStructuralAnalysis": false
     },
     "web_dashboard.py": {
       "filePath": "web_dashboard.py",
-      "contentHash": "fd9b443a9862115109e12a00a4c292f2c6afbe2eaef2db366a41c18736760cf4",
+      "contentHash": "cce4af46bed4e4a17baff9e7e416e2e9a2c9ef1d90f29a23b0e4cc0fa3c542da",
       "functions": [
         {
           "name": "render_dashboard",
           "params": [
             "symbol_raw",
-            "timeframe_raw"
+            "timeframe_raw",
+            "market_type_raw"
           ],
           "exported": true,
-          "lineCount": 295
+          "lineCount": 427
         }
       ],
       "classes": [],
@@ -1178,7 +2082,103 @@
       "exports": [
         "render_dashboard"
       ],
-      "totalLines": 302,
+      "totalLines": 434,
+      "hasStructuralAnalysis": true
+    },
+    "zone_service.py": {
+      "filePath": "zone_service.py",
+      "contentHash": "a3652fccac37a12d011f578e72031df25bf4f6ae9c8cef83f9f8ecf98f317b74",
+      "functions": [
+        {
+          "name": "add_zone",
+          "params": [
+            "active_zones",
+            "start_time",
+            "bottom",
+            "top",
+            "peak",
+            "zone_type",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "merge_zones",
+          "params": [
+            "raw_zones",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "extract_demand_zones",
+          "params": [
+            "df",
+            "cycle_start_idx",
+            "proper_high_idx",
+            "active_pb_low_idx",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 52
+        },
+        {
+          "name": "extract_supply_zones",
+          "params": [
+            "df",
+            "cycle_start_idx",
+            "proper_low_idx",
+            "active_pb_high_idx",
+            "threshold"
+          ],
+          "exported": true,
+          "lineCount": 53
+        }
+      ],
+      "classes": [
+        {
+          "name": "ZoneManager",
+          "methods": [
+            "__init__",
+            "process_candle",
+            "handle_idm_uptrend",
+            "handle_is_uptrend",
+            "handle_idm_downtrend",
+            "handle_is_downtrend",
+            "clear_on_bos",
+            "clear_on_choch",
+            "finalize",
+            "get_all_zones"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 110
+        }
+      ],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "add_zone",
+        "merge_zones",
+        "extract_demand_zones",
+        "extract_supply_zones",
+        "ZoneManager"
+      ],
+      "totalLines": 275,
       "hasStructuralAnalysis": true
     }
   }

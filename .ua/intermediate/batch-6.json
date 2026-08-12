@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {
+      "id": "file:infrastructure/main.tf",
+      "type": "file",
+      "name": "main.tf",
+      "filePath": "infrastructure/main.tf",
+      "summary": "Infra file: infrastructure/main.tf",
+      "tags": [
+        "infra",
+        "terraform"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:infrastructure/outputs.tf",
+      "type": "file",
+      "name": "outputs.tf",
+      "filePath": "infrastructure/outputs.tf",
+      "summary": "Infra file: infrastructure/outputs.tf",
+      "tags": [
+        "infra",
+        "terraform"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:infrastructure/variables.tf",
+      "type": "file",
+      "name": "variables.tf",
+      "filePath": "infrastructure/variables.tf",
+      "summary": "Infra file: infrastructure/variables.tf",
+      "tags": [
+        "infra",
+        "terraform"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

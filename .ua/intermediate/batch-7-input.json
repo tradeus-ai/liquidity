@@ -1,0 +1,182 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchFiles": [
+    {
+      "path": ".planning/tmp/docs-work-manifest.json",
+      "language": "json",
+      "sizeLines": 66,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/ua-inline-validate.cjs",
+      "language": "javascript",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".ua/.understandignore",
+      "language": "unknown",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".ua/intermediate/scan-result.json",
+      "language": "json",
+      "sizeLines": 307,
+      "fileCategory": "config"
+    },
+    {
+      "path": "app.py",
+      "language": "python",
+      "sizeLines": 161,
+      "fileCategory": "code"
+    },
+    {
+      "path": "bos_choch_inducement.py",
+      "language": "python",
+      "sizeLines": 415,
+      "fileCategory": "code"
+    },
+    {
+      "path": "config.py",
+      "language": "python",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data_fetcher.py",
+      "language": "python",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "feedback_server.py",
+      "language": "python",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "fvg_with_inside_bars.pine",
+      "language": "pine",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "gap_test.py",
+      "language": "python",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "infrastructure/.terraform.lock.hcl",
+      "language": "hcl",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "inside_bars.pine",
+      "language": "pine",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "inside_bars.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "main.py",
+      "language": "python",
+      "sizeLines": 263,
+      "fileCategory": "code"
+    },
+    {
+      "path": "market_structure.pine",
+      "language": "pine",
+      "sizeLines": 489,
+      "fileCategory": "code"
+    },
+    {
+      "path": "market_structure.py",
+      "language": "python",
+      "sizeLines": 172,
+      "fileCategory": "code"
+    },
+    {
+      "path": "screener_service.py",
+      "language": "python",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_pullback.pine",
+      "language": "pine",
+      "sizeLines": 177,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_pullback.py",
+      "language": "python",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_pullbacks.pine",
+      "language": "pine",
+      "sizeLines": 181,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_zones.py",
+      "language": "python",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "stocks list/Futures.csv",
+      "language": "csv",
+      "sizeLines": 215,
+      "fileCategory": "data"
+    },
+    {
+      "path": "stocks list/NSE_all_stocks.csv",
+      "language": "csv",
+      "sizeLines": 2962,
+      "fileCategory": "data"
+    },
+    {
+      "path": "structure_service.py",
+      "language": "python",
+      "sizeLines": 234,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    ".planning/tmp/docs-work-manifest.json": [],
+    ".ua/.trash-1785038995/tmp/ua-inline-validate.cjs": [],
+    ".ua/.understandignore": [],
+    ".ua/intermediate/scan-result.json": [],
+    "app.py": [],
+    "bos_choch_inducement.py": [],
+    "config.py": [],
+    "data_fetcher.py": [],
+    "feedback_server.py": [],
+    "fvg_with_inside_bars.pine": [],
+    "gap_test.py": [],
+    "infrastructure/.terraform.lock.hcl": [],
+    "inside_bars.pine": [],
+    "inside_bars.py": [],
+    "main.py": [],
+    "market_structure.pine": [],
+    "market_structure.py": [],
+    "screener_service.py": [],
+    "smc_pullback.pine": [],
+    "smc_pullback.py": [],
+    "smc_pullbacks.pine": [],
+    "smc_zones.py": [],
+    "stocks list/Futures.csv": [],
+    "stocks list/NSE_all_stocks.csv": [],
+    "structure_service.py": []
+  }
+}

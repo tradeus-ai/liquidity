@@ -1,0 +1,70 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchFiles": [
+    {
+      "path": "GEMINI.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 56,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "chat_summary.md",
+      "language": "markdown",
+      "sizeLines": 24,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "dashboard.html",
+      "language": "html",
+      "sizeLines": 570,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "deploy.sh",
+      "language": "shell",
+      "sizeLines": 108,
+      "fileCategory": "script"
+    },
+    {
+      "path": "deploy_to_oci.sh",
+      "language": "shell",
+      "sizeLines": 64,
+      "fileCategory": "script"
+    },
+    {
+      "path": "requirements.txt",
+      "language": "txt",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "screener.html",
+      "language": "html",
+      "sizeLines": 497,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "walkthrough.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    }
+  ],
+  "batchImportData": {
+    "GEMINI.md": [],
+    "README.md": [],
+    "chat_summary.md": [],
+    "dashboard.html": [],
+    "deploy.sh": [],
+    "deploy_to_oci.sh": [],
+    "requirements.txt": [],
+    "screener.html": [],
+    "walkthrough.md": []
+  }
+}

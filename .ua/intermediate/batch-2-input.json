@@ -1,0 +1,35 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchFiles": [
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-0-input.json",
+      "language": "json",
+      "sizeLines": 54,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-1-input.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-2-input.json",
+      "language": "json",
+      "sizeLines": 156,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-3-input.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    ".ua/.trash-1785038995/tmp/batch-0-input.json": [],
+    ".ua/.trash-1785038995/tmp/batch-1-input.json": [],
+    ".ua/.trash-1785038995/tmp/batch-2-input.json": [],
+    ".ua/.trash-1785038995/tmp/batch-3-input.json": []
+  }
+}

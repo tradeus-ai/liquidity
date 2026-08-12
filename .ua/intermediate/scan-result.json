@@ -8,46 +8,178 @@
       "fileCategory": "config"
     },
     {
+      "path": ".ua/.trash-1785038995/assemble-review.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/assembled-graph.json",
+      "language": "json",
+      "sizeLines": 1144,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-0.json",
+      "language": "json",
+      "sizeLines": 101,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-1.json",
+      "language": "json",
+      "sizeLines": 89,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-2.json",
+      "language": "json",
+      "sizeLines": 610,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batch-3.json",
+      "language": "json",
+      "sizeLines": 154,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/batches.json",
+      "language": "json",
+      "sizeLines": 441,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/fingerprint-input.json",
+      "language": "json",
+      "sizeLines": 52,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/layers.json",
+      "language": "json",
+      "sizeLines": 106,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/review.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-0-input.json",
+      "language": "json",
+      "sizeLines": 54,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-1-input.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-2-input.json",
+      "language": "json",
+      "sizeLines": 156,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-3-input.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/ua-inline-validate.cjs",
+      "language": "javascript",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".ua/.trash-1785038995/tour.json",
+      "language": "json",
+      "sizeLines": 58,
+      "fileCategory": "config"
+    },
+    {
       "path": ".ua/.understandignore",
       "language": "unknown",
       "sizeLines": 46,
       "fileCategory": "code"
     },
     {
+      "path": ".ua/fingerprints.json",
+      "language": "json",
+      "sizeLines": 1184,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/intermediate/scan-result.json",
+      "language": "json",
+      "sizeLines": 307,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/knowledge-graph.json",
+      "language": "json",
+      "sizeLines": 1144,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/meta.json",
+      "language": "json",
+      "sizeLines": 5,
+      "fileCategory": "config"
+    },
+    {
       "path": "app.py",
       "language": "python",
-      "sizeLines": 107,
+      "sizeLines": 161,
       "fileCategory": "code"
     },
     {
       "path": "bos_choch_inducement.py",
       "language": "python",
-      "sizeLines": 356,
+      "sizeLines": 415,
       "fileCategory": "code"
     },
     {
-      "path": "chart_15m.html",
-      "language": "html",
-      "sizeLines": 63148,
-      "fileCategory": "markup"
+      "path": "chat_summary.md",
+      "language": "markdown",
+      "sizeLines": 24,
+      "fileCategory": "docs"
     },
     {
-      "path": "chart_1d.html",
-      "language": "html",
-      "sizeLines": 52131,
-      "fileCategory": "markup"
+      "path": "config.py",
+      "language": "python",
+      "sizeLines": 3,
+      "fileCategory": "code"
     },
     {
       "path": "dashboard.html",
       "language": "html",
-      "sizeLines": 706,
+      "sizeLines": 570,
       "fileCategory": "markup"
     },
     {
       "path": "data_fetcher.py",
       "language": "python",
-      "sizeLines": 54,
+      "sizeLines": 73,
       "fileCategory": "code"
+    },
+    {
+      "path": "deploy_to_oci.sh",
+      "language": "shell",
+      "sizeLines": 64,
+      "fileCategory": "script"
+    },
+    {
+      "path": "deploy.sh",
+      "language": "shell",
+      "sizeLines": 108,
+      "fileCategory": "script"
     },
     {
       "path": "docs/ARCHITECTURE.md",
@@ -59,6 +191,12 @@
       "path": "docs/CONFIGURATION.md",
       "language": "markdown",
       "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/DEPLOYMENT-OCI.md",
+      "language": "markdown",
+      "sizeLines": 82,
       "fileCategory": "docs"
     },
     {
@@ -80,9 +218,21 @@
       "fileCategory": "docs"
     },
     {
+      "path": "docs/SERVER_MANAGEMENT.md",
+      "language": "markdown",
+      "sizeLines": 47,
+      "fileCategory": "docs"
+    },
+    {
       "path": "docs/SESSION_SUMMARY.md",
       "language": "markdown",
       "sizeLines": 218,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/SMC-MARKET-STRUCTURE.md",
+      "language": "markdown",
+      "sizeLines": 55,
       "fileCategory": "docs"
     },
     {
@@ -98,22 +248,52 @@
       "fileCategory": "code"
     },
     {
-      "path": "fix_issues.py",
-      "language": "python",
-      "sizeLines": 86,
+      "path": "fvg_with_inside_bars.pine",
+      "language": "pine",
+      "sizeLines": 118,
       "fileCategory": "code"
     },
     {
-      "path": "Futures.csv",
-      "language": "csv",
-      "sizeLines": 215,
-      "fileCategory": "data"
+      "path": "gap_test.py",
+      "language": "python",
+      "sizeLines": 13,
+      "fileCategory": "code"
     },
     {
       "path": "GEMINI.md",
       "language": "markdown",
       "sizeLines": 28,
       "fileCategory": "docs"
+    },
+    {
+      "path": "infrastructure/.terraform.lock.hcl",
+      "language": "hcl",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "infrastructure/main.tf",
+      "language": "terraform",
+      "sizeLines": 130,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "infrastructure/outputs.tf",
+      "language": "terraform",
+      "sizeLines": 4,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "infrastructure/variables.tf",
+      "language": "terraform",
+      "sizeLines": 35,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "inside_bars.pine",
+      "language": "pine",
+      "sizeLines": 74,
+      "fileCategory": "code"
     },
     {
       "path": "inside_bars.py",
@@ -128,57 +308,15 @@
       "fileCategory": "code"
     },
     {
+      "path": "market_structure.pine",
+      "language": "pine",
+      "sizeLines": 489,
+      "fileCategory": "code"
+    },
+    {
       "path": "market_structure.py",
       "language": "python",
-      "sizeLines": 168,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_bos_choch.py",
-      "language": "python",
-      "sizeLines": 158,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_bos_live_zones.py",
-      "language": "python",
-      "sizeLines": 36,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_dashboard.py",
-      "language": "python",
-      "sizeLines": 126,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_invalidation.py",
-      "language": "python",
-      "sizeLines": 86,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_main_app.py",
-      "language": "python",
-      "sizeLines": 38,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_smc_zones_mitigate.py",
-      "language": "python",
-      "sizeLines": 15,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_structure_service.py",
-      "language": "python",
-      "sizeLines": 95,
-      "fileCategory": "code"
-    },
-    {
-      "path": "patch_zones.py",
-      "language": "python",
-      "sizeLines": 35,
+      "sizeLines": 172,
       "fileCategory": "code"
     },
     {
@@ -188,87 +326,285 @@
       "fileCategory": "docs"
     },
     {
-      "path": "rewrite_bos.py",
+      "path": "requirements.txt",
+      "language": "txt",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "screener_service.py",
       "language": "python",
-      "sizeLines": 109,
+      "sizeLines": 90,
       "fileCategory": "code"
     },
     {
-      "path": "scratch.py",
-      "language": "python",
-      "sizeLines": 1,
+      "path": "screener.html",
+      "language": "html",
+      "sizeLines": 497,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "smc_pullback.pine",
+      "language": "pine",
+      "sizeLines": 177,
       "fileCategory": "code"
     },
     {
       "path": "smc_pullback.py",
       "language": "python",
-      "sizeLines": 237,
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "smc_pullbacks.pine",
+      "language": "pine",
+      "sizeLines": 181,
       "fileCategory": "code"
     },
     {
       "path": "smc_zones.py",
       "language": "python",
-      "sizeLines": 108,
+      "sizeLines": 13,
       "fileCategory": "code"
+    },
+    {
+      "path": "stocks list/Futures.csv",
+      "language": "csv",
+      "sizeLines": 215,
+      "fileCategory": "data"
+    },
+    {
+      "path": "stocks list/NSE_all_stocks.csv",
+      "language": "csv",
+      "sizeLines": 2962,
+      "fileCategory": "data"
     },
     {
       "path": "structure_service.py",
       "language": "python",
-      "sizeLines": 215,
+      "sizeLines": 234,
       "fileCategory": "code"
     },
     {
       "path": "symbol_loader.py",
       "language": "python",
-      "sizeLines": 26,
+      "sizeLines": 58,
       "fileCategory": "code"
     },
     {
-      "path": "test_fetch.py",
+      "path": "test_4h.py",
       "language": "python",
-      "sizeLines": 21,
+      "sizeLines": 5,
       "fileCategory": "code"
     },
     {
-      "path": "test_fix_bos.py",
+      "path": "test_browser_axis.py",
+      "language": "python",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_browser.py",
+      "language": "python",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_check_swings.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_compare_pullback.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_compare_pullbacks.py",
+      "language": "python",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_events.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_fetch_4h.py",
+      "language": "python",
+      "sizeLines": 4,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_lw_str.py",
+      "language": "python",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_lw.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_ms.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_ohlc_aug.py",
+      "language": "python",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_ohlc_axis.py",
+      "language": "python",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_structure.py",
+      "language": "python",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_time_offset.py",
       "language": "python",
       "sizeLines": 6,
       "fileCategory": "code"
     },
     {
-      "path": "test_fix.py",
+      "path": "test_tv.py",
       "language": "python",
-      "sizeLines": 23,
+      "sizeLines": 4,
       "fileCategory": "code"
     },
     {
-      "path": "test_lwc_time.html",
-      "language": "html",
-      "sizeLines": 339,
-      "fileCategory": "markup"
-    },
-    {
-      "path": "test_lwc_time.py",
+      "path": "test_unix.py",
       "language": "python",
-      "sizeLines": 19,
-      "fileCategory": "code"
-    },
-    {
-      "path": "test_lwc_time2.py",
-      "language": "python",
-      "sizeLines": 22,
-      "fileCategory": "code"
-    },
-    {
-      "path": "test_merge.py",
-      "language": "python",
-      "sizeLines": 26,
+      "sizeLines": 9,
       "fileCategory": "code"
     },
     {
       "path": "test_zones.py",
       "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_zones2.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_zones3.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_analysis.py",
+      "language": "python",
       "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cache.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_downtrend_is.py",
+      "language": "python",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_edge_case.py",
+      "language": "python",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_fetch.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_fix_bos.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_fix.py",
+      "language": "python",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_lw.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_lwc_time.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_lwc_time2.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_merge.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ms.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_structure.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ts.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_zones.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tradeus_toolkit.pine",
+      "language": "pine",
+      "sizeLines": 836,
       "fileCategory": "code"
     },
     {
@@ -280,29 +616,43 @@
     {
       "path": "web_dashboard.py",
       "language": "python",
-      "sizeLines": 301,
+      "sizeLines": 433,
+      "fileCategory": "code"
+    },
+    {
+      "path": "zone_service.py",
+      "language": "python",
+      "sizeLines": 274,
       "fileCategory": "code"
     }
   ],
-  "totalFiles": 47,
+  "totalFiles": 104,
   "filteredByIgnore": 0,
   "estimatedComplexity": "moderate",
   "stats": {
-    "filesScanned": 47,
+    "filesScanned": 104,
     "byCategory": {
-      "config": 1,
-      "code": 31,
-      "markup": 4,
-      "docs": 10,
-      "data": 1
+      "config": 20,
+      "code": 60,
+      "docs": 15,
+      "markup": 2,
+      "script": 2,
+      "infra": 3,
+      "data": 2
     },
     "byLanguage": {
-      "json": 1,
+      "json": 20,
+      "javascript": 1,
       "unknown": 1,
-      "python": 30,
-      "html": 4,
-      "markdown": 10,
-      "csv": 1
+      "python": 51,
+      "markdown": 14,
+      "html": 2,
+      "shell": 2,
+      "pine": 6,
+      "hcl": 1,
+      "terraform": 3,
+      "txt": 1,
+      "csv": 2
     }
   }
 }

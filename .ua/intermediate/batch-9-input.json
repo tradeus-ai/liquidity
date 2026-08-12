@@ -1,0 +1,105 @@
+{
+  "projectRoot": "/mnt/all/Trading/Courses/Xoduse/Liquidity",
+  "batchFiles": [
+    {
+      "path": "tests/test_fetch.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_fix_bos.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_fix.py",
+      "language": "python",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_lw.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_lwc_time.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_lwc_time2.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_merge.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ms.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_structure.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ts.py",
+      "language": "python",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_zones.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tradeus_toolkit.pine",
+      "language": "pine",
+      "sizeLines": 836,
+      "fileCategory": "code"
+    },
+    {
+      "path": "web_dashboard.py",
+      "language": "python",
+      "sizeLines": 433,
+      "fileCategory": "code"
+    },
+    {
+      "path": "zone_service.py",
+      "language": "python",
+      "sizeLines": 274,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "tests/test_fetch.py": [],
+    "tests/test_fix_bos.py": [],
+    "tests/test_fix.py": [],
+    "tests/test_lw.py": [],
+    "tests/test_lwc_time.py": [],
+    "tests/test_lwc_time2.py": [],
+    "tests/test_merge.py": [],
+    "tests/test_ms.py": [],
+    "tests/test_structure.py": [],
+    "tests/test_ts.py": [],
+    "tests/test_zones.py": [],
+    "tradeus_toolkit.pine": [],
+    "web_dashboard.py": [],
+    "zone_service.py": []
+  }
+}

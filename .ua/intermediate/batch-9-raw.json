@@ -1,0 +1,1129 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 14,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "tests/test_fetch.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 16,
+      "functions": [
+        {
+          "name": "main",
+          "startLine": 4,
+          "endLine": 18,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "main",
+          "line": 4,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "main",
+          "callee": "TvDatafeed",
+          "lineNumber": 5
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 10
+        },
+        {
+          "caller": "main",
+          "callee": "tv.get_hist",
+          "lineNumber": 11
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 12
+        },
+        {
+          "caller": "main",
+          "callee": "df_15m.head",
+          "lineNumber": 12
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 13
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 13
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 15
+        },
+        {
+          "caller": "main",
+          "callee": "tv.get_hist",
+          "lineNumber": 16
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 17
+        },
+        {
+          "caller": "main",
+          "callee": "df_1d.head",
+          "lineNumber": 17
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 18
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 18
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_fix_bos.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "functions": [
+        {
+          "name": "replace_bos_choch",
+          "startLine": 1,
+          "endLine": 6,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "replace_bos_choch",
+          "line": 1,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "replace_bos_choch",
+          "callee": "open",
+          "lineNumber": 2
+        },
+        {
+          "caller": "replace_bos_choch",
+          "callee": "f.read",
+          "lineNumber": 3
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_fix.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 18,
+      "functions": [
+        {
+          "name": "test_logic",
+          "startLine": 5,
+          "endLine": 21,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_logic",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_logic",
+          "callee": "pd.read_parquet",
+          "lineNumber": 6
+        },
+        {
+          "caller": "test_logic",
+          "callee": "find_swings",
+          "lineNumber": 7
+        },
+        {
+          "caller": "test_logic",
+          "callee": "pd.Timestamp",
+          "lineNumber": 10
+        },
+        {
+          "caller": "test_logic",
+          "callee": "pd.Timestamp",
+          "lineNumber": 11
+        },
+        {
+          "caller": "test_logic",
+          "callee": "len",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_logic",
+          "callee": "print",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_logic",
+          "callee": "sh_rows.index[-1].strftime",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_logic",
+          "callee": "print",
+          "lineNumber": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_lw.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 13,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_lwc_time.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 17,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_lwc_time2.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 19,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_merge.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 25,
+      "functions": [
+        {
+          "name": "merge_zones",
+          "startLine": 1,
+          "endLine": 18,
+          "params": [
+            "raw_zones",
+            "threshold"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "merge_zones",
+          "line": 1,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "merge_zones",
+          "callee": "sorted",
+          "lineNumber": 3
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "dict",
+          "lineNumber": 5
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "abs",
+          "lineNumber": 7
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "min",
+          "lineNumber": 9
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "max",
+          "lineNumber": 10
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "merged.append",
+          "lineNumber": 13
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "dict",
+          "lineNumber": 14
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "merged.append",
+          "lineNumber": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_ms.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 15,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_structure.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_ts.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 6,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_zones.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tradeus_toolkit.pine",
+      "language": "pine",
+      "fileCategory": "code",
+      "totalLines": 836,
+      "nonEmptyLines": 713,
+      "metrics": {}
+    },
+    {
+      "path": "web_dashboard.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 433,
+      "nonEmptyLines": 388,
+      "functions": [
+        {
+          "name": "render_dashboard",
+          "startLine": 7,
+          "endLine": 433,
+          "params": [
+            "symbol_raw",
+            "timeframe_raw",
+            "market_type_raw"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "render_dashboard",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "render_dashboard",
+          "callee": "timeframe_raw.lower",
+          "lineNumber": 8
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str(market_type_raw).lower().strip",
+          "lineNumber": 9
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str(market_type_raw).lower",
+          "lineNumber": 9
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str",
+          "lineNumber": 9
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "get_chart_data",
+          "lineNumber": 10
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "data.get",
+          "lineNumber": 15
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "StaticLWC",
+          "lineNumber": 18
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.layout",
+          "lineNumber": 19
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.candle_style",
+          "lineNumber": 20
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str(symbol_raw).upper().replace('1!', '').strip",
+          "lineNumber": 29
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str(symbol_raw).upper().replace",
+          "lineNumber": 29
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str(symbol_raw).upper",
+          "lineNumber": 29
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "str",
+          "lineNumber": 29
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.time_scale",
+          "lineNumber": 33
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.legend",
+          "lineNumber": 34
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.precision",
+          "lineNumber": 36
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.run_script",
+          "lineNumber": 39
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.run_script",
+          "lineNumber": 42
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "pd.DataFrame",
+          "lineNumber": 78
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "pd.to_datetime(candles_df['time']).astype",
+          "lineNumber": 79
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "pd.to_datetime",
+          "lineNumber": 79
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "candles_df.drop_duplicates",
+          "lineNumber": 82
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.set",
+          "lineNumber": 83
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "data.get",
+          "lineNumber": 94
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "pd.DataFrame",
+          "lineNumber": 95
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "pd.to_datetime(line_df['time']).astype",
+          "lineNumber": 96
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "pd.to_datetime",
+          "lineNumber": 96
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "line_df.drop_duplicates",
+          "lineNumber": 97
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.create_line",
+          "lineNumber": 98
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "line.set",
+          "lineNumber": 99
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "data.get",
+          "lineNumber": 104
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.trend_line",
+          "lineNumber": 107
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart._single_datetime_format",
+          "lineNumber": 113
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart._single_datetime_format",
+          "lineNumber": 114
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "events_for_js.append",
+          "lineNumber": 115
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "\",\\n\".join",
+          "lineNumber": 116
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "data.get",
+          "lineNumber": 119
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.box",
+          "lineNumber": 122
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "data.get",
+          "lineNumber": 129
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.box",
+          "lineNumber": 138
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart.load",
+          "lineNumber": 144
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "get_symbol_list",
+          "lineNumber": 147
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "symbol_raw.replace",
+          "lineNumber": 148
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "\"\".join",
+          "lineNumber": 149
+        },
+        {
+          "caller": "render_dashboard",
+          "callee": "chart._html.replace",
+          "lineNumber": 427
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "zone_service.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 274,
+      "nonEmptyLines": 234,
+      "functions": [
+        {
+          "name": "add_zone",
+          "startLine": 14,
+          "endLine": 32,
+          "params": [
+            "active_zones",
+            "start_time",
+            "bottom",
+            "top",
+            "peak",
+            "zone_type",
+            "threshold"
+          ]
+        },
+        {
+          "name": "merge_zones",
+          "startLine": 35,
+          "endLine": 53,
+          "params": [
+            "raw_zones",
+            "threshold"
+          ]
+        },
+        {
+          "name": "extract_demand_zones",
+          "startLine": 56,
+          "endLine": 107,
+          "params": [
+            "df",
+            "cycle_start_idx",
+            "proper_high_idx",
+            "active_pb_low_idx",
+            "threshold"
+          ]
+        },
+        {
+          "name": "extract_supply_zones",
+          "startLine": 110,
+          "endLine": 162,
+          "params": [
+            "df",
+            "cycle_start_idx",
+            "proper_low_idx",
+            "active_pb_high_idx",
+            "threshold"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ZoneManager",
+          "startLine": 165,
+          "endLine": 274,
+          "methods": [
+            "__init__",
+            "process_candle",
+            "handle_idm_uptrend",
+            "handle_is_uptrend",
+            "handle_idm_downtrend",
+            "handle_is_downtrend",
+            "clear_on_bos",
+            "clear_on_choch",
+            "finalize",
+            "get_all_zones"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "add_zone",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "merge_zones",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "extract_demand_zones",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "extract_supply_zones",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "ZoneManager",
+          "line": 165,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "add_zone",
+          "callee": "abs",
+          "lineNumber": 17
+        },
+        {
+          "caller": "add_zone",
+          "callee": "min",
+          "lineNumber": 19
+        },
+        {
+          "caller": "add_zone",
+          "callee": "max",
+          "lineNumber": 20
+        },
+        {
+          "caller": "add_zone",
+          "callee": "z['history'].append",
+          "lineNumber": 22
+        },
+        {
+          "caller": "add_zone",
+          "callee": "active_zones.append",
+          "lineNumber": 25
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "sorted",
+          "lineNumber": 38
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "dict",
+          "lineNumber": 40
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "abs",
+          "lineNumber": 42
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "min",
+          "lineNumber": 44
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "max",
+          "lineNumber": 45
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "merged.append",
+          "lineNumber": 48
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "dict",
+          "lineNumber": 49
+        },
+        {
+          "caller": "merge_zones",
+          "callee": "merged.append",
+          "lineNumber": 50
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "sl_rows.iterrows",
+          "lineNumber": 62
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "float",
+          "lineNumber": 63
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "len",
+          "lineNumber": 67
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "len",
+          "lineNumber": 69
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "float",
+          "lineNumber": 70
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "float",
+          "lineNumber": 72
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "prev_df['high'].max",
+          "lineNumber": 72
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "len",
+          "lineNumber": 72
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "float",
+          "lineNumber": 72
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "df.index.get_loc",
+          "lineNumber": 76
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "len",
+          "lineNumber": 77
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "float",
+          "lineNumber": 81
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "len",
+          "lineNumber": 88
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "future_df['low'].min",
+          "lineNumber": 89
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "len",
+          "lineNumber": 95
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "float",
+          "lineNumber": 96
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "touches['low'].min",
+          "lineNumber": 96
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "valid_zones.append",
+          "lineNumber": 99
+        },
+        {
+          "caller": "extract_demand_zones",
+          "callee": "merge_zones",
+          "lineNumber": 107
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "sh_rows.iterrows",
+          "lineNumber": 116
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "float",
+          "lineNumber": 117
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "len",
+          "lineNumber": 121
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "len",
+          "lineNumber": 123
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "float",
+          "lineNumber": 124
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "float",
+          "lineNumber": 126
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "prev_df['low'].min",
+          "lineNumber": 126
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "len",
+          "lineNumber": 126
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "float",
+          "lineNumber": 126
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "df.index.get_loc",
+          "lineNumber": 131
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "len",
+          "lineNumber": 132
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "float",
+          "lineNumber": 136
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "len",
+          "lineNumber": 143
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "future_df['high'].max",
+          "lineNumber": 144
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "len",
+          "lineNumber": 150
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "float",
+          "lineNumber": 151
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "touches['high'].max",
+          "lineNumber": 151
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "valid_zones.append",
+          "lineNumber": 154
+        },
+        {
+          "caller": "extract_supply_zones",
+          "callee": "merge_zones",
+          "lineNumber": 162
+        },
+        {
+          "caller": "process_candle",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 187
+        },
+        {
+          "caller": "process_candle",
+          "callee": "self.active_demand_zones.remove",
+          "lineNumber": 188
+        },
+        {
+          "caller": "process_candle",
+          "callee": "z['history'].append",
+          "lineNumber": 191
+        },
+        {
+          "caller": "process_candle",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 199
+        },
+        {
+          "caller": "process_candle",
+          "callee": "self.active_supply_zones.remove",
+          "lineNumber": 200
+        },
+        {
+          "caller": "process_candle",
+          "callee": "z['history'].append",
+          "lineNumber": 203
+        },
+        {
+          "caller": "handle_idm_uptrend",
+          "callee": "extract_demand_zones",
+          "lineNumber": 209
+        },
+        {
+          "caller": "handle_idm_uptrend",
+          "callee": "self.active_demand_zones.extend",
+          "lineNumber": 210
+        },
+        {
+          "caller": "handle_is_uptrend",
+          "callee": "extract_demand_zones",
+          "lineNumber": 216
+        },
+        {
+          "caller": "handle_is_uptrend",
+          "callee": "self.active_demand_zones.extend",
+          "lineNumber": 217
+        },
+        {
+          "caller": "handle_idm_downtrend",
+          "callee": "extract_supply_zones",
+          "lineNumber": 223
+        },
+        {
+          "caller": "handle_idm_downtrend",
+          "callee": "self.active_supply_zones.extend",
+          "lineNumber": 224
+        },
+        {
+          "caller": "handle_is_downtrend",
+          "callee": "extract_supply_zones",
+          "lineNumber": 230
+        },
+        {
+          "caller": "handle_is_downtrend",
+          "callee": "self.active_supply_zones.extend",
+          "lineNumber": 231
+        },
+        {
+          "caller": "clear_on_bos",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 238
+        },
+        {
+          "caller": "clear_on_bos",
+          "callee": "self.active_demand_zones.clear",
+          "lineNumber": 239
+        },
+        {
+          "caller": "clear_on_bos",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 244
+        },
+        {
+          "caller": "clear_on_bos",
+          "callee": "self.active_supply_zones.clear",
+          "lineNumber": 245
+        },
+        {
+          "caller": "clear_on_choch",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 252
+        },
+        {
+          "caller": "clear_on_choch",
+          "callee": "self.active_demand_zones.clear",
+          "lineNumber": 253
+        },
+        {
+          "caller": "clear_on_choch",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 258
+        },
+        {
+          "caller": "clear_on_choch",
+          "callee": "self.active_supply_zones.clear",
+          "lineNumber": 259
+        },
+        {
+          "caller": "finalize",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 266
+        },
+        {
+          "caller": "finalize",
+          "callee": "self.historical_zones.append",
+          "lineNumber": 270
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    }
+  ]
+}

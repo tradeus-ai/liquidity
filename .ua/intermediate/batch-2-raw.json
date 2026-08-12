@@ -1,0 +1,151 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-0-input.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 55,
+      "nonEmptyLines": 55,
+      "sections": [
+        {
+          "heading": "projectRoot",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "batchIndex",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "totalBatches",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "batchFiles",
+          "level": 1,
+          "line": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-1-input.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 49,
+      "nonEmptyLines": 49,
+      "sections": [
+        {
+          "heading": "projectRoot",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "batchIndex",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "totalBatches",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "batchFiles",
+          "level": 1,
+          "line": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-2-input.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 157,
+      "nonEmptyLines": 157,
+      "sections": [
+        {
+          "heading": "projectRoot",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "batchIndex",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "totalBatches",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "batchFiles",
+          "level": 1,
+          "line": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".ua/.trash-1785038995/tmp/batch-3-input.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 49,
+      "nonEmptyLines": 49,
+      "sections": [
+        {
+          "heading": "projectRoot",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "batchIndex",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "totalBatches",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "batchFiles",
+          "level": 1,
+          "line": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    }
+  ]
+}
