@@ -76,58 +76,49 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     """)
     # Format candle dataframe for lightweight-charts safely
     candles_df = pd.DataFrame(data['candles'])
+    candles_df['time'] = pd.to_datetime(candles_df['time']).astype('datetime64[ns]')
     if not candles_df.empty:
-        if is_intraday:
-            candles_df['time'] = pd.to_datetime(candles_df['time'], unit='s').astype('datetime64[ns]')
-        else:
-            candles_df['time'] = pd.to_datetime(candles_df['time']).astype('datetime64[ns]')
-            
         # Ensure unique timestamps and no zero-interval division errors
         candles_df.drop_duplicates(subset=['time'], inplace=True)
         chart.set(candles_df[['time', 'open', 'high', 'low', 'close']])
         
-        if getattr(chart, '_interval', 0) == 0:
-            chart._interval = 86400 if not is_intraday else 300
+        # Override internal library interval quantization so event timestamps aren't floored.
+        # _set_interval (called inside chart.set) computes _interval AND offset from candle diffs.
+        # _single_datetime_format does: _interval * (ts // _interval) + offset
+        # For NSE data (09:15 start), offset=900 shifts all events by 15min to non-existent times.
+        # Setting both to identity values ensures exact timestamp passthrough.
+        chart._interval = 1
+        chart.offset = 0
     
     # Add pullback line safely
-    if len(data.get('pullback_points', [])) > 1:
+    if data.get('pullback_points'):
         line_df = pd.DataFrame(data['pullback_points'])
-        if is_intraday:
-            line_df['time'] = pd.to_datetime(line_df['time'], unit='s').astype('datetime64[ns]')
-        else:
-            line_df['time'] = pd.to_datetime(line_df['time']).astype('datetime64[ns]')
+        line_df['time'] = pd.to_datetime(line_df['time']).astype('datetime64[ns]')
+        line_df.drop_duplicates(subset=['time'], keep='last', inplace=True)
         line = chart.create_line(color='#ff9800', width=3)
         line.set(line_df)
         
-    # Helper to parse scalar time
-    def format_time_scalar(val, fmt='%Y-%m-%d'):
-        if isinstance(val, (int, float)):
-            return pd.to_datetime(val, unit='s').strftime(fmt)
-        return str(val)
-
-    # HTF Structure Events (#, IS, BOS, ChoCH) - ONLY for Daily - 1D
+    # HTF Structure Events (#, IS, BOS, ChoCH) - FOR ALL TIMEFRAMES
     htf_js_events_str = "[]"
-    if tf == '1d':
-        events_for_js = []
-        for ev in data.get('htf_events', []):
-            st_date = format_time_scalar(ev['start_time'])
-            et_date = format_time_scalar(ev['end_time'])
-            chart.trend_line(
-                start_time=st_date, start_value=ev['start_val'],
-                end_time=et_date, end_value=ev['end_val'],
-                line_color=ev['color'], width=2, style='solid'
-            )
-            # Format time for JS injection
-            js_start = chart._single_datetime_format(st_date)
-            js_end = chart._single_datetime_format(et_date)
-            events_for_js.append(f"{{start_time: {js_start}, end_time: {js_end}, price: {ev['start_val']}, text: '{ev['label']}', color: '{ev['color']}'}}")
-        htf_js_events_str = "[" + ",\n".join(events_for_js) + "]"
+    events_for_js = []
+    for ev in data.get('htf_events', []):
+        st_date = ev['start_time']
+        et_date = ev['end_time']
+        chart.trend_line(
+            start_time=st_date, start_value=ev['start_val'],
+            end_time=et_date, end_value=ev['end_val'],
+            line_color=ev['color'], width=2, style='solid'
+        )
+        # Format time for JS injection
+        js_start = chart._single_datetime_format(st_date)
+        js_end = chart._single_datetime_format(et_date)
+        events_for_js.append(f"{{start_time: {js_start}, end_time: {js_end}, price: {ev['start_val']}, text: '{ev['label']}', color: '{ev['color']}'}}")
+    htf_js_events_str = "[" + ",\n".join(events_for_js) + "]"
 
     # Inside bar zones (pink rectangle)
-    time_fmt = '%Y-%m-%d %H:%M:%S' if is_intraday else '%Y-%m-%d'
     for z in data.get('inside_zones', []):
-        st_date = format_time_scalar(z['start_time'], time_fmt)
-        et_date = format_time_scalar(z['end_time'], time_fmt)
+        st_date = z['start_time']
+        et_date = z['end_time']
         chart.box(
             start_time=st_date, start_value=z['high'],
             end_time=et_date, end_value=z['low'],
@@ -271,6 +262,7 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         </div>
         <div class="tf-group">
             <button class="tf-btn {'active' if tf=='1d' else ''}" onclick="changeTF('1d')">1D</button>
+            <button class="tf-btn {'active' if tf=='4h' else ''}" onclick="changeTF('4h')">4H</button>
             <button class="tf-btn {'active' if tf=='1h' else ''}" onclick="changeTF('1h')">1H</button>
             <button class="tf-btn {'active' if tf=='15m' else ''}" onclick="changeTF('15m')">15m</button>
             <button class="tf-btn {'active' if tf=='5m' else ''}" onclick="changeTF('5m')">5m</button>

@@ -24,6 +24,12 @@ class DataFetcher:
                 return self.tv.get_hist(symbol=symbol, exchange=exchange, interval=interval, n_bars=n_bars)
             except Exception as e2:
                 print(f"[{symbol}] tvDatafeed re-authentication failed: {e2}")
+                if n_bars > 1000:
+                    try:
+                        print(f"[{symbol}] Retrying with smaller n_bars=1000...")
+                        return self.tv.get_hist(symbol=symbol, exchange=exchange, interval=interval, n_bars=1000)
+                    except Exception as e3:
+                        print(f"[{symbol}] Fallback fetch failed: {e3}")
                 return None
 
     def fetch_data(self, symbol, exchange, interval_enum, interval_name, n_bars_initial=5000, n_bars_update=500):

@@ -15,6 +15,7 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 TIMEFRAME_MAP = {
     '1w': (Interval.in_weekly, '1W'),
     '1d': (Interval.in_daily, '1d'),
+    '4h': (Interval.in_4_hour, '4h'),
     '1h': (Interval.in_1_hour, '1h'),
     '15m': (Interval.in_15_minute, '15m'),
     '5m': (Interval.in_5_minute, '5m')
@@ -23,6 +24,7 @@ TIMEFRAME_MAP = {
 LTF_MAP = {
     '1w': '1d',
     '1d': '15m',
+    '4h': '15m',
     '1h': '5m',
     '15m': '5m',
     '5m': None
@@ -100,7 +102,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     analyzer = MarketStructureAnalyzer(df, timeframe=tf, ltf_df=ltf_df)
     df_struct = analyzer.identify_structure()
     
-    is_intraday = tf in ['1h', '15m', '5m']
+    is_intraday = tf in ['4h', '1h', '15m', '5m']
     time_format = '%Y-%m-%d %H:%M:%S' if is_intraday else '%Y-%m-%d'
     
     df_plot = df_struct.copy()
@@ -116,7 +118,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     candles = []
     for _, row in df_plot.iterrows():
         dt = pd.to_datetime(row['time'])
-        ts_val = int(dt.timestamp()) if is_intraday else dt.strftime('%Y-%m-%d')
+        ts_val = dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt.strftime('%Y-%m-%d')
         
         candles.append({
             'time': ts_val,
@@ -132,15 +134,13 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         is_high = row.get('is_swing_high', False)
         is_low = row.get('is_swing_low', False)
         dt = pd.to_datetime(idx)
-        ts_val = int(dt.timestamp()) if is_intraday else dt.strftime('%Y-%m-%d')
+        ts_val = dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt.strftime('%Y-%m-%d')
         
         if is_high and is_low:
             if last_swing == 'HIGH':
-                pullback_points.append({'time': ts_val, 'value': float(row['low'])})
                 pullback_points.append({'time': ts_val, 'value': float(row['high'])})
                 last_swing = 'HIGH'
             else:
-                pullback_points.append({'time': ts_val, 'value': float(row['high'])})
                 pullback_points.append({'time': ts_val, 'value': float(row['low'])})
                 last_swing = 'LOW'
         elif is_high:
@@ -155,8 +155,8 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     for z in inside_zones_raw:
         st_dt = pd.to_datetime(z['start_time'])
         et_dt = pd.to_datetime(z['end_time'])
-        st_val = int(st_dt.timestamp()) if is_intraday else st_dt.strftime('%Y-%m-%d')
-        et_val = int(et_dt.timestamp()) if is_intraday else et_dt.strftime('%Y-%m-%d')
+        st_val = st_dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else st_dt.strftime('%Y-%m-%d')
+        et_val = et_dt.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else et_dt.strftime('%Y-%m-%d')
         inside_zones.append({
             'start_time': st_val,
             'end_time': et_val,
@@ -167,29 +167,30 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     zones = []
     htf_events = []
     htf_zones = []
-    if tf == '1d':
-        # Analyze Higher Timeframe Market Structure (BOS, ChoCH, Inducement)
-        res = analyze_htf_structure(df_struct)
-        raw_events = res['events']
-        raw_zones = res['zones']
-        current_state = res.get('current_state', {})
+    current_state = {}
+    
+    # Analyze Market Structure (BOS, ChoCH, Inducement) for all timeframes
+    res = analyze_htf_structure(df_struct)
+    raw_events = res['events']
+    raw_zones = res['zones']
+    current_state = res.get('current_state', {})
+    
+    for ev in raw_events:
+        dt_st = pd.to_datetime(ev['start_time'])
+        dt_et = pd.to_datetime(ev['end_time'])
+        st_ts = dt_st.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt_st.strftime('%Y-%m-%d')
+        et_ts = dt_et.strftime('%Y-%m-%d %H:%M:%S') if is_intraday else dt_et.strftime('%Y-%m-%d')
+        htf_events.append({
+            'type': ev['type'],
+            'label': ev['label'],
+            'start_time': st_ts,
+            'start_val': float(ev['start_val']),
+            'end_time': et_ts,
+            'end_val': float(ev['end_val']),
+            'color': ev['color']
+        })
         
-        for ev in raw_events:
-            dt_st = pd.to_datetime(ev['start_time'])
-            dt_et = pd.to_datetime(ev['end_time'])
-            st_ts = int(dt_st.timestamp()) if is_intraday else dt_st.strftime('%Y-%m-%d')
-            et_ts = int(dt_et.timestamp()) if is_intraday else dt_et.strftime('%Y-%m-%d')
-            htf_events.append({
-                'type': ev['type'],
-                'label': ev['label'],
-                'start_time': st_ts,
-                'start_val': float(ev['start_val']),
-                'end_time': et_ts,
-                'end_val': float(ev['end_val']),
-                'color': ev['color']
-            })
-            
-        htf_zones = []
+    htf_zones = []
         
     payload = {
         'symbol': symbol_raw,
@@ -201,7 +202,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         'zones': zones,
         'htf_events': htf_events,
         'htf_zones': htf_zones,
-        'current_state': current_state if tf == '1d' else None
+        'current_state': current_state
     }
     
     # Write to cache

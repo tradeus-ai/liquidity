@@ -152,7 +152,7 @@ if __name__ == "__main__":
     with ThreadedTCPServer(("", PORT), LiquidityDashboardHandler) as httpd:
         print(f"=" * 80)
         print(f"🚀 Liquidity Dashboard running at http://127.0.0.1:{PORT}")
-        print(f"Features: Multi-Symbol Dropdown (215+ symbols), Timeframes (1D, 1H, 15m, 5m), White Candles, Orange Pullback, Pink Inside Boxes")
+        print(f"Features: Multi-Symbol Dropdown (215+ symbols), Timeframes (1D, 4H, 1H, 15m, 5m), White Candles, Orange Pullback, Pink Inside Boxes")
         print(f"=" * 80)
         try:
             httpd.serve_forever()
