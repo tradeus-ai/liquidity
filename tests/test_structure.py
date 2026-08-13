@@ -1,12 +1,5 @@
-import sys
-import os
-import json
 from structure_service import get_chart_data
 
-data = get_chart_data('EURUSD', '1d', 'forex')
-
-if 'payload' in data:
-    print("Candles found:", len(data['payload']['candles']))
-    print(data['payload']['candles'][0])
-else:
-    print("Error:", data)
+data = get_chart_data('AUDUSD', timeframe_raw='15m', market_type='forex')
+print(f"Events: {len(data['htf_events'])}")
+print(f"Zones: {len(data['zones'])}")

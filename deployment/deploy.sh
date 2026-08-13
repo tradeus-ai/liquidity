@@ -85,7 +85,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/.venv/bin"
 # Executing app.py which binds to PORT 80
-ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/app.py
+ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/src/app.py
 Restart=always
 RestartSec=5
 

@@ -76,7 +76,10 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     """)
     # Format candle dataframe for lightweight-charts safely
     candles_df = pd.DataFrame(data['candles'])
-    candles_df['time'] = pd.to_datetime(candles_df['time']).astype('datetime64[ns]')
+    if pd.api.types.is_numeric_dtype(candles_df['time']):
+        candles_df['time'] = pd.to_datetime(candles_df['time'], unit='s').astype('datetime64[ns]')
+    else:
+        candles_df['time'] = pd.to_datetime(candles_df['time']).astype('datetime64[ns]')
     if not candles_df.empty:
         # Ensure unique timestamps and no zero-interval division errors
         candles_df.drop_duplicates(subset=['time'], inplace=True)
@@ -93,17 +96,29 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     # Add pullback line safely
     if data.get('pullback_points'):
         line_df = pd.DataFrame(data['pullback_points'])
-        line_df['time'] = pd.to_datetime(line_df['time']).astype('datetime64[ns]')
+        if pd.api.types.is_numeric_dtype(line_df['time']):
+            line_df['time'] = pd.to_datetime(line_df['time'], unit='s').astype('datetime64[ns]')
+        else:
+            line_df['time'] = pd.to_datetime(line_df['time']).astype('datetime64[ns]')
         line_df.drop_duplicates(subset=['time'], keep='last', inplace=True)
         line = chart.create_line(color='#ff9800', width=3)
         line.set(line_df)
         
     # HTF Structure Events (#, IS, BOS, ChoCH) - FOR ALL TIMEFRAMES
+    def parse_dt(ts):
+        if isinstance(ts, (int, float)) or (isinstance(ts, str) and str(ts).replace('.','',1).isdigit()):
+            dt = pd.to_datetime(float(ts), unit='s')
+        else:
+            dt = pd.to_datetime(ts)
+        if not is_intraday:
+            dt = dt.normalize()
+        return dt
+
     htf_js_events_str = "[]"
     events_for_js = []
     for ev in data.get('htf_events', []):
-        st_date = ev['start_time']
-        et_date = ev['end_time']
+        st_date = parse_dt(ev['start_time'])
+        et_date = parse_dt(ev['end_time'])
         chart.trend_line(
             start_time=st_date, start_value=ev['start_val'],
             end_time=et_date, end_value=ev['end_val'],
@@ -117,29 +132,29 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
 
     # Inside bar zones (pink rectangle)
     for z in data.get('inside_zones', []):
-        st_date = z['start_time']
-        et_date = z['end_time']
+        st_date = parse_dt(z['start_time'])
+        et_date = parse_dt(z['end_time'])
         chart.box(
             start_time=st_date, start_value=z['high'],
             end_time=et_date, end_value=z['low'],
             color='pink', fill_color='rgba(255, 105, 180, 0.2)', width=1
         )
     
-    # Supply/Demand zones (teal for demand, red for supply)
-    for z in data.get('htf_zones', []):
-        st_date = z['start_time']
-        et_date = z['end_time']
-        if z['type'] == 'demand':
-            box_color = 'rgba(38, 166, 154, 0.6)'
-            fill_color = 'rgba(38, 166, 154, 0.15)'
-        else:
-            box_color = 'rgba(239, 83, 80, 0.6)'
-            fill_color = 'rgba(239, 83, 80, 0.15)'
-        chart.box(
-            start_time=st_date, start_value=z['top'],
-            end_time=et_date, end_value=z['bottom'],
-            color=box_color, fill_color=fill_color, width=1
-        )
+    # Supply/Demand zones (teal for demand, red for supply) - DISABLED
+    # for z in data.get('htf_zones', []):
+    #     st_date = parse_dt(z['start_time'])
+    #     et_date = parse_dt(z['end_time'])
+    #     if z['type'] == 'demand':
+    #         box_color = 'rgba(38, 166, 154, 0.6)'
+    #         fill_color = 'rgba(38, 166, 154, 0.15)'
+    #     else:
+    #         box_color = 'rgba(239, 83, 80, 0.6)'
+    #         fill_color = 'rgba(239, 83, 80, 0.15)'
+    #     chart.box(
+    #         start_time=st_date, start_value=z['top'],
+    #         end_time=et_date, end_value=z['bottom'],
+    #         color=box_color, fill_color=fill_color, width=1
+    #     )
         
     chart.load()
     
@@ -254,7 +269,51 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     .footer-btn:hover {{ color: #fff; background: rgba(255, 255, 255, 0.08); }}
     .footer-clock {{ font-family: monospace; color: #848e9c; font-size: 12px; }}
     
+    /* Loader CSS */
+    #full-page-loader {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(19, 23, 34, 0.9);
+        z-index: 10000;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #d1d4dc;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }}
+    .spinner {{
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-left-color: #2962ff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }}
+    @keyframes spin {{
+        0% {{ transform: rotate(0deg); }}
+        100% {{ transform: rotate(360deg); }}
+    }}
+    .loader-text {{
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }}
+    .loader-subtext {{
+        font-size: 13px;
+        color: #848e9c;
+    }}
     </style>
+
+    <div id="full-page-loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading...</div>
+        <div class="loader-subtext">Fetching data, processing pullbacks & market structure</div>
+    </div>
 
     <div class="custom-topbar">
         <div class="title">📊 Liquidity Finder</div>
@@ -301,18 +360,25 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
     </div>
 
     <script>
+    function showLoader() {{
+        const loader = document.getElementById('full-page-loader');
+        if (loader) loader.style.display = 'flex';
+    }}
     function changeMarket(m) {{
+        showLoader();
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('type', m);
         urlParams.delete('symbol');
         window.location.search = urlParams.toString();
     }}
     function changeSymbol(sym) {{
+        showLoader();
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('symbol', sym);
         window.location.search = urlParams.toString();
     }}
     function changeTF(tf) {{
+        showLoader();
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('timeframe', tf);
         window.location.search = urlParams.toString();

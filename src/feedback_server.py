@@ -5,7 +5,8 @@ import logging
 import os
 
 PORT = 8080
-FEEDBACK_FILE = "chart_feedback.json"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEEDBACK_FILE = os.path.join(BASE_DIR, "chart_feedback.json")
 
 class FeedbackHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):

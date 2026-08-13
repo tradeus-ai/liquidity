@@ -109,17 +109,17 @@ def plot_structure(df, filename="chart", title="Market Structure"):
                 line_color=ev['color'], width=2, style='solid'
             )
             
-    # Add zones
-    zones = df.dropna(subset=['zone_type'])
-    end_date = df.index[-1]
-    for idx, row in zones.iterrows():
-        color = 'rgba(0, 255, 0, 0.2)' if row['zone_type'] == 'DEMAND' else 'rgba(255, 0, 0, 0.2)'
-        line_color = 'green' if row['zone_type'] == 'DEMAND' else 'red'
-        chart.box(
-            start_time=idx, start_value=row['zone_high'],
-            end_time=end_date, end_value=row['zone_low'],
-            color=line_color, fill_color=color, width=1
-        )
+    # Add zones - DISABLED
+    # zones = df.dropna(subset=['zone_type'])
+    # end_date = df.index[-1]
+    # for idx, row in zones.iterrows():
+    #     color = 'rgba(0, 255, 0, 0.2)' if row['zone_type'] == 'DEMAND' else 'rgba(255, 0, 0, 0.2)'
+    #     line_color = 'green' if row['zone_type'] == 'DEMAND' else 'red'
+    #     chart.box(
+    #         start_time=idx, start_value=row['zone_high'],
+    #         end_time=end_date, end_value=row['zone_low'],
+    #         color=line_color, fill_color=color, width=1
+    #     )
         
     # Add inside bar zones (pink rectangle)
     from inside_bars import identify_inside_bar_zones

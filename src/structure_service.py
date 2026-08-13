@@ -8,8 +8,9 @@ from market_structure import MarketStructureAnalyzer
 from inside_bars import identify_inside_bar_zones
 from bos_choch_inducement import analyze_htf_structure
 
-fetcher = DataFetcher(data_dir="data")
-CACHE_DIR = "data/structure_cache"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+fetcher = DataFetcher(data_dir=os.path.join(BASE_DIR, "data"))
+CACHE_DIR = os.path.join(BASE_DIR, "data", "structure_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 TIMEFRAME_MAP = {
@@ -136,15 +137,16 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         ts_val = int(dt.timestamp())
         
         if is_high and is_low:
+            ts_val2 = ts_val + 1
             if last_swing == 'HIGH':
                 # We need a LOW, then a HIGH
                 pullback_points.append({'time': ts_val, 'value': float(row['low'])})
-                pullback_points.append({'time': ts_val + 1, 'value': float(row['high'])})
+                pullback_points.append({'time': ts_val2, 'value': float(row['high'])})
                 last_swing = 'HIGH'
             else:
                 # We need a HIGH, then a LOW
                 pullback_points.append({'time': ts_val, 'value': float(row['high'])})
-                pullback_points.append({'time': ts_val + 1, 'value': float(row['low'])})
+                pullback_points.append({'time': ts_val2, 'value': float(row['low'])})
                 last_swing = 'LOW'
         elif is_high:
             pullback_points.append({'time': ts_val, 'value': float(row['high'])})
@@ -190,20 +192,20 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         })
         
     htf_zones = []
-    for z in res.get('zones', []):
-        # Only include active zones (still visible on chart)
-        if z.get('status') != 'active':
-            continue
-        dt_st = pd.to_datetime(z['start_time'])
-        dt_et = pd.to_datetime(z.get('end_time', df.index[-1]))
-        htf_zones.append({
-            'type': z['type'],
-            'start_time': int(dt_st.timestamp()),
-            'end_time': int(dt_et.timestamp()),
-            'top': float(z['top']),
-            'bottom': float(z['bottom']),
-            'status': z.get('status', 'active')
-        })
+    # for z in res.get('zones', []):
+    #     # Only include active zones (still visible on chart)
+    #     if z.get('status') != 'active':
+    #         continue
+    #     dt_st = pd.to_datetime(z['start_time'])
+    #     dt_et = pd.to_datetime(z.get('end_time', df.index[-1]))
+    #     htf_zones.append({
+    #         'type': z['type'],
+    #         'start_time': int(dt_st.timestamp()),
+    #         'end_time': int(dt_et.timestamp()),
+    #         'top': float(z['top']),
+    #         'bottom': float(z['bottom']),
+    #         'status': z.get('status', 'active')
+    #     })
         
     payload = {
         'symbol': symbol_raw,

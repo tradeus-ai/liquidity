@@ -51,8 +51,8 @@ ssh -o StrictHostKeyChecking=no -i "$SSH_PRIVATE_KEY" $REMOTE_USER@$INSTANCE_IP 
     
     echo "Running deploy.sh..."
     cd $TMP_DIR
-    chmod +x deploy.sh
-    sudo ./deploy.sh
+    chmod +x deployment/deploy.sh
+    sudo ./deployment/deploy.sh
     
     echo "Cleaning up temp files..."
     rm -rf /tmp/$ZIP_NAME

@@ -8,7 +8,7 @@ show_inside_bars   = input.bool(true, "Show Inside Bar Zones", group="Modules")
 show_fvgs          = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
 show_pullbacks     = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
 show_market_struct = input.bool(true, "Show Market Structure (BOS/ChoCH/#/IS)", group="Modules")
-show_zones         = input.bool(false, "Show Supply/Demand Zones", group="Modules")
+show_zones         = false
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -40,10 +40,10 @@ bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group=
 // ==========================================
 // INPUTS & STYLING (Supply/Demand Zones)
 // ==========================================
-demand_zone_color  = input.color(color.new(#26a69a, 75), "Demand Zone Color", group="Supply/Demand Zones")
-demand_border_clr  = input.color(color.new(#26a69a, 40), "Demand Zone Border", group="Supply/Demand Zones")
-supply_zone_color  = input.color(color.new(#ef5350, 75), "Supply Zone Color", group="Supply/Demand Zones")
-supply_border_clr  = input.color(color.new(#ef5350, 40), "Supply Zone Border", group="Supply/Demand Zones")
+demand_zone_color  = color.new(#26a69a, 75)
+demand_border_clr  = color.new(#26a69a, 40)
+supply_zone_color  = color.new(#ef5350, 75)
+supply_border_clr  = color.new(#ef5350, 40)
 
 // ==========================================
 // INPUTS & STYLING (Pullbacks)

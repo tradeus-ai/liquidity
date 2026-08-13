@@ -4,12 +4,22 @@ import json
 import urllib.parse
 import os
 import sys
+import logging
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 from symbol_loader import get_symbol_list
 from web_dashboard import render_dashboard
 
-PORT = int(os.environ.get("PORT", 8080))
-FEEDBACK_FILE = "chart_feedback.json"
+PORT = int(os.environ.get("PORT", 80))
+FEEDBACK_FILE = os.path.join(BASE_DIR, "chart_feedback.json")
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
@@ -80,7 +90,7 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             symbol = requested_symbol or default_symbol
             timeframe = query.get('timeframe', ['1d'])[0]
 
-            print(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}', market_type='{market_type}'...")
+            logger.info(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}', market_type='{market_type}'...")
             html_content = render_dashboard(symbol, timeframe, market_type)
 
             self.send_response(200)
@@ -91,7 +101,8 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
 
         # 3. Serve Screener UI
         elif path in ['/screener', '/screener.html']:
-            with open("screener.html", "r", encoding="utf-8") as f:
+            screener_path = os.path.join(BASE_DIR, "screener.html")
+            with open(screener_path, "r", encoding="utf-8") as f:
                 html_content = f.read()
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
@@ -123,7 +134,7 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
                 with open(FEEDBACK_FILE, 'w') as f:
                     json.dump(feedbacks, f, indent=4)
 
-                print(f"✅ Feedback received and saved: {data}")
+                logger.info(f"✅ Feedback received and saved: {data}")
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
@@ -131,7 +142,7 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b'{"status": "success"}')
             except Exception as e:
-                print(f"❌ Error processing feedback: {e}")
+                logger.error(f"❌ Error processing feedback: {e}")
                 self.send_response(400)
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
@@ -147,15 +158,26 @@ if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=lambda: get_screener_data(force_refresh=True), trigger="cron", hour=0, minute=0)
     scheduler.start()
-    print("⏰ Background scheduler started for daily screener cache updates.")
+    logger.info("⏰ Background scheduler started for daily screener cache updates.")
 
-    with ThreadedTCPServer(("", PORT), LiquidityDashboardHandler) as httpd:
-        print(f"=" * 80)
-        print(f"🚀 Liquidity Dashboard running at http://127.0.0.1:{PORT}")
-        print(f"Features: Multi-Symbol Dropdown (215+ symbols), Timeframes (1D, 4H, 1H, 15m, 5m), White Candles, Orange Pullback, Pink Inside Boxes")
-        print(f"=" * 80)
+    bind_port = PORT
+    try:
+        httpd = ThreadedTCPServer(("", bind_port), LiquidityDashboardHandler)
+    except PermissionError:
+        if bind_port == 80:
+            bind_port = 8080
+            logger.warning(f"⚠️ Permission denied for port 80. Falling back to port 8080...")
+            httpd = ThreadedTCPServer(("", bind_port), LiquidityDashboardHandler)
+        else:
+            raise
+
+    with httpd:
+        logger.info(f"=" * 80)
+        logger.info(f"🚀 Liquidity Dashboard running at http://127.0.0.1:{bind_port}")
+        logger.info(f"Features: Multi-Symbol Dropdown (215+ symbols), Timeframes (1D, 4H, 1H, 15m, 5m), White Candles, Orange Pullback, Pink Inside Boxes")
+        logger.info(f"=" * 80)
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
-            print("\nShutting down server.")
+            logger.info("Shutting down server.")
             scheduler.shutdown()

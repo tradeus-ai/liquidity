@@ -5,7 +5,8 @@ import concurrent.futures
 from symbol_loader import get_symbol_list
 from structure_service import get_chart_data
 
-CACHE_FILE = "data/screener_cache.json"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CACHE_FILE = os.path.join(BASE_DIR, "data", "screener_cache.json")
 
 def process_symbol(sym):
     try:
