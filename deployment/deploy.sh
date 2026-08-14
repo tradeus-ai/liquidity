@@ -38,6 +38,8 @@ fi
 echo "[1/6] Updating system and installing dependencies..."
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
+sudo apt-get update -y
+sudo apt-get install -y python3-venv git
 sudo timedatectl set-timezone Asia/Kolkata
 
 # 2. Setup Application Directory
@@ -98,6 +100,7 @@ echo "[5/6] Starting and enabling the service..."
 sudo systemctl daemon-reload
 sudo systemctl enable $SERVICE_NAME
 sudo systemctl restart $SERVICE_NAME
+sudo iptables -I INPUT 5 -p tcp --dport 80 -j ACCEPT
 
 echo "========================================================"
 echo "Deployment Complete!"

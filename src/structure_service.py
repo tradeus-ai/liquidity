@@ -64,11 +64,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     if df is None or df.empty:
         return {'error': f'Failed to fetch data for {tv_symbol}'}
 
-    # IMPORTANT: Round data to match market tick precision (prevents floating point errors in swing logic)
-    decimals_val = 5 if m_type in ['forex', 'metals'] else 2
-    for col in ['open', 'high', 'low', 'close']:
-        if col in df.columns:
-            df[col] = df[col].round(decimals_val)
+
 
     clean_sym = tv_symbol.replace('!', '_')
     cache_path = os.path.join(CACHE_DIR, f"{clean_sym}_{tf}_{m_type}.json")
@@ -95,10 +91,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
     if ltf_name and ltf_name in TIMEFRAME_MAP:
         ltf_enum, ltf_str = TIMEFRAME_MAP[ltf_name]
         ltf_df = fetcher.fetch_data(tv_symbol, exchange, ltf_enum, ltf_str, n_bars_initial=2000, n_bars_update=300)
-        if ltf_df is not None and not ltf_df.empty:
-            for col in ['open', 'high', 'low', 'close']:
-                if col in ltf_df.columns:
-                    ltf_df[col] = ltf_df[col].round(decimals_val)
+
 
     analyzer = MarketStructureAnalyzer(df, timeframe=tf, ltf_df=ltf_df)
     df_struct = analyzer.identify_structure()
@@ -134,6 +127,9 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         is_high = row.get('is_swing_high', False)
         is_low = row.get('is_swing_low', False)
         dt = pd.to_datetime(idx)
+        # Normalize to midnight for daily timeframes to match candle timestamps
+        if not is_intraday:
+            dt = dt.normalize()
         ts_val = int(dt.timestamp())
         
         if is_high and is_low:

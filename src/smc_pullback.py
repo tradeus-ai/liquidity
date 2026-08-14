@@ -15,9 +15,6 @@ import numpy as np
 logger = logging.getLogger('smc_pullback')
 
 
-def round_price(val, is_forex=False):
-    decimals = 5 if is_forex else 2
-    return round(float(val), decimals)
 
 
 def find_swings(df, ltf_df=None, symbol=""):
@@ -28,11 +25,9 @@ def find_swings(df, ltf_df=None, symbol=""):
     if len(df) < 2:
         return df
 
-    is_forex = any(kw in str(symbol).upper() for kw in ['EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'XAUUSD', 'XAGUSD', 'FOREX'])
-
-    opens = [round_price(v, is_forex) for v in df['open'].values]
-    highs = [round_price(v, is_forex) for v in df['high'].values]
-    lows  = [round_price(v, is_forex) for v in df['low'].values]
+    opens = df['open'].values.tolist()
+    highs = df['high'].values.tolist()
+    lows  = df['low'].values.tolist()
 
     current_dir = 0  # 0 = neutral, 1 = UP, -1 = DOWN
     swing_high_idx = 0
