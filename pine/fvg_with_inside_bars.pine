@@ -6,6 +6,7 @@ indicator("FVG with Inside Bars [TradeUS AI]", overlay=true, max_boxes_count=500
 // ==========================================
 bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Style")
 bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Style")
+max_fvgs       = input.int(100, "Max FVGs to display", minval=1, maxval=500, group="Style")
 
 // ==========================================
 // STATE VARIABLES FOR VALID BARS
@@ -103,6 +104,9 @@ if bar_index > 0
                      )
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bull")
+                if array.size(active_fvgs) > max_fvgs
+                    box.delete(array.shift(active_fvgs))
+                    array.shift(active_fvg_types)
                 
             // Bearish FVG: ref1 low is higher than ref3 high
             if ref3_high < ref1_low
@@ -116,3 +120,6 @@ if bar_index > 0
                      )
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bear")
+                if array.size(active_fvgs) > max_fvgs
+                    box.delete(array.shift(active_fvgs))
+                    array.shift(active_fvg_types)

@@ -27,7 +27,7 @@ def analyze_htf_structure(df):
     if len(df) < 5:
         return []
     structure_events = []
-    zm = ZoneManager(0.003)
+    zm = ZoneManager(0.003, enabled=True)
 
     
     # 1 = UPTREND, -1 = DOWNTREND
@@ -156,7 +156,7 @@ def analyze_htf_structure(df):
                                 })
                                 
                                 # NEW REQUIREMENT: draw zones on the left side of inducement shift
-                                zm.handle_is_uptrend(df, old_proper_high_idx, proper_high_idx, current_pb_low_idx)
+                                zm.handle_is_uptrend(df, choch_idx, old_proper_high_idx, proper_high_idx, current_pb_low_idx)
                                 
                                 wick_high_idx = None
                                 wick_high_val = None
@@ -164,7 +164,7 @@ def analyze_htf_structure(df):
                         target_high = wick_high_val if wick_high_val is not None else proper_high_val
                         
                         # Check BOS: Candle CLOSE above Proper High / Wick High
-                        if c_close > target_high and not event_triggered_this_candle:
+                        if c_close > target_high:
                             event_triggered_this_candle = True
                             structure_events.append({
                                 'type': 'BOS',
@@ -204,7 +204,7 @@ def analyze_htf_structure(df):
                             # IS check happens on next candles
                                 
                 # Check ChoCH: Low breaks structural ChoCH level
-                if choch_val is not None and not event_triggered_this_candle and c_low < choch_val:
+                if choch_val is not None and c_low < choch_val:
                     event_triggered_this_candle = True
                     structure_events.append({
                         'type': 'CHOCH',
@@ -313,7 +313,7 @@ def analyze_htf_structure(df):
                                 })
                                 
                                 # NEW REQUIREMENT: draw zones on the left side of inducement shift
-                                zm.handle_is_downtrend(df, old_proper_low_idx, proper_low_idx, current_pb_high_idx)
+                                zm.handle_is_downtrend(df, choch_idx, old_proper_low_idx, proper_low_idx, current_pb_high_idx)
                                 
                                 wick_low_idx = None
                                 wick_low_val = None
@@ -321,7 +321,7 @@ def analyze_htf_structure(df):
                         target_low = wick_low_val if wick_low_val is not None else proper_low_val
                         
                         # Check BOS: Candle CLOSE below Proper Low / Wick Low
-                        if c_close < target_low and not event_triggered_this_candle:
+                        if c_close < target_low:
                             event_triggered_this_candle = True
                             structure_events.append({
                                 'type': 'BOS',
@@ -361,7 +361,7 @@ def analyze_htf_structure(df):
                             # IS check happens on next candles
                                 
                 # Check ChoCH: High breaks structural ChoCH level
-                if choch_val is not None and not event_triggered_this_candle and c_high > choch_val:
+                if choch_val is not None and c_high > choch_val:
                     event_triggered_this_candle = True
                     structure_events.append({
                         'type': 'CHOCH',

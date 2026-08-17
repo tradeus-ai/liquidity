@@ -4,65 +4,39 @@ Zone Service Module
 
 Dedicated service for Supply & Demand Zone drawing, extraction, mitigation,
 and structural lifecycle management (BOS/ChoCH invalidation).
-Extracted as a separate service for easier debugging and modular testing.
+
+Rules implemented:
+1. Uptrend (ChoCH/BOS up): after IDM, all pullback swing lows left of IDM → demand zones
+2. Downtrend (ChoCH/BOS down): after IDM, all pullback swing highs left of IDM → supply zones
+3. Clear zones on ChoCH or BOS
+4. On IS, draw zones left of IS
+5. Demand zone = pullback low → previous high (Rule 6)
+6. Supply zone = pullback high → previous low (Rule 7)
+7. Show only active (non-mitigated, non-invalidated) zones
 """
 
 import pandas as pd
 import numpy as np
 
 
-def add_zone(active_zones, start_time, bottom, top, peak, zone_type, threshold=0.003):
-    # Try to merge with an existing zone
-    for z in active_zones:
-        diff = abs(z['peak'] - peak) / z['peak']
-        if diff <= threshold:
-            z['bottom'] = min(z['bottom'], bottom)
-            z['top'] = max(z['top'], top)
-            z['start_time'] = start_time
-            z['history'].append({'time': start_time, 'top': z['top'], 'bottom': z['bottom']})
-            return
-            
-    active_zones.append({
-        'start_time': start_time,
-        'bottom': bottom,
-        'top': top,
-        'peak': peak,
-        'type': zone_type,
-        'history': [{'time': start_time, 'top': top, 'bottom': bottom}]
-    })
-
-
-def merge_zones(raw_zones, threshold=0.003):
-    if not raw_zones:
-        return []
-    raw_zones = sorted(raw_zones, key=lambda x: x['start_time'])
-    merged = []
-    current = dict(raw_zones[0])
-    for next_zone in raw_zones[1:]:
-        diff = abs(current['peak'] - next_zone['peak']) / current['peak']
-        if diff <= threshold:
-            current['bottom'] = min(current['bottom'], next_zone['bottom'])
-            current['top'] = max(current['top'], next_zone['top'])
-            current['start_time'] = next_zone['start_time']
-        else:
-            merged.append(current)
-            current = dict(next_zone)
-    merged.append(current)
-    for z in merged:
-        z['history'] = [{'time': z['start_time'], 'top': z['top'], 'bottom': z['bottom']}]
-    return merged
-
-
-def extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx, threshold=0.003):
+def extract_demand_zones(df, cycle_start_idx, search_start_idx, proper_high_idx, active_pb_low_idx, threshold=0.003):
+    """
+    Extract demand zones from pullback swing lows in an uptrend leg.
+    
+    Rule 5/6: In uptrend, lows are pullbacks. Zone = pullback low to previous high.
+    Rule 1: Zones occur only left of inducement.
+    """
     leg_df = df.loc[cycle_start_idx:proper_high_idx]
-    sl_rows = leg_df[leg_df['is_swing_low'] == True]
+    search_df = df.loc[search_start_idx:proper_high_idx]
+    sl_rows = search_df[search_df['is_swing_low'] == True]
+    # Only include swing lows that are LEFT of the inducement point
     sl_rows = sl_rows[sl_rows.index < active_pb_low_idx]
     
-    valid_zones = []
+    zones = []
     for z_idx, row in sl_rows.iterrows():
         zone_bottom = float(row['low'])
         
-        # Rule 6 (Option C): Top is the previous swing high peak
+        # Rule 5: zone top = previous swing high peak before this swing low
         prev_df = leg_df.loc[:z_idx]
         prev_df = prev_df.iloc[:-1] if len(prev_df) > 0 else prev_df
         prev_sh = prev_df[prev_df['is_swing_high'] == True]
@@ -70,48 +44,36 @@ def extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx
             zone_top = float(prev_sh['high'].iloc[-1])
         else:
             zone_top = float(prev_df['high'].max()) if len(prev_df) > 0 else float(row['high'])
-        peak = zone_bottom
         
-        # Gap logic: if next candle gaps up, the gap itself becomes the zone
-        idx_pos = df.index.get_loc(z_idx)
-        if idx_pos + 1 < len(df):
-            next_candle = df.iloc[idx_pos + 1]
-            if next_candle['low'] > zone_top:
-                zone_bottom = zone_top
-                zone_top = float(next_candle['low'])
-        
-        # Check if the zone was mitigated in the future of this leg
-        future_df = leg_df.loc[z_idx:]
-        future_df = future_df.iloc[1:] # exclude the swing low bar itself
-        
-        mitigated = False
-        if len(future_df) > 0:
-            lowest_future = future_df['low'].min()
-            if lowest_future <= zone_bottom:
-                mitigated = True
-                    
-        if not mitigated:
-            valid_zones.append({
-                'start_time': z_idx,
-                'bottom': zone_bottom,
-                'top': zone_top,
-                'peak': zone_bottom,
-                'type': 'demand'
-            })
-            
-    return merge_zones(valid_zones, threshold)
+        zones.append({
+            'start_time': z_idx,
+            'bottom': zone_bottom,
+            'top': zone_top,
+            'peak': zone_bottom,
+            'type': 'demand'
+        })
+    
+    return zones
 
 
-def extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx, threshold=0.003):
+def extract_supply_zones(df, cycle_start_idx, search_start_idx, proper_low_idx, active_pb_high_idx, threshold=0.003):
+    """
+    Extract supply zones from pullback swing highs in a downtrend leg.
+    
+    Rule 6/7: In downtrend, highs are pullbacks. Zone = pullback high to previous low.
+    Rule 2: Zones occur only left of inducement.
+    """
     leg_df = df.loc[cycle_start_idx:proper_low_idx]
-    sh_rows = leg_df[leg_df['is_swing_high'] == True]
+    search_df = df.loc[search_start_idx:proper_low_idx]
+    sh_rows = search_df[search_df['is_swing_high'] == True]
+    # Only include swing highs that are LEFT of the inducement point
     sh_rows = sh_rows[sh_rows.index < active_pb_high_idx]
     
-    valid_zones = []
+    zones = []
     for z_idx, row in sh_rows.iterrows():
         zone_top = float(row['high'])
         
-        # Rule 7 (Option C): Bottom is the previous swing low trough
+        # Rule 6: zone bottom = previous swing low trough before this swing high
         prev_df = leg_df.loc[:z_idx]
         prev_df = prev_df.iloc[:-1] if len(prev_df) > 0 else prev_df
         prev_sl = prev_df[prev_df['is_swing_low'] == True]
@@ -119,140 +81,101 @@ def extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx
             zone_bottom = float(prev_sl['low'].iloc[-1])
         else:
             zone_bottom = float(prev_df['low'].min()) if len(prev_df) > 0 else float(row['low'])
-            
-        peak = zone_top
         
-        # Gap logic: if next candle gaps down, the gap itself becomes the zone
-        idx_pos = df.index.get_loc(z_idx)
-        if idx_pos + 1 < len(df):
-            next_candle = df.iloc[idx_pos + 1]
-            if next_candle['high'] < zone_bottom:
-                zone_top = zone_bottom
-                zone_bottom = float(next_candle['high'])
-        
-        # Check if the zone was mitigated in the future of this leg
-        future_df = leg_df.loc[z_idx:]
-        future_df = future_df.iloc[1:] # exclude the swing high bar itself
-        
-        mitigated = False
-        if len(future_df) > 0:
-            highest_future = future_df['high'].max()
-            if highest_future >= zone_top:
-                mitigated = True
-                    
-        if not mitigated:
-            valid_zones.append({
-                'start_time': z_idx,
-                'bottom': zone_bottom,
-                'top': zone_top,
-                'peak': zone_top,
-                'type': 'supply'
-            })
-            
-    return merge_zones(valid_zones, threshold)
+        zones.append({
+            'start_time': z_idx,
+            'bottom': zone_bottom,
+            'top': zone_top,
+            'peak': zone_top,
+            'type': 'supply'
+        })
+    
+    return zones
 
 
 class ZoneManager:
     """
-    Manages active and historical Supply & Demand zones throughout structure analysis.
-    Handles extraction on IDM / IS, bar-by-bar mitigation, and invalidation on BOS / ChoCH.
+    Manages active Supply & Demand zones throughout structure analysis.
+    
+    Lifecycle:
+    - Zones are created on IDM or IS events
+    - Zones are mitigated bar-by-bar (price touches zone)
+    - Zones are invalidated on BOS or ChoCH (Rule 3)
+    - Only active zones are returned (Rule 7)
     """
     def __init__(self, threshold=0.003, enabled=False):
         self.threshold = threshold
         self.enabled = enabled
         self.active_demand_zones = []
         self.active_supply_zones = []
-        self.historical_zones = []
 
     def process_candle(self, idx, c_low, c_high):
-        """Processes real-time mitigation for active demand and supply zones."""
+        """Mitigate zones bar-by-bar. If price fully penetrates a zone, remove it."""
         if not self.enabled:
             return
-        # Demand Zones (touched if low dips into top)
+        # Demand: mitigated if low <= zone bottom
         for z in self.active_demand_zones[:]:
-            if idx > z['start_time'] and c_low < z['top']:
-                if c_low <= z['bottom']:
-                    z['end_time'] = idx
-                    z['status'] = 'mitigated'
-                    self.historical_zones.append(z)
-                    self.active_demand_zones.remove(z)
-                    
-        # Supply Zones (touched if high pierces bottom)
+            if idx > z['start_time'] and c_low <= z['bottom']:
+                self.active_demand_zones.remove(z)
+        
+        # Supply: mitigated if high >= zone top
         for z in self.active_supply_zones[:]:
-            if idx > z['start_time'] and c_high > z['bottom']:
-                if c_high >= z['top']:
-                    z['end_time'] = idx
-                    z['status'] = 'mitigated'
-                    self.historical_zones.append(z)
-                    self.active_supply_zones.remove(z)
+            if idx > z['start_time'] and c_high >= z['top']:
+                self.active_supply_zones.remove(z)
 
     def handle_idm_uptrend(self, df, choch_idx, proper_high_idx, active_pb_low_idx):
-        """Extracts demand zones when Inducement occurs in an uptrend."""
+        """Rule 1: On IDM in uptrend, extract demand zones from pullbacks left of IDM."""
         if not self.enabled:
             return
-        merged = extract_demand_zones(df, choch_idx, proper_high_idx, active_pb_low_idx, self.threshold)
-        self.active_demand_zones.extend(merged)
+        new_zones = extract_demand_zones(df, choch_idx, choch_idx, proper_high_idx, active_pb_low_idx, self.threshold)
+        self.active_demand_zones.extend(new_zones)
 
-    def handle_is_uptrend(self, df, old_proper_high_idx, proper_high_idx, current_pb_low_idx):
-        """Extracts demand zones when Inducement Shift occurs in an uptrend."""
+    def handle_is_uptrend(self, df, choch_idx, old_proper_high_idx, proper_high_idx, current_pb_low_idx):
+        """Rule 4: On IS in uptrend, extract demand zones from pullbacks left of IS."""
         if not self.enabled:
             return
-        merged = extract_demand_zones(df, old_proper_high_idx, proper_high_idx, current_pb_low_idx, self.threshold)
-        self.active_demand_zones.extend(merged)
+        new_zones = extract_demand_zones(df, choch_idx, old_proper_high_idx, proper_high_idx, current_pb_low_idx, self.threshold)
+        self.active_demand_zones.extend(new_zones)
 
     def handle_idm_downtrend(self, df, choch_idx, proper_low_idx, active_pb_high_idx):
-        """Extracts supply zones when Inducement occurs in a downtrend."""
+        """Rule 2: On IDM in downtrend, extract supply zones from pullbacks left of IDM."""
         if not self.enabled:
             return
-        merged = extract_supply_zones(df, choch_idx, proper_low_idx, active_pb_high_idx, self.threshold)
-        self.active_supply_zones.extend(merged)
+        new_zones = extract_supply_zones(df, choch_idx, choch_idx, proper_low_idx, active_pb_high_idx, self.threshold)
+        self.active_supply_zones.extend(new_zones)
 
-    def handle_is_downtrend(self, df, old_proper_low_idx, proper_low_idx, current_pb_high_idx):
-        """Extracts supply zones when Inducement Shift occurs in a downtrend."""
+    def handle_is_downtrend(self, df, choch_idx, old_proper_low_idx, proper_low_idx, current_pb_high_idx):
+        """Rule 4: On IS in downtrend, extract supply zones from pullbacks left of IS."""
         if not self.enabled:
             return
-        merged = extract_supply_zones(df, old_proper_low_idx, proper_low_idx, current_pb_high_idx, self.threshold)
-        self.active_supply_zones.extend(merged)
+        new_zones = extract_supply_zones(df, choch_idx, old_proper_low_idx, proper_low_idx, current_pb_high_idx, self.threshold)
+        self.active_supply_zones.extend(new_zones)
 
     def clear_on_bos(self, idx):
-        """Invalidates all active zones upon Break of Structure (BOS)."""
-        for z in self.active_demand_zones:
-            z['end_time'] = idx
-            z['status'] = 'invalidated_by_bos'
-            self.historical_zones.append(z)
+        """Rule 3: Clear all active zones on BOS."""
         self.active_demand_zones.clear()
-
-        for z in self.active_supply_zones:
-            z['end_time'] = idx
-            z['status'] = 'invalidated_by_bos'
-            self.historical_zones.append(z)
         self.active_supply_zones.clear()
 
     def clear_on_choch(self, idx):
-        """Invalidates all active zones upon Change of Character (ChoCH)."""
-        for z in self.active_demand_zones:
-            z['end_time'] = idx
-            z['status'] = 'invalidated_by_choch'
-            self.historical_zones.append(z)
+        """Rule 3: Clear all active zones on ChoCH."""
         self.active_demand_zones.clear()
-
-        for z in self.active_supply_zones:
-            z['end_time'] = idx
-            z['status'] = 'invalidated_by_choch'
-            self.historical_zones.append(z)
         self.active_supply_zones.clear()
 
     def finalize(self, last_idx):
-        """Finalizes active zones at dataset end."""
+        """Set end_time on remaining active zones at dataset end."""
         for z in self.active_demand_zones:
             z['end_time'] = last_idx
-            z['status'] = 'active'
-            self.historical_zones.append(z)
-        for z in self.active_supply_zones:
             z['end_time'] = last_idx
-            z['status'] = 'active'
-            self.historical_zones.append(z)
 
     def get_all_zones(self):
-        """Returns all tracked zones (active + historical)."""
-        return self.historical_zones
+        """Rule 7: Return only currently active zones."""
+        all_active = []
+        for z in self.active_demand_zones:
+            zone_copy = dict(z)
+            zone_copy['status'] = 'active'
+            all_active.append(zone_copy)
+        for z in self.active_supply_zones:
+            zone_copy = dict(z)
+            zone_copy['status'] = 'active'
+            all_active.append(zone_copy)
+        return all_active

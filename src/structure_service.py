@@ -188,20 +188,17 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         })
         
     htf_zones = []
-    # for z in res.get('zones', []):
-    #     # Only include active zones (still visible on chart)
-    #     if z.get('status') != 'active':
-    #         continue
-    #     dt_st = pd.to_datetime(z['start_time'])
-    #     dt_et = pd.to_datetime(z.get('end_time', df.index[-1]))
-    #     htf_zones.append({
-    #         'type': z['type'],
-    #         'start_time': int(dt_st.timestamp()),
-    #         'end_time': int(dt_et.timestamp()),
-    #         'top': float(z['top']),
-    #         'bottom': float(z['bottom']),
-    #         'status': z.get('status', 'active')
-    #     })
+    for z in res.get('zones', []):
+        dt_st = pd.to_datetime(z['start_time'])
+        dt_et = pd.to_datetime(z.get('end_time', df.index[-1]))
+        htf_zones.append({
+            'type': z['type'],
+            'start_time': int(dt_st.timestamp()),
+            'end_time': int(dt_et.timestamp()),
+            'top': float(z['top']),
+            'bottom': float(z['bottom']),
+            'status': z.get('status', 'active')
+        })
         
     payload = {
         'symbol': symbol_raw,
