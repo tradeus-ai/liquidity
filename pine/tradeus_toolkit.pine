@@ -168,13 +168,13 @@ if show_fvgs and array.size(active_fvgs) > 0
         if fvg_type == "bull"
             if low <= bottom
                 mitigated := true
-            else if low < top
-                box.set_top(bx, low)
+            //else if low < top
+            //    box.set_top(bx, low)
         else if fvg_type == "bear"
             if high >= top
                 mitigated := true
-            else if high > bottom
-                box.set_bottom(bx, high)
+            //else if high > bottom
+            //    box.set_bottom(bx, high)
                 
         if mitigated
             array.remove(active_fvgs, i)
@@ -356,138 +356,6 @@ clear_all_zones() =>
         array.clear(active_sd_zones)
         array.clear(active_sd_types)
 
-// Find ALL swing lows in [from_bar, to_bar) and draw demand zones for unbroken ones
-draw_demand_zones_in_range(c_start, from_bar, to_bar, broken_bar) =>
-    int sz = array.size(sl_bars)
-    if sz > 0
-        for i = 0 to sz - 1
-            int b = array.get(sl_bars, i)
-            if b >= from_bar and b < to_bar and b < broken_bar
-                add_demand_zone(c_start, b)
-
-add_demand_zone(c_start, z_bar) =>
-    if show_zones and z_bar >= 0 and z_bar < array.size(bar_highs)
-        float z_bot = array.get(bar_lows, z_bar)
-        
-        // Rule 6 (Option C): top boundary is the previous swing high peak
-        float z_top = na
-        if z_bar > c_start
-            [prev_sh_bar, prev_sh_val] = find_last_sh(c_start, z_bar - 1)
-            if not na(prev_sh_val)
-                z_top := prev_sh_val
-            else
-                float highest_h = na
-                for b = c_start to z_bar - 1
-                    int offset = bar_index - b
-                    if offset >= 0
-                        float h = high[offset]
-                        if na(highest_h) or h > highest_h
-                            highest_h := h
-                z_top := na(highest_h) ? array.get(bar_highs, z_bar) : highest_h
-        else
-            z_top := array.get(bar_highs, z_bar)
-        
-        // Gap logic: if next candle gaps up, the gap itself becomes the zone
-        if z_bar < bar_index
-            int next_offset = bar_index - (z_bar + 1)
-            if next_offset >= 0
-                float next_low = low[next_offset]
-                if next_low > z_top
-                    z_bot := z_top
-                    z_top := next_low
-        
-        bool mitigated = false
-        if z_bar < bar_index
-            for b = z_bar + 1 to bar_index
-                int offset = bar_index - b
-                if offset >= 0
-                    float l = low[offset]
-                    if l <= z_bot
-                        mitigated := true
-                        break
-                    else if l < z_top
-                        z_top := l
-                        
-        if not mitigated
-            bx = box.new(z_bar, z_top, bar_index, z_bot, xloc=xloc.bar_index, bgcolor=demand_zone_color, border_color=demand_border_clr, border_width=1)
-            array.push(active_sd_zones, bx)
-            array.push(active_sd_types, 1)
-
-// Find ALL swing highs in [from_bar, to_bar) and draw supply zones for unbroken ones
-draw_supply_zones_in_range(c_start, from_bar, to_bar, broken_bar) =>
-    int sz = array.size(sh_bars)
-    if sz > 0
-        for i = 0 to sz - 1
-            int b = array.get(sh_bars, i)
-            if b >= from_bar and b < to_bar and b < broken_bar
-                add_supply_zone(c_start, b)
-
-add_supply_zone(c_start, z_bar) =>
-    if show_zones and z_bar >= 0 and z_bar < array.size(bar_highs)
-        float z_top = array.get(bar_highs, z_bar)
-        
-        // Rule 7 (Option C): bottom boundary is the previous swing low trough
-        float z_bot = na
-        if z_bar > c_start
-            [prev_sl_bar, prev_sl_val] = find_last_sl(c_start, z_bar - 1)
-            if not na(prev_sl_val)
-                z_bot := prev_sl_val
-            else
-                float lowest_l = na
-                for b = c_start to z_bar - 1
-                    int offset = bar_index - b
-                    if offset >= 0
-                        float l = low[offset]
-                        if na(lowest_l) or l < lowest_l
-                            lowest_l := l
-                z_bot := na(lowest_l) ? array.get(bar_lows, z_bar) : lowest_l
-        else
-            z_bot := array.get(bar_lows, z_bar)
-        
-        // Gap logic: if next candle gaps down, the gap itself becomes the zone
-        if z_bar < bar_index
-            int next_offset = bar_index - (z_bar + 1)
-            if next_offset >= 0
-                float next_high = high[next_offset]
-                if next_high < z_bot
-                    z_top := z_bot
-                    z_bot := next_high
-        
-        bool mitigated = false
-        if z_bar < bar_index
-            for b = z_bar + 1 to bar_index
-                int offset = bar_index - b
-                if offset >= 0
-                    float h = high[offset]
-                    if h >= z_top
-                        mitigated := true
-                        break
-                    else if h > z_bot
-                        z_bot := h
-
-        if not mitigated
-            bx = box.new(z_bar, z_top, bar_index, z_bot, xloc=xloc.bar_index, bgcolor=supply_zone_color, border_color=supply_border_clr, border_width=1)
-            array.push(active_sd_zones, bx)
-            array.push(active_sd_types, -1)
-
-// Find ALL swing lows in [from_bar, to_bar) and draw demand zones for unbroken ones
-draw_demand_zones_in_range(from_bar, to_bar, broken_bar) =>
-    int sz = array.size(sl_bars)
-    if sz > 0
-        for i = 0 to sz - 1
-            int b = array.get(sl_bars, i)
-            if b >= from_bar and b < to_bar and b < broken_bar
-                add_demand_zone(b)
-
-// Find ALL swing highs in [from_bar, to_bar) and draw supply zones for unbroken ones
-draw_supply_zones_in_range(from_bar, to_bar, broken_bar) =>
-    int sz = array.size(sh_bars)
-    if sz > 0
-        for i = 0 to sz - 1
-            int b = array.get(sh_bars, i)
-            if b >= from_bar and b < to_bar and b < broken_bar
-                add_supply_zone(b)
-
 // Helper: find the last swing low within [after_bar, before_bar] inclusive
 find_last_sl(after_bar, before_bar) =>
     int found_bar = na
@@ -543,6 +411,122 @@ find_leg_max(from_bar, to_bar) =>
                 max_val := h
                 max_bar := b
     [max_bar, max_val]
+
+add_demand_zone(c_start, z_bar) =>
+    if show_zones and z_bar >= 0 and z_bar < array.size(bar_highs)
+        float z_bot = array.get(bar_lows, z_bar)
+        
+        // Rule 6 (Option C): top boundary is the previous swing high peak
+        float z_top = na
+        if z_bar > c_start
+            [prev_sh_bar, prev_sh_val] = find_last_sh(c_start, z_bar - 1)
+            if not na(prev_sh_val)
+                z_top := prev_sh_val
+            else
+                float highest_h = na
+                for b = c_start to z_bar - 1
+                    int offset = bar_index - b
+                    if offset >= 0
+                        float h = high[offset]
+                        if na(highest_h) or h > highest_h
+                            highest_h := h
+                z_top := na(highest_h) ? array.get(bar_highs, z_bar) : highest_h
+        else
+            z_top := array.get(bar_highs, z_bar)
+        
+        // Gap logic: if next candle gaps up, the gap itself becomes the zone
+        if z_bar < bar_index
+            int next_offset = bar_index - (z_bar + 1)
+            if next_offset >= 0
+                float next_low = low[next_offset]
+                if next_low > z_top
+                    z_bot := z_top
+                    z_top := next_low
+        
+        bool mitigated = false
+        if z_bar < bar_index
+            for b = z_bar + 1 to bar_index
+                int offset = bar_index - b
+                if offset >= 0
+                    float l = low[offset]
+                    if l <= z_bot
+                        mitigated := true
+                        break
+                    else if l < z_top
+                        z_top := l
+                        
+        if not mitigated
+            bx = box.new(z_bar, z_top, bar_index, z_bot, xloc=xloc.bar_index, bgcolor=demand_zone_color, border_color=demand_border_clr, border_width=1)
+            array.push(active_sd_zones, bx)
+            array.push(active_sd_types, 1)
+
+// Find ALL swing lows in [from_bar, to_bar) and draw demand zones for unbroken ones
+draw_demand_zones_in_range(c_start, from_bar, to_bar, broken_bar) =>
+    int sz = array.size(sl_bars)
+    if sz > 0
+        for i = 0 to sz - 1
+            int b = array.get(sl_bars, i)
+            if b >= from_bar and b < to_bar and b < broken_bar
+                add_demand_zone(c_start, b)
+
+add_supply_zone(c_start, z_bar) =>
+    if show_zones and z_bar >= 0 and z_bar < array.size(bar_highs)
+        float z_top = array.get(bar_highs, z_bar)
+        
+        // Rule 7 (Option C): bottom boundary is the previous swing low trough
+        float z_bot = na
+        if z_bar > c_start
+            [prev_sl_bar, prev_sl_val] = find_last_sl(c_start, z_bar - 1)
+            if not na(prev_sl_val)
+                z_bot := prev_sl_val
+            else
+                float lowest_l = na
+                for b = c_start to z_bar - 1
+                    int offset = bar_index - b
+                    if offset >= 0
+                        float l = low[offset]
+                        if na(lowest_l) or l < lowest_l
+                            lowest_l := l
+                z_bot := na(lowest_l) ? array.get(bar_lows, z_bar) : lowest_l
+        else
+            z_bot := array.get(bar_lows, z_bar)
+        
+        // Gap logic: if next candle gaps down, the gap itself becomes the zone
+        if z_bar < bar_index
+            int next_offset = bar_index - (z_bar + 1)
+            if next_offset >= 0
+                float next_high = high[next_offset]
+                if next_high < z_bot
+                    z_top := z_bot
+                    z_bot := next_high
+        
+        bool mitigated = false
+        if z_bar < bar_index
+            for b = z_bar + 1 to bar_index
+                int offset = bar_index - b
+                if offset >= 0
+                    float h = high[offset]
+                    if h >= z_top
+                        mitigated := true
+                        break
+                    else if h > z_bot
+                        z_bot := h
+
+        if not mitigated
+            bx = box.new(z_bar, z_top, bar_index, z_bot, xloc=xloc.bar_index, bgcolor=supply_zone_color, border_color=supply_border_clr, border_width=1)
+            array.push(active_sd_zones, bx)
+            array.push(active_sd_types, -1)
+
+// Find ALL swing highs in [from_bar, to_bar) and draw supply zones for unbroken ones
+draw_supply_zones_in_range(c_start, from_bar, to_bar, broken_bar) =>
+    int sz = array.size(sh_bars)
+    if sz > 0
+        for i = 0 to sz - 1
+            int b = array.get(sh_bars, i)
+            if b >= from_bar and b < to_bar and b < broken_bar
+                add_supply_zone(c_start, b)
+
+
 
 // HTF Structure State
 var int current_trend = 1
@@ -632,7 +616,7 @@ if show_market_struct
                     line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                     label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                     // Draw demand zones for all existing swing lows in this cycle (excluding the broken one)
-                    draw_demand_zones_in_range(choch_bar, choch_bar, proper_high_idx, pb_low_bar)
+                    draw_demand_zones_in_range(choch_idx, choch_idx, proper_high_idx, pb_low_bar)
                     
             else
                 // Post-inducement: check IS, BOS, wick breaks
@@ -648,7 +632,7 @@ if show_market_struct
                         label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                         
                         // NEW REQUIREMENT: draw zones on the left side of inducement shift
-                        draw_demand_zones_in_range(choch_bar, old_proper_high_idx, proper_high_idx, is_pb_bar)
+                        draw_demand_zones_in_range(choch_idx, old_proper_high_idx, proper_high_idx, is_pb_bar)
                         
                         wick_high_idx := na
                         wick_high_val := na
@@ -722,7 +706,7 @@ if show_market_struct
                     line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
                     label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
                     // Draw supply zones for all existing swing highs in this cycle (excluding the broken one)
-                    draw_supply_zones_in_range(choch_bar, choch_bar, proper_low_idx, pb_high_bar)
+                    draw_supply_zones_in_range(choch_idx, choch_idx, proper_low_idx, pb_high_bar)
                     
             else
                 // Post-inducement: check IS, BOS, wick breaks
@@ -738,7 +722,7 @@ if show_market_struct
                         label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
                         
                         // NEW REQUIREMENT: draw zones on the left side of inducement shift
-                        draw_supply_zones_in_range(choch_bar, old_proper_low_idx, proper_low_idx, is_pb_bar)
+                        draw_supply_zones_in_range(choch_idx, old_proper_low_idx, proper_low_idx, is_pb_bar)
                         
                         wick_low_idx := na
                         wick_low_val := na

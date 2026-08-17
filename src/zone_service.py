@@ -2,7 +2,7 @@
 Zone Service Module
 ===================
 
-Dedicated service for Supply & Demand Zone drawing, extraction, shaving, mitigation,
+Dedicated service for Supply & Demand Zone drawing, extraction, mitigation,
 and structural lifecycle management (BOS/ChoCH invalidation).
 Extracted as a separate service for easier debugging and modular testing.
 """
@@ -89,11 +89,6 @@ def extract_demand_zones(df, cycle_start_idx, proper_high_idx, active_pb_low_idx
             lowest_future = future_df['low'].min()
             if lowest_future <= zone_bottom:
                 mitigated = True
-            else:
-                # If pierced but not broken, shave the top down
-                touches = future_df[future_df['low'] < zone_top]
-                if len(touches) > 0:
-                    zone_top = float(touches['low'].min())
                     
         if not mitigated:
             valid_zones.append({
@@ -144,11 +139,6 @@ def extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx
             highest_future = future_df['high'].max()
             if highest_future >= zone_top:
                 mitigated = True
-            else:
-                # If pierced but not broken, shave the bottom up
-                touches = future_df[future_df['high'] > zone_bottom]
-                if len(touches) > 0:
-                    zone_bottom = float(touches['high'].max())
                     
         if not mitigated:
             valid_zones.append({
@@ -165,7 +155,7 @@ def extract_supply_zones(df, cycle_start_idx, proper_low_idx, active_pb_high_idx
 class ZoneManager:
     """
     Manages active and historical Supply & Demand zones throughout structure analysis.
-    Handles extraction on IDM / IS, bar-by-bar mitigation & shaving, and invalidation on BOS / ChoCH.
+    Handles extraction on IDM / IS, bar-by-bar mitigation, and invalidation on BOS / ChoCH.
     """
     def __init__(self, threshold=0.003, enabled=False):
         self.threshold = threshold
@@ -175,7 +165,7 @@ class ZoneManager:
         self.historical_zones = []
 
     def process_candle(self, idx, c_low, c_high):
-        """Processes real-time mitigation and shaving for active demand and supply zones."""
+        """Processes real-time mitigation for active demand and supply zones."""
         if not self.enabled:
             return
         # Demand Zones (touched if low dips into top)
@@ -186,9 +176,6 @@ class ZoneManager:
                     z['status'] = 'mitigated'
                     self.historical_zones.append(z)
                     self.active_demand_zones.remove(z)
-                else:
-                    z['top'] = c_low
-                    z['history'].append({'time': idx, 'top': z['top'], 'bottom': z['bottom']})
                     
         # Supply Zones (touched if high pierces bottom)
         for z in self.active_supply_zones[:]:
@@ -198,9 +185,6 @@ class ZoneManager:
                     z['status'] = 'mitigated'
                     self.historical_zones.append(z)
                     self.active_supply_zones.remove(z)
-                else:
-                    z['bottom'] = c_high
-                    z['history'].append({'time': idx, 'top': z['top'], 'bottom': z['bottom']})
 
     def handle_idm_uptrend(self, df, choch_idx, proper_high_idx, active_pb_low_idx):
         """Extracts demand zones when Inducement occurs in an uptrend."""
