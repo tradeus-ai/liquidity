@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 
-def extract_demand_zones(df, cycle_start_idx, search_start_idx, proper_high_idx, active_pb_low_idx, threshold=0.003):
+def extract_demand_zones(df, cycle_start_idx, search_start_idx, proper_high_idx, active_pb_low_idx):
     """
     Extract demand zones from pullback swing lows in an uptrend leg.
     
@@ -56,7 +56,7 @@ def extract_demand_zones(df, cycle_start_idx, search_start_idx, proper_high_idx,
     return zones
 
 
-def extract_supply_zones(df, cycle_start_idx, search_start_idx, proper_low_idx, active_pb_high_idx, threshold=0.003):
+def extract_supply_zones(df, cycle_start_idx, search_start_idx, proper_low_idx, active_pb_high_idx):
     """
     Extract supply zones from pullback swing highs in a downtrend leg.
     
@@ -103,8 +103,7 @@ class ZoneManager:
     - Zones are invalidated on BOS or ChoCH (Rule 3)
     - Only active zones are returned (Rule 7)
     """
-    def __init__(self, threshold=0.003, enabled=False):
-        self.threshold = threshold
+    def __init__(self, enabled=False):
         self.enabled = enabled
         self.active_demand_zones = []
         self.active_supply_zones = []
@@ -127,28 +126,28 @@ class ZoneManager:
         """Rule 1: On IDM in uptrend, extract demand zones from pullbacks left of IDM."""
         if not self.enabled:
             return
-        new_zones = extract_demand_zones(df, choch_idx, choch_idx, proper_high_idx, active_pb_low_idx, self.threshold)
+        new_zones = extract_demand_zones(df, choch_idx, choch_idx, proper_high_idx, active_pb_low_idx)
         self.active_demand_zones.extend(new_zones)
 
     def handle_is_uptrend(self, df, choch_idx, old_proper_high_idx, proper_high_idx, current_pb_low_idx):
         """Rule 4: On IS in uptrend, extract demand zones from pullbacks left of IS."""
         if not self.enabled:
             return
-        new_zones = extract_demand_zones(df, choch_idx, old_proper_high_idx, proper_high_idx, current_pb_low_idx, self.threshold)
+        new_zones = extract_demand_zones(df, choch_idx, old_proper_high_idx, proper_high_idx, current_pb_low_idx)
         self.active_demand_zones.extend(new_zones)
 
     def handle_idm_downtrend(self, df, choch_idx, proper_low_idx, active_pb_high_idx):
         """Rule 2: On IDM in downtrend, extract supply zones from pullbacks left of IDM."""
         if not self.enabled:
             return
-        new_zones = extract_supply_zones(df, choch_idx, choch_idx, proper_low_idx, active_pb_high_idx, self.threshold)
+        new_zones = extract_supply_zones(df, choch_idx, choch_idx, proper_low_idx, active_pb_high_idx)
         self.active_supply_zones.extend(new_zones)
 
     def handle_is_downtrend(self, df, choch_idx, old_proper_low_idx, proper_low_idx, current_pb_high_idx):
         """Rule 4: On IS in downtrend, extract supply zones from pullbacks left of IS."""
         if not self.enabled:
             return
-        new_zones = extract_supply_zones(df, choch_idx, old_proper_low_idx, proper_low_idx, current_pb_high_idx, self.threshold)
+        new_zones = extract_supply_zones(df, choch_idx, old_proper_low_idx, proper_low_idx, current_pb_high_idx)
         self.active_supply_zones.extend(new_zones)
 
     def clear_on_bos(self, idx):

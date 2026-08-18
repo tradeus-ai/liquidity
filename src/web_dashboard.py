@@ -4,7 +4,8 @@ from symbol_loader import get_symbol_list
 from structure_service import get_chart_data
 from lightweight_charts.widgets import StaticLWC
 
-def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw="futures"):
+def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw="futures",
+                     show_fvg=True, show_structure=True, show_zones=True):
     tf = timeframe_raw.lower()
     m_type = str(market_type_raw).lower().strip()
     data = get_chart_data(symbol_raw, tf, m_type)
@@ -101,7 +102,8 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         else:
             line_df['time'] = pd.to_datetime(line_df['time']).astype('datetime64[ns]')
         line_df.drop_duplicates(subset=['time'], keep='last', inplace=True)
-        line = chart.create_line(color='#ff9800', width=3)
+        line_df.rename(columns={'value': 'Pullbacks'}, inplace=True)
+        line = chart.create_line(name='Pullbacks', color='#ff9800', width=3)
         line.set(line_df)
         
     # HTF Structure Events (#, IS, BOS, ChoCH) - FOR ALL TIMEFRAMES
@@ -116,18 +118,19 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
 
     htf_js_events_str = "[]"
     events_for_js = []
-    for ev in data.get('htf_events', []):
-        st_date = parse_dt(ev['start_time'])
-        et_date = parse_dt(ev['end_time'])
-        chart.trend_line(
-            start_time=st_date, start_value=ev['start_val'],
-            end_time=et_date, end_value=ev['end_val'],
-            line_color=ev['color'], width=2, style='solid'
-        )
-        # Format time for JS injection
-        js_start = chart._single_datetime_format(st_date)
-        js_end = chart._single_datetime_format(et_date)
-        events_for_js.append(f"{{start_time: {js_start}, end_time: {js_end}, price: {ev['start_val']}, text: '{ev['label']}', color: '{ev['color']}'}}")
+    if show_structure:
+        for ev in data.get('htf_events', []):
+            st_date = parse_dt(ev['start_time'])
+            et_date = parse_dt(ev['end_time'])
+            chart.trend_line(
+                start_time=st_date, start_value=ev['start_val'],
+                end_time=et_date, end_value=ev['end_val'],
+                line_color=ev['color'], width=2, style='solid'
+            )
+            # Format time for JS injection
+            js_start = chart._single_datetime_format(st_date)
+            js_end = chart._single_datetime_format(et_date)
+            events_for_js.append(f"{{start_time: {js_start}, end_time: {js_end}, price: {ev['start_val']}, text: '{ev['label']}', color: '{ev['color']}'}}")
     htf_js_events_str = "[" + ",\n".join(events_for_js) + "]"
 
     # Inside bar zones (pink rectangle)
@@ -135,26 +138,45 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
         st_date = parse_dt(z['start_time'])
         et_date = parse_dt(z['end_time'])
         chart.box(
-            start_time=st_date, start_value=z['high'],
-            end_time=et_date, end_value=z['low'],
+            start_time=st_date, start_value=z.get('high', z.get('top')),
+            end_time=et_date, end_value=z.get('low', z.get('bottom')),
             color='pink', fill_color='rgba(255, 105, 180, 0.2)', width=1
         )
     
     # Supply/Demand zones (teal for demand, red for supply)
-    for z in data.get('htf_zones', []):
-        st_date = parse_dt(z['start_time'])
-        et_date = parse_dt(z['end_time'])
-        if z['type'] == 'demand':
-            box_color = 'rgba(38, 166, 154, 0.6)'
-            fill_color = 'rgba(38, 166, 154, 0.15)'
-        else:
-            box_color = 'rgba(239, 83, 80, 0.6)'
-            fill_color = 'rgba(239, 83, 80, 0.15)'
-        chart.box(
-            start_time=st_date, start_value=z['top'],
-            end_time=et_date, end_value=z['bottom'],
-            color=box_color, fill_color=fill_color, width=1
-        )
+    if show_zones:
+        for z in data.get('htf_zones', []):
+            st_date = parse_dt(z['start_time'])
+            et_date = parse_dt(z['end_time'])
+            if z['type'] == 'demand':
+                box_color = 'rgba(38, 166, 154, 0.6)'
+                fill_color = 'rgba(38, 166, 154, 0.15)'
+            else:
+                box_color = 'rgba(239, 83, 80, 0.6)'
+                fill_color = 'rgba(239, 83, 80, 0.15)'
+            chart.box(
+                start_time=st_date, start_value=z['top'],
+                end_time=et_date, end_value=z['bottom'],
+                color=box_color, fill_color=fill_color, width=1
+            )
+        
+    if show_fvg:
+        for fvg in data.get('fvgs', []):
+            st_date = parse_dt(fvg['start_time'])
+            et_date = parse_dt(fvg['end_time'])
+            
+            if fvg['type'] == 'bull':
+                box_color = 'rgba(76, 175, 80, 0.6)'
+                fill_color = 'rgba(76, 175, 80, 0.15)'
+            else:
+                box_color = 'rgba(244, 67, 54, 0.6)'
+                fill_color = 'rgba(244, 67, 54, 0.15)'
+                
+            chart.box(
+                start_time=st_date, start_value=fvg['top'],
+                end_time=et_date, end_value=fvg['bottom'],
+                color=box_color, fill_color=fill_color, width=1
+            )
         
     chart.load()
     
@@ -342,6 +364,7 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             <button class="tf-btn {'active' if tf=='15m' else ''}" onclick="changeTF('15m')">15m</button>
             <button class="tf-btn {'active' if tf=='5m' else ''}" onclick="changeTF('5m')">5m</button>
         </div>
+
     </div>
     
     <!-- Bottom TradingView-style Time Scale Footer -->
@@ -482,6 +505,51 @@ def render_dashboard(symbol_raw="AMBUJACEM", timeframe_raw="1d", market_type_raw
             // Initial render + periodic update for resize/pan
             updateLabels();
             setInterval(updateLabels, 50);
+        }
+        
+        // ===== In-Chart Feature Toggle Panel (eye icons like pullback legend) =====
+        const eyeOn = `<svg width="22" height="16"><g><path style="fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:#FFF;stroke-opacity:1;stroke-miterlimit:4;" d="M 21.998437 12 C 21.998437 12 18.998437 18 12 18 C 5.001562 18 2.001562 12 2.001562 12 C 2.001562 12 5.001562 6 12 6 C 18.998437 6 21.998437 12 21.998437 12 Z M 21.998437 12 " transform="matrix(0.833333,0,0,0.833333,0,0)"/><path style="fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:#FFF;stroke-opacity:1;stroke-miterlimit:4;" d="M 15 12 C 15 13.654687 13.654687 15 12 15 C 10.345312 15 9 13.654687 9 12 C 9 10.345312 10.345312 9 12 9 C 13.654687 9 15 10.345312 15 12 Z M 15 12 " transform="matrix(0.833333,0,0,0.833333,0,0)"/></g></svg>`;
+        const eyeOff = `<svg width="22" height="16"><g><path style="fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:#FFF;stroke-opacity:1;stroke-miterlimit:4;" d="M 20.001562 9 C 20.001562 9 19.678125 9.665625 18.998437 10.514062 M 12 14.001562 C 10.392187 14.001562 9.046875 13.589062 7.95 12.998437 M 12 14.001562 C 13.607812 14.001562 14.953125 13.589062 16.05 12.998437 M 12 14.001562 L 12 17.498437 M 3.998437 9 C 3.998437 9 4.354687 9.735937 5.104687 10.645312 M 7.95 12.998437 L 5.001562 15.998437 M 7.95 12.998437 C 6.689062 12.328125 5.751562 11.423437 5.104687 10.645312 M 16.05 12.998437 L 18.501562 15.998437 M 16.05 12.998437 C 17.38125 12.290625 18.351562 11.320312 18.998437 10.514062 M 5.104687 10.645312 L 2.001562 12 M 18.998437 10.514062 L 21.998437 12 " transform="matrix(0.833333,0,0,0.833333,0,0)"/></g></svg>`;
+        
+        const features = [
+            { param: 'show_structure', label: 'Structure', color: '#2962ff' },
+            { param: 'show_zones', label: 'S/D Zones', color: '#26a69a' },
+            { param: 'show_fvg', label: 'FVG', color: '#4caf50' }
+        ];
+        
+        let targetContainer = lwHandler.legend ? lwHandler.legend.seriesContainer : null;
+        if (targetContainer) {
+            features.forEach(f => {
+                const isOn = urlParams.get(f.param) !== '0';
+                
+                let n = document.createElement('div');
+                n.style.display = 'flex';
+                n.style.alignItems = 'center';
+                
+                let r = document.createElement('div');
+                r.innerHTML = `<span style="color: ${f.color}; opacity: ${isOn ? '1' : '0.5'};">▨</span>    ${f.label} : `;
+                r.style.color = isOn ? '#fff' : '#888';
+                
+                let a = document.createElement('div');
+                a.classList.add('legend-toggle-switch');
+                a.style.cursor = 'pointer';
+                a.innerHTML = isOn ? eyeOn : eyeOff;
+                a.title = isOn ? `Hide ${f.label}` : `Show ${f.label}`;
+                
+                a.addEventListener('click', () => {
+                    const p = new URLSearchParams(window.location.search);
+                    p.set(f.param, isOn ? '0' : '1');
+                    window.location.search = p.toString();
+                });
+                
+                n.appendChild(r);
+                n.appendChild(a);
+                targetContainer.appendChild(n);
+            });
+            // Ensure legend is visible
+            if (lwHandler.legend.div) {
+                lwHandler.legend.div.style.display = 'block';
+            }
         }
     }, 500);
     </script>

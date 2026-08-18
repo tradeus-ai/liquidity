@@ -27,7 +27,7 @@ def analyze_htf_structure(df):
     if len(df) < 5:
         return []
     structure_events = []
-    zm = ZoneManager(0.003, enabled=True)
+    zm = ZoneManager(enabled=True)
 
     
     # 1 = UPTREND, -1 = DOWNTREND

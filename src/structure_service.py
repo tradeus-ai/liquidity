@@ -6,6 +6,7 @@ from tvDatafeed import Interval
 from data_fetcher import DataFetcher
 from market_structure import MarketStructureAnalyzer
 from inside_bars import identify_inside_bar_zones
+from fvg import identify_fvgs
 from bos_choch_inducement import analyze_htf_structure
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -163,6 +164,19 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
             'low': float(z['low'])
         })
         
+    fvgs_raw = identify_fvgs(df_struct, limit=150)
+    fvgs = []
+    for f in fvgs_raw:
+        st_dt = pd.to_datetime(f['start_time'])
+        et_dt = pd.to_datetime(f['end_time'])
+        fvgs.append({
+            'type': f['type'],
+            'start_time': int(st_dt.timestamp()),
+            'end_time': int(et_dt.timestamp()),
+            'top': float(f['top']),
+            'bottom': float(f['bottom'])
+        })
+    
     zones = []
     htf_events = []
     htf_zones = []
@@ -207,6 +221,7 @@ def get_chart_data(symbol_raw, timeframe_raw='1d', market_type='futures'):
         'candles': candles,
         'pullback_points': pullback_points,
         'inside_zones': inside_zones,
+        'fvgs': fvgs,
         'zones': zones,
         'htf_events': htf_events,
         'htf_zones': htf_zones,

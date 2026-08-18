@@ -89,9 +89,15 @@ class LiquidityDashboardHandler(http.server.SimpleHTTPRequestHandler):
             
             symbol = requested_symbol or default_symbol
             timeframe = query.get('timeframe', ['1d'])[0]
+            
+            # Parse toggle params (default: all on)
+            show_fvg = query.get('show_fvg', ['1'])[0] != '0'
+            show_structure = query.get('show_structure', ['1'])[0] != '0'
+            show_zones = query.get('show_zones', ['1'])[0] != '0'
 
             logger.info(f"📊 Rendering dashboard for symbol='{symbol}', timeframe='{timeframe}', market_type='{market_type}'...")
-            html_content = render_dashboard(symbol, timeframe, market_type)
+            html_content = render_dashboard(symbol, timeframe, market_type,
+                                            show_fvg=show_fvg, show_structure=show_structure, show_zones=show_zones)
 
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
