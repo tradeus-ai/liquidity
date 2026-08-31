@@ -34,7 +34,8 @@ border_width    = input.int(1, "Border Width", minval=1, maxval=4, group="Inside
 // ==========================================
 show_bull_fvgs = input.bool(true, "Show Bullish FVGs (Buy)", group="Fair Value Gaps")
 show_bear_fvgs = input.bool(true, "Show Bearish FVGs (Sell)", group="Fair Value Gaps")
-max_fvgs       = input.int(100, "Max FVGs to display", minval=1, maxval=500, group="Fair Value Gaps")
+fvg_use_inside_bars = input.bool(true, "Use Inside Bar Logic for FVG", group="Fair Value Gaps")
+max_fvgs       = input.int(50, "Max FVGs to display", minval=1, maxval=500, group="Fair Value Gaps")
 bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Fair Value Gaps")
 bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Fair Value Gaps")
 
@@ -74,6 +75,7 @@ var int   ref2_bar  = na
 
 var box[] active_fvgs = array.new_box()
 var string[] active_fvg_types = array.new_string()
+var box[] all_drawn_fvgs = array.new_box()
 
 // Supply/Demand Zone State
 var box[] active_sd_zones = array.new_box()
@@ -207,6 +209,24 @@ curr_close = round_price(close)
 
 if bar_index > 0
     
+    // ----------------------------------------------------
+    // FVG: Traditional detection (without inside bars)
+    // ----------------------------------------------------
+    if show_fvgs and not fvg_use_inside_bars and bar_index >= 2
+        prev2_high = round_price(high[2])
+        prev2_low = round_price(low[2])
+        if show_bull_fvgs and curr_low > prev2_high
+            bx = box.new(left=bar_index-2, top=curr_low, right=bar_index, bottom=prev2_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+            array.push(active_fvgs, bx)
+            array.push(active_fvg_types, "bull")
+            array.push(all_drawn_fvgs, bx)
+                
+        if show_bear_fvgs and curr_high < prev2_low
+            bx = box.new(left=bar_index-2, top=prev2_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+            array.push(active_fvgs, bx)
+            array.push(active_fvg_types, "bear")
+            array.push(all_drawn_fvgs, bx)
+
     open_broke_high = curr_open > ref_high
     open_broke_low = curr_open < ref_low
     
@@ -231,22 +251,18 @@ if bar_index > 0
         ref2_low  := ref_low
         ref2_bar  := ref_bar
         
-        if show_fvgs and not na(ref1_bar)
+        if show_fvgs and fvg_use_inside_bars and not na(ref1_bar)
             if show_bull_fvgs and curr_low > ref1_high
-                bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100))
+                bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bull")
-                if array.size(active_fvgs) > max_fvgs
-                    box.delete(array.shift(active_fvgs))
-                    array.shift(active_fvg_types)
+                array.push(all_drawn_fvgs, bx)
                 
             if show_bear_fvgs and curr_high < ref1_low
-                bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100))
+                bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
                 array.push(active_fvgs, bx)
                 array.push(active_fvg_types, "bear")
-                if array.size(active_fvgs) > max_fvgs
-                    box.delete(array.shift(active_fvgs))
-                    array.shift(active_fvg_types)
+                array.push(all_drawn_fvgs, bx)
 
         // ----------------------------------------------------
         // 3. PULLBACKS: Process directional swings
@@ -321,6 +337,18 @@ if bar_index > 0
         // Inside bar detected
         inside_count += 1
         last_inside_bar := bar_index
+
+// ==========================================
+// MAX FVG LIMIT ENFORCEMENT
+// ==========================================
+if array.size(all_drawn_fvgs) > max_fvgs
+    while array.size(all_drawn_fvgs) > max_fvgs
+        bx_to_del = array.shift(all_drawn_fvgs)
+        box.delete(bx_to_del)
+        idx = array.indexof(active_fvgs, bx_to_del)
+        if idx != -1
+            array.remove(active_fvgs, idx)
+            array.remove(active_fvg_types, idx)
 
 // ==========================================
 // END OF CHART CLEANUP (Inside Bars)
