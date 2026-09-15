@@ -1,5 +1,5 @@
 //@version=6
-indicator("TradeUS SMC Toolkit", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
+indicator("Tradeus Liquidity Toolkit", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
 
 // ==========================================
 // MODULE TOGGLES
@@ -14,7 +14,7 @@ show_zones         = input.bool(true, "Show Supply/Demand Zones", group="Modules
 // UTILITY FUNCTIONS
 // ==========================================
 get_decimals() =>
-    is_forex = syminfo.type == "forex" or syminfo.ticker == "XAUUSD" or syminfo.ticker == "XAGUSD"
+    is_forex = syminfo.type == "forex" or syminfo.type == "metals"
     is_forex ? 5 : 2
 
 round_price(val) =>
@@ -38,6 +38,10 @@ fvg_use_inside_bars = input.bool(true, "Use Inside Bar Logic for FVG", group="Fa
 max_fvgs       = input.int(50, "Max FVGs to display", minval=1, maxval=500, group="Fair Value Gaps")
 bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Fair Value Gaps")
 bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Fair Value Gaps")
+mitigated_bull_fvg_color = input.color(color.new(#4caf50, 92), "Mitigated Bullish FVG Color", group="Fair Value Gaps")
+mitigated_bear_fvg_color = input.color(color.new(#f44336, 92), "Mitigated Bearish FVG Color", group="Fair Value Gaps")
+mitigated_bull_border = input.color(color.new(#4caf50, 50), "Mitigated Bull Border", group="Fair Value Gaps")
+mitigated_bear_border = input.color(color.new(#f44336, 50), "Mitigated Bear Border", group="Fair Value Gaps")
 
 // ==========================================
 // INPUTS & STYLING (Supply/Demand Zones)
@@ -73,9 +77,13 @@ var float ref2_high = na
 var float ref2_low  = na
 var int   ref2_bar  = na
 
-var box[] active_fvgs = array.new_box()
-var string[] active_fvg_types = array.new_string()
-var box[] all_drawn_fvgs = array.new_box()
+var box[] bull_fvg_boxes = array.new_box()
+var box[] bear_fvg_boxes = array.new_box()
+
+// Helper: enforce max_fvgs limit per type by removing oldest FVGs
+trim_fvg_array(box[] arr) =>
+    while array.size(arr) > max_fvgs
+        box.delete(array.shift(arr))
 
 // Supply/Demand Zone State
 var box[] active_sd_zones = array.new_box()
@@ -157,31 +165,33 @@ process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
 // ==========================================
 // FVG MITIGATION (Runs on all bars)
 // ==========================================
-if show_fvgs and array.size(active_fvgs) > 0
-    for i = array.size(active_fvgs) - 1 to 0
-        bx = array.get(active_fvgs, i)
-        fvg_type = array.get(active_fvg_types, i)
-        
+// Mitigate bullish FVGs
+if show_fvgs and array.size(bull_fvg_boxes) > 0
+    for i = array.size(bull_fvg_boxes) - 1 to 0
+        bx = array.get(bull_fvg_boxes, i)
         top = box.get_top(bx)
         bottom = box.get_bottom(bx)
-        
         box.set_right(bx, bar_index)
-        
-        bool mitigated = false
-        if fvg_type == "bull"
-            if low <= bottom
-                mitigated := true
-            //else if low < top
-            //    box.set_top(bx, low)
-        else if fvg_type == "bear"
-            if high >= top
-                mitigated := true
-            //else if high > bottom
-            //    box.set_bottom(bx, high)
-                
-        if mitigated
-            array.remove(active_fvgs, i)
-            array.remove(active_fvg_types, i)
+        if low <= bottom
+            box.set_bgcolor(bx, mitigated_bull_fvg_color)
+            box.set_border_color(bx, mitigated_bull_border)
+            box.set_border_width(bx, 1)
+            box.set_text(bx, "FVG ✓")
+            array.remove(bull_fvg_boxes, i)
+
+// Mitigate bearish FVGs
+if show_fvgs and array.size(bear_fvg_boxes) > 0
+    for i = array.size(bear_fvg_boxes) - 1 to 0
+        bx = array.get(bear_fvg_boxes, i)
+        top = box.get_top(bx)
+        bottom = box.get_bottom(bx)
+        box.set_right(bx, bar_index)
+        if high >= top
+            box.set_bgcolor(bx, mitigated_bear_fvg_color)
+            box.set_border_color(bx, mitigated_bear_border)
+            box.set_border_width(bx, 1)
+            box.set_text(bx, "FVG ✓")
+            array.remove(bear_fvg_boxes, i)
 
 // ==========================================
 // SWING CONFIRMATION FLAGS (used by HTF engine)
@@ -217,15 +227,13 @@ if bar_index > 0
         prev2_low = round_price(low[2])
         if show_bull_fvgs and curr_low > prev2_high
             bx = box.new(left=bar_index-2, top=curr_low, right=bar_index, bottom=prev2_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
-            array.push(active_fvgs, bx)
-            array.push(active_fvg_types, "bull")
-            array.push(all_drawn_fvgs, bx)
+            array.push(bull_fvg_boxes, bx)
+            trim_fvg_array(bull_fvg_boxes)
                 
         if show_bear_fvgs and curr_high < prev2_low
             bx = box.new(left=bar_index-2, top=prev2_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
-            array.push(active_fvgs, bx)
-            array.push(active_fvg_types, "bear")
-            array.push(all_drawn_fvgs, bx)
+            array.push(bear_fvg_boxes, bx)
+            trim_fvg_array(bear_fvg_boxes)
 
     open_broke_high = curr_open > ref_high
     open_broke_low = curr_open < ref_low
@@ -254,15 +262,13 @@ if bar_index > 0
         if show_fvgs and fvg_use_inside_bars and not na(ref1_bar)
             if show_bull_fvgs and curr_low > ref1_high
                 bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
-                array.push(active_fvgs, bx)
-                array.push(active_fvg_types, "bull")
-                array.push(all_drawn_fvgs, bx)
+                array.push(bull_fvg_boxes, bx)
+                trim_fvg_array(bull_fvg_boxes)
                 
             if show_bear_fvgs and curr_high < ref1_low
                 bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 100), text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
-                array.push(active_fvgs, bx)
-                array.push(active_fvg_types, "bear")
-                array.push(all_drawn_fvgs, bx)
+                array.push(bear_fvg_boxes, bx)
+                trim_fvg_array(bear_fvg_boxes)
 
         // ----------------------------------------------------
         // 3. PULLBACKS: Process directional swings
@@ -337,18 +343,6 @@ if bar_index > 0
         // Inside bar detected
         inside_count += 1
         last_inside_bar := bar_index
-
-// ==========================================
-// MAX FVG LIMIT ENFORCEMENT
-// ==========================================
-if array.size(all_drawn_fvgs) > max_fvgs
-    while array.size(all_drawn_fvgs) > max_fvgs
-        bx_to_del = array.shift(all_drawn_fvgs)
-        box.delete(bx_to_del)
-        idx = array.indexof(active_fvgs, bx_to_del)
-        if idx != -1
-            array.remove(active_fvgs, idx)
-            array.remove(active_fvg_types, idx)
 
 // ==========================================
 // END OF CHART CLEANUP (Inside Bars)

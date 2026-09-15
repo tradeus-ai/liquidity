@@ -1,8 +1,8 @@
-# TradeUS SMC Toolkit
+# Tradeus Liquidity Toolkit
 
-The **TradeUS SMC Toolkit** is a comprehensive, all-in-one Smart Money Concepts (SMC) indicator built for TradingView. It is designed to help traders identify structural liquidity, market shifts, and high-probability trading zones seamlessly.
+The **Tradeus Liquidity Toolkit** is a comprehensive, all-in-one Smart Money Concepts (SMC) indicator built for TradingView. It is designed to help traders identify structural liquidity, market shifts, and high-probability trading zones seamlessly.
 
-This toolkit automatically maps complex market structures from higher timeframes down to execution timeframes, rendering clean, precise visual cues for Break of Structure (BOS), Change of Character (ChoCH), Inducement (#), and Supply/Demand zones.
+This toolkit automatically maps complex market structures from all timeframes, rendering clean, precise visual cues for Break of Structure (BOS), Change of Character (ChoCH), Inducement (#), and Supply/Demand zones.
 
 ## Features & Modules
 
@@ -22,6 +22,7 @@ Automatically plots refined Supply and Demand zones based on unbroken swing poin
 Detects unmitigated price imbalances in the market.
 - **Bullish FVGs:** Highlighted in green, acting as potential support.
 - **Bearish FVGs:** Highlighted in red, acting as potential resistance.
+- **Inside Bar Logic:** Optionally detect FVGs using inside bar sequences for more refined imbalances.
 - FVGs dynamically mitigate and clear from the chart as price fills the gap.
 
 ### 4. SMC Pullbacks (ZigZag)
@@ -45,7 +46,3 @@ All modules are highly customizable via the indicator settings:
 - **Toggles:** Turn any of the 5 main modules on/off to keep your chart clean.
 - **Colors & Styling:** Customize the colors, borders, and opacities for Inside Bars, FVGs, and Pullback lines.
 - **FVG Limits:** Set a maximum number of historical FVGs to display, optimizing performance and chart clarity.
-
-## Disclaimer
-
-*This indicator is designed for educational and analytical purposes only. Smart Money Concepts and technical analysis do not guarantee future performance. Always use proper risk management and test any strategy or tool in a demo environment before trading with live capital.*
