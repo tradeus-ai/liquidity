@@ -1,0 +1,4 @@
+pandas==2.2.2
+smartmoneyconcepts==0.0.27
+python-telegram-bot==21.4
+git+https://github.com/rongardF/tvdatafeed.git

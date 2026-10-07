@@ -1,0 +1,6 @@
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaagsr5n5zfk5dpmos2meruusgas4nqqnhwv5aejm3vd5skiovhatza"
+user_ocid        = "ocid1.user.oc1..aaaaaaaachwymnmdz3vb5pw5jiozbmhh5rufs2aux3boekxrud35yonicurq"
+fingerprint      = "50:62:ac:eb:c9:78:00:11:39:e7:c1:04:12:ef:01:6a"
+private_key_path = "/home/arun-sush/.oci/oci_api_key.pem"
+compartment_ocid = "ocid1.tenancy.oc1..aaaaaaaagsr5n5zfk5dpmos2meruusgas4nqqnhwv5aejm3vd5skiovhatza"
+region           = "ap-hyderabad-1"

@@ -8,4 +8,9 @@ infrastructure/terraform.tfstate
 infrastructure/terraform.tfstate.backup
 infrastructure/terraform.tfvars
 infrastructure/*.tfvars
+trading_alert_system/infrastructure/.terraform/
+trading_alert_system/infrastructure/terraform.tfstate
+trading_alert_system/infrastructure/terraform.tfstate.backup
+trading_alert_system/infrastructure/terraform.tfvars
+trading_alert_system/infrastructure/*.tfvars
 *.zip
