@@ -31,18 +31,26 @@ A dynamic zigzag line that maps out confirmed swing highs and swing lows. This v
 ### 5. Inside Bar Zones
 Identifies and highlights periods of market consolidation (inside bars). The toolkit boxes these zones, projecting the high and low of the "mother bar" to help you spot potential breakout or liquidity sweep opportunities.
 
-### 6. Buyer/Seller Candle Strength (Status Line)
+### 6. Price Gaps (Opening / Runaway Gaps)
+Detects and tracks unfilled market price gaps across successive candles:
+- **Up & Down Gaps:** Highlights price gaps exceeding a minimal deviation threshold (% of 14-bar SMA high-low range).
+- **Dynamic Mitigation:** Extends gap boxes forward until covered by future price action.
+- **Partial Closure Option:** Shrinks gap boxes as price partially enters the gap zone.
+- **Max Trail Length:** Optional limit to avoid tracking stale gaps indefinitely.
+- **Alerts:** Built-in alerts when a new gap appears or when an active gap is filled.
+
+### 7. Buyer/Seller Candle Strength (Status Line)
 A built-in histogram displayed on the status line and data window that calculates the relative strength of buyers versus sellers for every candle. This helps gauge momentum and pressure at key structural zones.
 
 ## How to Use
 
 1. **Top-Down Analysis:** Start on a higher timeframe (e.g., Daily or 4H) to establish the overall market structure (BOS, ChoCH) and identify major Supply/Demand zones.
-2. **Zone Refinement:** Toggle on FVGs and Inside Bars to see where liquidity is resting within or near those HTF zones.
+2. **Zone Refinement:** Toggle on FVGs, Gaps, and Inside Bars to see where liquidity is resting within or near those HTF zones.
 3. **Execution:** Drop down to your execution timeframe (e.g., 15m or 1h) and look for a local ChoCH or Inducement sweep inside the HTF zone for a high-probability entry.
 
 ## Customization
 
 All modules are highly customizable via the indicator settings:
-- **Toggles:** Turn any of the 5 main modules on/off to keep your chart clean.
-- **Colors & Styling:** Customize the colors, borders, and opacities for Inside Bars, FVGs, and Pullback lines.
-- **FVG Limits:** Set a maximum number of historical FVGs to display, optimizing performance and chart clarity.
+- **Toggles:** Turn any of the main modules on/off to keep your chart clean.
+- **Colors & Styling:** Customize the colors, borders, and opacities for Inside Bars, FVGs, Gaps, and Pullback lines.
+- **Limits:** Set maximum display counts for FVGs, OBs, and Gaps to optimize chart performance and clarity.

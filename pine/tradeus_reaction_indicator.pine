@@ -1,0 +1,534 @@
+//@version=6
+indicator("Tradeus Reaction-Filtered SMC Indicator", overlay=true, max_boxes_count=500, max_lines_count=500, max_labels_count=500)
+
+// ============================================================================
+// MODULE TOGGLES
+// ============================================================================
+show_all_fvgs       = input.bool(false, "Show All FVGs (Debug Mode)", group="Display", tooltip="When enabled, draws ALL detected FVGs on chart (not just reaction-confirmed ones). Useful for visual debugging.")
+show_all_obs        = input.bool(false, "Show All OBs (Debug Mode)", group="Display", tooltip="When enabled, draws ALL detected OBs on chart. Useful for visual debugging.")
+show_entry_labels   = input.bool(true, "Show Entry Signal Badges", group="Display")
+show_zigzag         = input.bool(true, "Show SMC Pullback ZigZag", group="Display")
+max_display         = input.int(15, "Max Reaction Setups Displayed", minval=1, maxval=50, group="Display")
+max_candidates      = input.int(50, "Max Candidate OBs/FVGs in Memory", minval=10, maxval=200, group="Display")
+
+// ============================================================================
+// INPUTS & STYLING
+// ============================================================================
+bull_ob_color        = input.color(color.new(#9c27b0, 75), "Bullish OB Color", group="Colors")
+bear_ob_color        = input.color(color.new(#ffeb3b, 75), "Bearish OB Color", group="Colors")
+bull_fvg_color       = input.color(color.new(#00bcd4, 80), "Bullish FVG Color", group="Colors")
+bear_fvg_color       = input.color(color.new(#ff9800, 80), "Bearish FVG Color", group="Colors")
+bull_ifvg_color      = input.color(color.new(#00bcd4, 70), "Bullish iFVG Color (Inverted Bearish)", group="Colors")
+bear_ifvg_color      = input.color(color.new(#ff9100, 70), "Bearish iFVG Color (Inverted Bullish)", group="Colors")
+zigzag_color         = input.color(#ff9800, "Pullback ZigZag Color", group="Colors")
+
+// Buffer Settings
+sl_buffer_ticks      = input.int(5, "SL Buffer (ticks beyond OB)", minval=0, maxval=50, group="Risk & Targets")
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+get_decimals() =>
+    is_forex = syminfo.type == "forex" or syminfo.type == "metals"
+    is_forex ? 5 : 2
+
+round_price(val) =>
+    mult = math.pow(10, get_decimals())
+    math.round(val * mult) / mult
+
+// ============================================================================
+// USER-DEFINED TYPES
+// ============================================================================
+
+// Candidate Order Block (tracked in memory, drawn only on reaction)
+type CandidateOB
+    int    id
+    bool   is_bullish       // true = Buy OB, false = Sell OB
+    int    start_bar        // bar_index where OB was formed
+    float  top              // Upper boundary
+    float  bottom           // Lower boundary
+    bool   is_touched       // Has price traded into this OB?
+    int    touch_bar        // bar_index when first touched
+    float  touch_low        // Lowest price recorded while touching/retesting OB
+    float  touch_high       // Highest price recorded while touching/retesting OB
+    bool   is_invalidated   // Closed below bottom (Buy) or above top (Sell)
+    bool   is_reacted       // Successfully met reaction criteria
+    box    drawn_box        // Only set when reaction confirmed or debug
+
+// Candidate Fair Value Gap (tracked in memory)
+type CandidateFVG
+    int    id
+    bool   is_bullish       // true = Bullish FVG, false = Bearish FVG
+    int    start_bar        // bar_index where FVG formed
+    float  top              // Upper boundary
+    float  bottom           // Lower boundary
+    bool   is_inverted      // Has a candle closed inside it?
+    int    inversion_bar    // bar_index when inversion happened
+    bool   is_used          // Already consumed in a reaction
+    box    drawn_box        // Debug-mode box (if show_all_fvgs), or reaction box
+
+// SMC Pullback Swing
+type SMCSwing
+    bool   is_high
+    int    bar
+    float  price
+
+// Reaction Setup (materialized on chart — OB + iFVG boxes only, targets disabled)
+type ReactionSetup
+    bool   is_long
+    int    entry_bar
+    float  entry_price
+    box    ob_box
+    box    fvg_box
+    label  entry_label
+
+// ============================================================================
+// STATE VARIABLES
+// ============================================================================
+
+// Candidate arrays (background tracking)
+var CandidateOB[]  cand_obs  = array.new<CandidateOB>(0)
+var CandidateFVG[] cand_fvgs = array.new<CandidateFVG>(0)
+var int ob_id_counter  = 0
+var int fvg_id_counter = 0
+
+// SMC Pullback state
+var int   current_dir       = 0   // 0=neutral, 1=UP, -1=DOWN
+var int   swing_high_bar    = na
+var float swing_high_val    = na
+var int   swing_low_bar     = na
+var float swing_low_val     = na
+var int   last_confirmed_bar = na
+var float last_confirmed_val = na
+
+// Swing history for target discovery (mirrors toolkit reference)
+var int[] sl_bars = array.new_int()
+var float[] sl_vals = array.new_float()
+var int[] sh_bars = array.new_int()
+var float[] sh_vals = array.new_float()
+
+// Shared Reference Bar
+var float ref_high = na
+var float ref_low  = na
+var int   ref_bar  = na
+
+// Reaction setups (materialized on chart)
+var ReactionSetup[] active_setups = array.new<ReactionSetup>(0)
+
+// Alert Triggers for Current Bar
+bool long_entry_signal  = false
+bool short_entry_signal = false
+
+// ============================================================================
+// PULLBACK HELPER FUNCTIONS
+// ============================================================================
+add_zigzag_line(x1, y1, x2, y2, col) =>
+    if show_zigzag and not na(x1) and not na(y1) and not na(x2) and not na(y2)
+        line.new(x1, y1, x2, y2, xloc=xloc.bar_index, color=col, width=2)
+
+process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
+    int n_dir = c_dir
+    int n_sh_b = sh_b
+    float n_sh_v = sh_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sl = false
+
+    if c_dir == -1
+        add_zigzag_line(lc_b, lc_v, sl_b, sl_v, zigzag_color)
+        confirmed_sl := true
+        n_lc_b := sl_b
+        n_lc_v := sl_v
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+    else if c_dir == 1
+        if h_val >= sh_v
+            n_sh_b := b_idx
+            n_sh_v := h_val
+    else
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v, confirmed_sl]
+
+process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
+    int n_dir = c_dir
+    int n_sl_b = sl_b
+    float n_sl_v = sl_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sh = false
+
+    if c_dir == 1
+        add_zigzag_line(lc_b, lc_v, sh_b, sh_v, zigzag_color)
+        confirmed_sh := true
+        n_lc_b := sh_b
+        n_lc_v := sh_v
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+    else if c_dir == -1
+        if l_val <= sl_v
+            n_sl_b := b_idx
+            n_sl_v := l_val
+    else
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v, confirmed_sh]
+
+// ============================================================================
+// CURRENT BAR OHLC (Rounded)
+// ============================================================================
+curr_open  = round_price(open)
+curr_high  = round_price(high)
+curr_low   = round_price(low)
+curr_close = round_price(close)
+
+// ============================================================================
+// CANDIDATE OB & FVG DETECTION (Silent — no chart drawing unless debug mode)
+// ============================================================================
+
+trim_candidates() =>
+    while array.size(cand_obs) > max_candidates
+        CandidateOB oldest = array.shift(cand_obs)
+        if not na(oldest.drawn_box)
+            box.delete(oldest.drawn_box)
+    while array.size(cand_fvgs) > max_candidates
+        CandidateFVG oldest = array.shift(cand_fvgs)
+        if not na(oldest.drawn_box)
+            box.delete(oldest.drawn_box)
+
+// --- Traditional 3-candle FVG + OB Detection ---
+if bar_index >= 2
+    prev2_high = round_price(high[2])
+    prev2_low  = round_price(low[2])
+
+    // Bullish FVG: curr_low > prev2_high (gap up)
+    if curr_low > prev2_high
+        fvg_id_counter += 1
+        box debug_fvg_box = na
+        if show_all_fvgs
+            debug_fvg_box := box.new(left=bar_index-2, top=curr_low, right=bar_index, bottom=prev2_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 50), border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+        array.push(cand_fvgs, CandidateFVG.new(fvg_id_counter, true, bar_index, curr_low, prev2_high, false, na, false, debug_fvg_box))
+
+        // Paired Bullish OB: candle 1 body (prev2_high to prev2_low)
+        ob_id_counter += 1
+        box debug_ob_box = na
+        if show_all_obs
+            debug_ob_box := box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+        array.push(cand_obs, CandidateOB.new(ob_id_counter, true, bar_index-2, prev2_high, prev2_low, false, na, na, na, false, false, debug_ob_box))
+
+    // Bearish FVG: curr_high < prev2_low (gap down)
+    if curr_high < prev2_low
+        fvg_id_counter += 1
+        box debug_fvg_box = na
+        if show_all_fvgs
+            debug_fvg_box := box.new(left=bar_index-2, top=prev2_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 50), border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+        array.push(cand_fvgs, CandidateFVG.new(fvg_id_counter, false, bar_index, prev2_low, curr_high, false, na, false, debug_fvg_box))
+
+        // Paired Bearish OB: candle 1 body (prev2_high to prev2_low)
+        ob_id_counter += 1
+        box debug_ob_box = na
+        if show_all_obs
+            debug_ob_box := box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+        array.push(cand_obs, CandidateOB.new(ob_id_counter, false, bar_index-2, prev2_high, prev2_low, false, na, na, na, false, false, debug_ob_box))
+
+    trim_candidates()
+
+// ============================================================================
+// OB INVALIDATION & TOUCH DETECTION (bar-by-bar)
+// ============================================================================
+if array.size(cand_obs) > 0
+    for i = array.size(cand_obs) - 1 to 0
+        CandidateOB ob = array.get(cand_obs, i)
+        if ob.is_invalidated or ob.is_reacted
+            continue
+
+        if not na(ob.drawn_box) and show_all_obs
+            box.set_right(ob.drawn_box, bar_index)
+
+        if ob.is_bullish
+            // Buy OB invalidated: candle closes below OB bottom
+            if curr_close < ob.bottom
+                ob.is_invalidated := true
+                if not na(ob.drawn_box)
+                    box.delete(ob.drawn_box)
+                    ob.drawn_box := na
+                continue
+            // Buy OB touched: candle low enters the OB zone
+            bool in_zone = low <= ob.top and close >= ob.bottom
+            if in_zone
+                if not ob.is_touched
+                    ob.is_touched := true
+                    ob.touch_bar := bar_index
+                    ob.touch_low := low
+                    ob.touch_high := high
+                else
+                    ob.touch_low := math.min(ob.touch_low, low)
+            else if ob.is_touched and not ob.is_reacted
+                // Track lower wick retests prior to reaction
+                if not na(ob.touch_low) and low < ob.touch_low and close >= ob.bottom
+                    ob.touch_low := low
+        else
+            // Sell OB invalidated: candle closes above OB top
+            if curr_close > ob.top
+                ob.is_invalidated := true
+                if not na(ob.drawn_box)
+                    box.delete(ob.drawn_box)
+                    ob.drawn_box := na
+                continue
+            // Sell OB touched: candle high enters the OB zone
+            bool in_zone = high >= ob.bottom and close <= ob.top
+            if in_zone
+                if not ob.is_touched
+                    ob.is_touched := true
+                    ob.touch_bar := bar_index
+                    ob.touch_high := high
+                    ob.touch_low := low
+                else
+                    ob.touch_high := math.max(ob.touch_high, high)
+            else if ob.is_touched and not ob.is_reacted
+                // Track higher wick retests prior to reaction
+                if not na(ob.touch_high) and high > ob.touch_high and close <= ob.top
+                    ob.touch_high := high
+
+// ============================================================================
+// FVG INVERSION DETECTION (bar-by-bar)
+// ============================================================================
+// A FVG is "inverted" when a candle closes INSIDE its range
+if array.size(cand_fvgs) > 0
+    for i = array.size(cand_fvgs) - 1 to 0
+        CandidateFVG fvg = array.get(cand_fvgs, i)
+        if fvg.is_inverted or fvg.is_used
+            continue
+
+        if not na(fvg.drawn_box) and show_all_fvgs
+            box.set_right(fvg.drawn_box, bar_index)
+
+        if curr_close >= fvg.bottom and curr_close <= fvg.top
+            fvg.is_inverted := true
+            fvg.inversion_bar := bar_index
+
+// ============================================================================
+// SMC PULLBACK ENGINE (from toolkit reference)
+// ============================================================================
+if bar_index == 0
+    ref_bar  := bar_index
+    ref_high := round_price(high)
+    ref_low  := round_price(low)
+    swing_high_bar := bar_index
+    swing_high_val := round_price(high)
+    swing_low_bar  := bar_index
+    swing_low_val  := round_price(low)
+
+bool is_sh = false
+bool is_sl = false
+
+if bar_index > 0
+    open_broke_high = curr_open > ref_high
+    open_broke_low  = curr_open < ref_low
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low  = (curr_low < ref_low) or open_broke_low
+
+    if broke_high or broke_low
+        bool conf_sl = false
+        bool conf_sh = false
+
+        if broke_high and broke_low
+            int taken_first = 0
+            if open_broke_high
+                taken_first := 1
+            else if open_broke_low
+                taken_first := -1
+            else
+                dist_high = math.abs(curr_open - ref_high)
+                dist_low  = math.abs(curr_open - ref_low)
+                taken_first := dist_low < dist_high ? -1 : 1
+
+            if taken_first == 1
+                [d1, sh_b1, sh_v1, lc_b1, lc_v1, csl1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sl := csl1
+                [d2, sl_b2, sl_v2, lc_b2, lc_v2, csh2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sh := csh2
+            else
+                [d1, sl_b1, sl_v1, lc_b1, lc_v1, csh1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sh := csh1
+                [d2, sh_b2, sh_v2, lc_b2, lc_v2, csl2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sl := csl2
+        else
+            if current_dir == 1
+                if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+                else if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+            else if current_dir == -1
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+            else
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+
+        ref_high := curr_high
+        ref_low  := curr_low
+        ref_bar  := bar_index
+
+        is_sh := conf_sh
+        is_sl := conf_sl
+
+// Record confirmed swings to history (mirrors toolkit reference)
+if is_sl
+    array.push(sl_bars, last_confirmed_bar)
+    array.push(sl_vals, last_confirmed_val)
+    if array.size(sl_bars) > 200
+        array.shift(sl_bars)
+        array.shift(sl_vals)
+
+if is_sh
+    array.push(sh_bars, last_confirmed_bar)
+    array.push(sh_vals, last_confirmed_val)
+    if array.size(sh_bars) > 200
+        array.shift(sh_bars)
+        array.shift(sh_vals)
+
+// ============================================================================
+// CONFLUENCE REACTION SCANNER
+// ============================================================================
+// STRICT 2-BAR SEQUENCE:
+//   Bar N   = Candle reacts (touches) in OB zone  →  touch_bar = N
+//   Bar N+1 = The VERY NEXT candle's close must fall inside an opposite FVG range
+//
+// We only check OBs whose touch_bar == bar_index - 1  (i.e. touched on previous bar).
+// On THIS bar (bar_index), we check if curr_close is inside any opposite FVG.
+// This guarantees the exact "one candle reacted in OB, next candle closes inside opposite FVG" rule.
+
+if array.size(cand_obs) > 0 and array.size(cand_fvgs) > 0
+    for i = array.size(cand_obs) - 1 to 0
+        CandidateOB ob = array.get(cand_obs, i)
+
+        if not ob.is_touched or ob.is_reacted or ob.is_invalidated
+            continue
+
+        // STRICT: Only process on the bar immediately AFTER the touch bar
+        if bar_index != ob.touch_bar + 1
+            continue
+
+        if ob.is_bullish
+            // Buy side: current bar's close must be inside a BEARISH FVG range
+            for j = array.size(cand_fvgs) - 1 to 0
+                CandidateFVG fvg = array.get(cand_fvgs, j)
+                if fvg.is_bullish or fvg.is_used
+                    continue
+                // Check if THIS bar's close falls inside the bearish FVG range
+                if curr_close >= fvg.bottom and curr_close <= fvg.top
+                    // REACTION CONFIRMED!
+                    ob.is_reacted := true
+                    fvg.is_used := true
+                    // Mark FVG as inverted on this bar (if not already)
+                    if not fvg.is_inverted
+                        fvg.is_inverted := true
+                        fvg.inversion_bar := bar_index
+
+                    float entry_price = close
+
+                    // Draw OB box
+                    box ob_bx = box.new(left=ob.start_bar, top=ob.top, right=bar_index, bottom=ob.bottom, bgcolor=bull_ob_color, border_color=color.new(#9c27b0, 30), border_width=2, text="OB ✓", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+
+                    // Draw iFVG box
+                    box fvg_bx = box.new(left=fvg.start_bar, top=fvg.top, right=bar_index, bottom=fvg.bottom, bgcolor=bear_ifvg_color, border_color=color.new(#ff9100, 30), border_width=2, text="iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+
+                    // Entry badge
+                    label entry_lb = na
+                    if show_entry_labels
+                        entry_lb := label.new(bar_index, low - 2 * syminfo.mintick, "▲ LONG\n@" + str.tostring(entry_price, format.mintick), color=color.new(#00c853, 20), textcolor=color.white, size=size.normal, style=label.style_label_up)
+
+                    long_entry_signal := true
+
+                    // Store setup (targets disabled)
+                    array.push(active_setups, ReactionSetup.new(true, bar_index, entry_price, ob_bx, fvg_bx, entry_lb))
+
+                    // Delete debug boxes if they existed
+                    if not na(ob.drawn_box)
+                        box.delete(ob.drawn_box)
+                        ob.drawn_box := na
+                    if not na(fvg.drawn_box)
+                        box.delete(fvg.drawn_box)
+                        fvg.drawn_box := na
+                    break
+        else
+            // Sell side: current bar's close must be inside a BULLISH FVG range
+            for j = array.size(cand_fvgs) - 1 to 0
+                CandidateFVG fvg = array.get(cand_fvgs, j)
+                if not fvg.is_bullish or fvg.is_used
+                    continue
+                // Check if THIS bar's close falls inside the bullish FVG range
+                if curr_close >= fvg.bottom and curr_close <= fvg.top
+                    // REACTION CONFIRMED!
+                    ob.is_reacted := true
+                    fvg.is_used := true
+                    // Mark FVG as inverted on this bar (if not already)
+                    if not fvg.is_inverted
+                        fvg.is_inverted := true
+                        fvg.inversion_bar := bar_index
+
+                    float entry_price = close
+
+                    // Draw OB box
+                    box ob_bx = box.new(left=ob.start_bar, top=ob.top, right=bar_index, bottom=ob.bottom, bgcolor=bear_ob_color, border_color=color.new(#ffeb3b, 30), border_width=2, text="OB ✓", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+
+                    // Draw iFVG box
+                    box fvg_bx = box.new(left=fvg.start_bar, top=fvg.top, right=bar_index, bottom=fvg.bottom, bgcolor=bull_ifvg_color, border_color=color.new(#00bcd4, 30), border_width=2, text="iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+
+                    // Entry badge
+                    label entry_lb = na
+                    if show_entry_labels
+                        entry_lb := label.new(bar_index, high + 2 * syminfo.mintick, "▼ SHORT\n@" + str.tostring(entry_price, format.mintick), color=color.new(#d50000, 20), textcolor=color.white, size=size.normal, style=label.style_label_down)
+
+                    short_entry_signal := true
+
+                    // Store setup (targets disabled)
+                    array.push(active_setups, ReactionSetup.new(false, bar_index, entry_price, ob_bx, fvg_bx, entry_lb))
+
+                    if not na(ob.drawn_box)
+                        box.delete(ob.drawn_box)
+                        ob.drawn_box := na
+                    if not na(fvg.drawn_box)
+                        box.delete(fvg.drawn_box)
+                        fvg.drawn_box := na
+                    break
+
+// ============================================================================
+// TRIM ACTIVE SETUPS (FIFO)
+// ============================================================================
+while array.size(active_setups) > max_display
+    ReactionSetup oldest = array.shift(active_setups)
+    if not na(oldest.ob_box)
+        box.delete(oldest.ob_box)
+    if not na(oldest.fvg_box)
+        box.delete(oldest.fvg_box)
+    if not na(oldest.entry_label)
+        label.delete(oldest.entry_label)
+
+// ============================================================================
+// ALERTS (Native Indicator alertcondition + alert())
+// ============================================================================
+alertcondition(long_entry_signal, "Long Reaction Entry", "Long Reaction Entry confirmed on {{ticker}} at {{close}}")
+alertcondition(short_entry_signal, "Short Reaction Entry", "Short Reaction Entry confirmed on {{ticker}} at {{close}}")
+
+if long_entry_signal
+    alert("Long Reaction Entry on " + syminfo.ticker + " at " + str.tostring(close, format.mintick), alert.freq_once_per_bar_close)
+if short_entry_signal
+    alert("Short Reaction Entry on " + syminfo.ticker + " at " + str.tostring(close, format.mintick), alert.freq_once_per_bar_close)

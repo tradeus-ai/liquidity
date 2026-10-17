@@ -1,0 +1,872 @@
+//@version=6
+indicator("Tradeus Liquidity Toolkit", overlay=true, max_lines_count=500, max_boxes_count=500, max_labels_count=500)
+
+// ==========================================
+// MODULE TOGGLES
+// ==========================================
+show_inside_bars   = input.bool(true, "Show Inside Bar Zones", group="Modules")
+show_fvgs          = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
+show_pullbacks     = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
+show_market_struct = input.bool(true, "Show Market Structure (BOS/ChoCH/#/IS)", group="Modules")
+show_sweeps        = input.bool(true, "Show Liquidity Sweeps", group="Modules")
+show_obs           = input.bool(true, "Show Order Blocks (FVG-paired)", group="Modules")
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+get_decimals() =>
+    is_forex = syminfo.type == "forex" or syminfo.type == "metals"
+    is_forex ? 5 : 2
+
+round_price(val) =>
+    mult = math.pow(10, get_decimals())
+    math.round(val * mult) / mult
+
+
+// ==========================================
+// INPUTS & STYLING (Inside Bars)
+// ==========================================
+zone_color      = input.color(color.new(#e91e63, 75), "Zone Color", group="Inside Bars")
+zone_border     = input.color(color.new(#e91e63, 50), "Zone Border Color", group="Inside Bars")
+border_width    = input.int(1, "Border Width", minval=1, maxval=4, group="Inside Bars")
+
+// ==========================================
+// INPUTS & STYLING (FVG)
+// ==========================================
+show_bull_fvgs = input.bool(true, "Show Bullish FVGs (Buy)", group="Fair Value Gaps")
+show_bear_fvgs = input.bool(true, "Show Bearish FVGs (Sell)", group="Fair Value Gaps")
+fvg_use_inside_bars = input.bool(true, "Use Inside Bar Logic for FVG", group="Fair Value Gaps")
+fvg_display_mode = input.string("All", "FVG Display Mode", options=["All", "Active Only", "Mitigated Only"], group="Fair Value Gaps")
+max_fvgs       = input.int(50, "Max FVGs to display", minval=1, maxval=500, group="Fair Value Gaps")
+bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Fair Value Gaps")
+bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Fair Value Gaps")
+mitigated_bull_fvg_color = input.color(color.new(#4caf50, 92), "Mitigated Bullish FVG Color", group="Fair Value Gaps")
+mitigated_bear_fvg_color = input.color(color.new(#f44336, 92), "Mitigated Bearish FVG Color", group="Fair Value Gaps")
+mitigated_bull_border = input.color(color.new(#4caf50, 50), "Mitigated Bull Border", group="Fair Value Gaps")
+mitigated_bear_border = input.color(color.new(#f44336, 50), "Mitigated Bear Border", group="Fair Value Gaps")
+
+// ==========================================
+// INPUTS & STYLING (Order Blocks)
+// ==========================================
+max_obs          = input.int(20, "Max OBs to display", minval=1, maxval=500, group="Order Blocks")
+bull_ob_color    = input.color(color.new(#26a69a, 75), "Bullish OB Color", group="Order Blocks")
+bear_ob_color    = input.color(color.new(#ef5350, 75), "Bearish OB Color", group="Order Blocks")
+
+// ==========================================
+// INPUTS & STYLING (Pullbacks)
+// ==========================================
+zigzag_color  = input.color(#ff9800, "ZigZag Line Color", group="Pullbacks")
+
+// ==========================================
+// INPUTS & STYLING (Liquidity Sweeps)
+// ==========================================
+sweep_pivot_len     = input.int(5, "Pivot Lookback", minval=2, maxval=50, group="Liquidity Sweeps", tooltip="Number of bars to confirm a swing high/low. Lower = more frequent sweeps; higher = major liquidity pool sweeps.")
+sweep_max_zones     = input.int(10, "Max Active Swing Levels", minval=2, maxval=30, group="Liquidity Sweeps", tooltip="How many unbroken swing levels to track simultaneously")
+sweep_bull_col      = input.color(#00e676, "Bullish Sweep Color", group="Liquidity Sweeps")
+sweep_bear_col      = input.color(#ff5252, "Bearish Sweep Color", group="Liquidity Sweeps")
+sweep_highlight_bar = input.bool(true, "Highlight Sweep Bars", group="Liquidity Sweeps")
+
+// ==========================================
+// STATE VARIABLES
+// ==========================================
+// Shared Reference Bar
+var float ref_high = na
+var float ref_low  = na
+var int   ref_bar  = na
+
+// Inside Bars State
+var int   inside_count = 0
+var int   last_inside_bar = na
+
+// FVG State
+var float ref1_high = na
+var float ref1_low  = na
+var int   ref1_bar  = na
+
+var float ref2_high = na
+var float ref2_low  = na
+var int   ref2_bar  = na
+
+var box[] bull_fvg_boxes = array.new_box()
+var box[] bear_fvg_boxes = array.new_box()
+var box[] mitigated_bull_fvg_boxes = array.new_box()
+var box[] mitigated_bear_fvg_boxes = array.new_box()
+
+// Helper: enforce max_fvgs limit per type by removing oldest FVGs
+trim_fvg_array(box[] arr) =>
+    while array.size(arr) > max_fvgs
+        box.delete(array.shift(arr))
+
+// Helper: enforce max_obs limit per type by removing oldest OBs
+trim_ob_array(box[] arr) =>
+    while array.size(arr) > max_obs
+        box.delete(array.shift(arr))
+
+// Order Block State
+var box[] bull_ob_boxes = array.new_box()
+var box[] bear_ob_boxes = array.new_box()
+
+// Pullbacks State
+var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
+var int swing_high_bar = na
+var float swing_high_val = na
+var int swing_low_bar = na
+var float swing_low_val = na
+var int last_confirmed_bar = na
+var float last_confirmed_val = na
+
+// Liquidity Sweeps State
+var float[] swp_rh_top    = array.new_float()
+var int[]   swp_rh_x      = array.new_int()
+var bool[]  swp_rh_broken = array.new_bool()
+var bool[]  swp_rh_swept  = array.new_bool()
+
+var float[] swp_sl_btm    = array.new_float()
+var int[]   swp_sl_x      = array.new_int()
+var bool[]  swp_sl_broken = array.new_bool()
+var bool[]  swp_sl_swept  = array.new_bool()
+
+// ==========================================
+// PULLBACK HELPER FUNCTIONS
+// (Merged: draws zigzag AND returns confirmed_sl/confirmed_sh for HTF engine)
+// ==========================================
+add_zigzag_line(x1, y1, x2, y2, col) =>
+    if show_pullbacks and not na(x1) and not na(y1) and not na(x2) and not na(y2)
+        line.new(x1, y1, x2, y2, xloc=xloc.bar_index, color=col, width=2)
+
+process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
+    int n_dir = c_dir
+    int n_sh_b = sh_b
+    float n_sh_v = sh_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sl = false
+
+    if c_dir == -1
+        // Zigzag: draw line from last confirmed to swing low
+        add_zigzag_line(lc_b, lc_v, sl_b, sl_v, zigzag_color)
+        confirmed_sl := true
+        n_lc_b := sl_b
+        n_lc_v := sl_v
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+    else if c_dir == 1
+        if h_val >= sh_v
+            n_sh_b := b_idx
+            n_sh_v := h_val
+    else
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+        
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v, confirmed_sl]
+
+process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
+    int n_dir = c_dir
+    int n_sl_b = sl_b
+    float n_sl_v = sl_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sh = false
+
+    if c_dir == 1
+        // Zigzag: draw line from last confirmed to swing high
+        add_zigzag_line(lc_b, lc_v, sh_b, sh_v, zigzag_color)
+        confirmed_sh := true
+        n_lc_b := sh_b
+        n_lc_v := sh_v
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+    else if c_dir == -1
+        if l_val <= sl_v
+            n_sl_b := b_idx
+            n_sl_v := l_val
+    else
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+        
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v, confirmed_sh]
+
+// ==========================================
+// FVG MITIGATION (Runs on all bars)
+// ==========================================
+bool show_active_fvgs = fvg_display_mode == "All" or fvg_display_mode == "Active Only"
+bool show_mitigated_fvgs = fvg_display_mode == "All" or fvg_display_mode == "Mitigated Only"
+
+// Mitigate bullish FVGs
+if show_fvgs and array.size(bull_fvg_boxes) > 0
+    for i = array.size(bull_fvg_boxes) - 1 to 0
+        bx = array.get(bull_fvg_boxes, i)
+        top = box.get_top(bx)
+        bottom = box.get_bottom(bx)
+        if show_active_fvgs
+            box.set_right(bx, bar_index)
+        if low <= bottom
+            array.remove(bull_fvg_boxes, i)
+            if show_mitigated_fvgs
+                box.set_bgcolor(bx, mitigated_bull_fvg_color)
+                box.set_border_color(bx, mitigated_bull_border)
+                box.set_border_width(bx, 1)
+                box.set_text(bx, "FVG ✓")
+                array.push(mitigated_bull_fvg_boxes, bx)
+            else
+                box.delete(bx)
+    trim_fvg_array(mitigated_bull_fvg_boxes)
+
+// Mitigate bearish FVGs
+if show_fvgs and array.size(bear_fvg_boxes) > 0
+    for i = array.size(bear_fvg_boxes) - 1 to 0
+        bx = array.get(bear_fvg_boxes, i)
+        top = box.get_top(bx)
+        bottom = box.get_bottom(bx)
+        if show_active_fvgs
+            box.set_right(bx, bar_index)
+        if high >= top
+            array.remove(bear_fvg_boxes, i)
+            if show_mitigated_fvgs
+                box.set_bgcolor(bx, mitigated_bear_fvg_color)
+                box.set_border_color(bx, mitigated_bear_border)
+                box.set_border_width(bx, 1)
+                box.set_text(bx, "FVG ✓")
+                array.push(mitigated_bear_fvg_boxes, bx)
+            else
+                box.delete(bx)
+    trim_fvg_array(mitigated_bear_fvg_boxes)
+
+// ==========================================
+// ORDER BLOCK MITIGATION (Runs on all bars)
+// ==========================================
+
+// Mitigate bullish OBs (price drops into/below OB)
+if show_obs and array.size(bull_ob_boxes) > 0
+    for i = array.size(bull_ob_boxes) - 1 to 0
+        bx = array.get(bull_ob_boxes, i)
+        ob_top = box.get_top(bx)
+        ob_bottom = box.get_bottom(bx)
+        box.set_right(bx, bar_index)
+        if low <= ob_bottom
+            array.remove(bull_ob_boxes, i)
+            box.delete(bx)
+
+// Mitigate bearish OBs (price rises into/above OB)
+if show_obs and array.size(bear_ob_boxes) > 0
+    for i = array.size(bear_ob_boxes) - 1 to 0
+        bx = array.get(bear_ob_boxes, i)
+        ob_top = box.get_top(bx)
+        ob_bottom = box.get_bottom(bx)
+        box.set_right(bx, bar_index)
+        if high >= ob_top
+            array.remove(bear_ob_boxes, i)
+            box.delete(bx)
+
+// ==========================================
+// SWING CONFIRMATION FLAGS (used by HTF engine)
+// ==========================================
+bool is_sh = false
+bool is_sl = false
+
+// ==========================================
+// MAIN LOOP (Unified: Inside Bars + FVG + Pullbacks)
+// ==========================================
+if bar_index == 0
+    ref_bar := bar_index
+    ref_high := round_price(high)
+    ref_low := round_price(low)
+    
+    swing_high_bar := bar_index
+    swing_high_val := round_price(high)
+    swing_low_bar := bar_index
+    swing_low_val := round_price(low)
+
+curr_open = round_price(open)
+curr_high = round_price(high)
+curr_low = round_price(low)
+curr_close = round_price(close)
+
+if bar_index > 0
+    
+    // ----------------------------------------------------
+    // FVG: Traditional detection (without inside bars)
+    // ----------------------------------------------------
+    if (show_fvgs or show_obs) and not fvg_use_inside_bars and bar_index >= 2
+        prev2_high = round_price(high[2])
+        prev2_low = round_price(low[2])
+        if curr_low > prev2_high
+            if show_fvgs and show_bull_fvgs
+                color active_bull_bg = show_active_fvgs ? bull_fvg_color : color.new(color.white, 100)
+                color active_bull_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
+                string active_bull_label = show_active_fvgs ? "FVG" : ""
+                bx = box.new(left=bar_index-2, top=curr_low, right=bar_index, bottom=prev2_high, bgcolor=active_bull_bg, border_color=color.new(color.white, 100), text=active_bull_label, text_halign=text.align_right, text_size=size.small, text_color=active_bull_txt)
+                array.push(bull_fvg_boxes, bx)
+                trim_fvg_array(bull_fvg_boxes)
+            if show_obs
+                bx_ob = box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                array.push(bull_ob_boxes, bx_ob)
+                trim_ob_array(bull_ob_boxes)
+
+        if curr_high < prev2_low
+            if show_fvgs and show_bear_fvgs
+                color active_bear_bg = show_active_fvgs ? bear_fvg_color : color.new(color.white, 100)
+                color active_bear_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
+                string active_bear_label = show_active_fvgs ? "FVG" : ""
+                bx = box.new(left=bar_index-2, top=prev2_low, right=bar_index, bottom=curr_high, bgcolor=active_bear_bg, border_color=color.new(color.white, 100), text=active_bear_label, text_halign=text.align_right, text_size=size.small, text_color=active_bear_txt)
+                array.push(bear_fvg_boxes, bx)
+                trim_fvg_array(bear_fvg_boxes)
+            if show_obs
+                bx_ob = box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                array.push(bear_ob_boxes, bx_ob)
+                trim_ob_array(bear_ob_boxes)
+
+    open_broke_high = curr_open > ref_high
+    open_broke_low = curr_open < ref_low
+    
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low = (curr_low < ref_low) or open_broke_low
+
+    if broke_high or broke_low
+        // ----------------------------------------------------
+        // 1. INSIDE BARS: Close active sequence
+        // ----------------------------------------------------
+        if show_inside_bars and inside_count > 0
+            box.new(left=ref_bar, top=ref_high, right=last_inside_bar, bottom=ref_low, xloc=xloc.bar_index, bgcolor=zone_color, border_color=zone_border, border_width=border_width)
+        
+        // ----------------------------------------------------
+        // 2. FVG: Detect new gaps
+        // ----------------------------------------------------
+        ref1_high := ref2_high
+        ref1_low  := ref2_low
+        ref1_bar  := ref2_bar
+        
+        ref2_high := ref_high
+        ref2_low  := ref_low
+        ref2_bar  := ref_bar
+        
+        if (show_fvgs or show_obs) and fvg_use_inside_bars and not na(ref1_bar)
+            if curr_low > ref1_high
+                if show_fvgs and show_bull_fvgs
+                    color ib_bull_bg = show_active_fvgs ? bull_fvg_color : color.new(color.white, 100)
+                    color ib_bull_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
+                    string ib_bull_label = show_active_fvgs ? "FVG" : ""
+                    bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=ib_bull_bg, border_color=color.new(color.white, 100), text=ib_bull_label, text_halign=text.align_right, text_size=size.small, text_color=ib_bull_txt)
+                    array.push(bull_fvg_boxes, bx)
+                    trim_fvg_array(bull_fvg_boxes)
+                if show_obs
+                    bx_ob = box.new(left=ref1_bar, top=ref1_high, right=bar_index, bottom=ref1_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                    array.push(bull_ob_boxes, bx_ob)
+                    trim_ob_array(bull_ob_boxes)
+
+            if curr_high < ref1_low
+                if show_fvgs and show_bear_fvgs
+                    color ib_bear_bg = show_active_fvgs ? bear_fvg_color : color.new(color.white, 100)
+                    color ib_bear_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
+                    string ib_bear_label = show_active_fvgs ? "FVG" : ""
+                    bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=ib_bear_bg, border_color=color.new(color.white, 100), text=ib_bear_label, text_halign=text.align_right, text_size=size.small, text_color=ib_bear_txt)
+                    array.push(bear_fvg_boxes, bx)
+                    trim_fvg_array(bear_fvg_boxes)
+                if show_obs
+                    bx_ob = box.new(left=ref1_bar, top=ref1_high, right=bar_index, bottom=ref1_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                    array.push(bear_ob_boxes, bx_ob)
+                    trim_ob_array(bear_ob_boxes)
+
+        // ----------------------------------------------------
+        // 3. PULLBACKS: Process directional swings
+        // (Returns confirmed_sl / confirmed_sh for HTF engine)
+        // ----------------------------------------------------
+        bool conf_sl = false
+        bool conf_sh = false
+
+        if broke_high and broke_low
+            int taken_first = 0
+            if open_broke_high
+                taken_first := 1
+            else if open_broke_low
+                taken_first := -1
+            else
+                dist_high = math.abs(curr_open - ref_high)
+                dist_low = math.abs(curr_open - ref_low)
+                if dist_low < dist_high
+                    taken_first := -1
+                else
+                    taken_first := 1
+                    
+            if taken_first == 1
+                [d1, sh_b1, sh_v1, lc_b1, lc_v1, csl1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sl := csl1
+                
+                [d2, sl_b2, sl_v2, lc_b2, lc_v2, csh2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sh := csh2
+            else
+                [d1, sl_b1, sl_v1, lc_b1, lc_v1, csh1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sh := csh1
+                
+                [d2, sh_b2, sh_v2, lc_b2, lc_v2, csl2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sl := csl2
+        else
+            if current_dir == 1
+                if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+                else if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+            else if current_dir == -1
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+            else
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+
+        // ----------------------------------------------------
+        // 4. UPDATE SHARED REFERENCE BAR
+        // ----------------------------------------------------
+        ref_high := curr_high
+        ref_low  := curr_low
+        ref_bar  := bar_index
+        
+        inside_count := 0
+        last_inside_bar := na
+        
+        // Set swing flags for HTF engine
+        is_sh := conf_sh
+        is_sl := conf_sl
+    else
+        // Inside bar detected
+        inside_count += 1
+        last_inside_bar := bar_index
+
+// ==========================================
+// END OF CHART CLEANUP (Inside Bars)
+// ==========================================
+if barstate.islast and inside_count > 0 and show_inside_bars
+    box.new(left=ref_bar, top=ref_high, right=last_inside_bar, bottom=ref_low, xloc=xloc.bar_index, bgcolor=zone_color, border_color=zone_border, border_width=border_width)
+
+// ============================================================================
+// MARKET STRUCTURE ENGINE — BOS / ChoCH / Inducement / Inducement Shift
+// (mirrors bos_choch_inducement.py via structure_service.py)
+// ============================================================================
+
+// Swing Point History Arrays (fed by is_sh / is_sl from pullback engine)
+var int[] sl_bars = array.new_int()
+var float[] sl_vals = array.new_float()
+var int[] sh_bars = array.new_int()
+var float[] sh_vals = array.new_float()
+
+if is_sl
+    array.push(sl_bars, last_confirmed_bar)
+    array.push(sl_vals, last_confirmed_val)
+
+if is_sh
+    array.push(sh_bars, last_confirmed_bar)
+    array.push(sh_vals, last_confirmed_val)
+
+// OHLC history arrays — for scanning leg min/max at BOS time
+var float[] bar_lows = array.new_float()
+var float[] bar_highs = array.new_float()
+array.push(bar_lows, round_price(low))
+array.push(bar_highs, round_price(high))
+
+// Helper: find the last swing low within [after_bar, before_bar] inclusive
+find_last_sl(after_bar, before_bar) =>
+    int found_bar = na
+    float found_val = na
+    int sz = array.size(sl_bars)
+    if sz > 0
+        for i = sz - 1 to 0
+            b = array.get(sl_bars, i)
+            if b < after_bar
+                break
+            if b >= after_bar and b < before_bar
+                found_bar := b
+                found_val := array.get(sl_vals, i)
+                break
+    [found_bar, found_val]
+
+// Helper: find the last swing high within [after_bar, before_bar] inclusive
+find_last_sh(after_bar, before_bar) =>
+    int found_bar = na
+    float found_val = na
+    int sz = array.size(sh_bars)
+    if sz > 0
+        for i = sz - 1 to 0
+            b = array.get(sh_bars, i)
+            if b < after_bar
+                break
+            if b >= after_bar and b < before_bar
+                found_bar := b
+                found_val := array.get(sh_vals, i)
+                break
+    [found_bar, found_val]
+
+// Helper: find lowest low in bar range [from_bar, to_bar] inclusive
+find_leg_min(from_bar, to_bar) =>
+    float min_val = na
+    int min_bar = na
+    if from_bar >= 0 and to_bar >= from_bar
+        for b = from_bar to to_bar
+            float l = array.get(bar_lows, b)
+            if na(min_val) or l < min_val
+                min_val := l
+                min_bar := b
+    [min_bar, min_val]
+
+// Helper: find highest high in bar range [from_bar, to_bar] inclusive
+find_leg_max(from_bar, to_bar) =>
+    float max_val = na
+    int max_bar = na
+    if from_bar >= 0 and to_bar >= from_bar
+        for b = from_bar to to_bar
+            float h = array.get(bar_highs, b)
+            if na(max_val) or h > max_val
+                max_val := h
+                max_bar := b
+    [max_bar, max_val]
+
+
+// HTF Structure State
+var int current_trend = 1
+
+var bool htf_locked = false
+
+var int proper_high_idx = na
+var float proper_high_val = na
+var int proper_low_idx = na
+var float proper_low_val = na
+
+var bool inducement_done = false
+
+var int wick_high_idx = na
+var float wick_high_val = na
+var int wick_low_idx = na
+var float wick_low_val = na
+
+var int choch_idx = na
+var float choch_val = na
+var int cycle_start_idx = na
+
+// Self-correcting start: track all-time low
+var float atl_low = na
+var int atl_bar = na
+
+if bar_index == 0
+    atl_low := round_price(low)
+    atl_bar := bar_index
+    cycle_start_idx := bar_index
+    choch_idx := bar_index
+    choch_val := round_price(low)
+
+// Self-correcting reset: new ATL before first structural event
+if bar_index > 0 and not htf_locked
+    curr_low_r = round_price(low)
+    if curr_low_r < atl_low
+        atl_low := curr_low_r
+        atl_bar := bar_index
+        current_trend := 1
+        proper_high_idx := na
+        proper_high_val := na
+        proper_low_idx := na
+        proper_low_val := na
+        inducement_done := false
+        wick_high_idx := na
+        wick_high_val := na
+        wick_low_idx := na
+        wick_low_val := na
+        choch_idx := bar_index
+        choch_val := curr_low_r
+        cycle_start_idx := bar_index
+
+// ============================================================================
+// MAIN STRUCTURE LOOP (up to 2 iterations for instant ChoCH→new trend)
+// Only runs when show_market_struct is enabled
+// ============================================================================
+if show_market_struct
+    int trends_processed = 0
+    bool continue_loop = true
+    
+    while trends_processed < 2 and continue_loop
+        int prev_trend = current_trend
+        bool inducement_triggered_now = false
+        bool event_triggered_this_candle = false
+        
+        if current_trend == 1
+            // ---- UPTREND ----
+            if na(proper_high_val)
+                proper_high_idx := bar_index
+                proper_high_val := curr_high
+            
+            if not inducement_done
+                // Update peak high
+                if curr_high >= proper_high_val
+                    proper_high_idx := bar_index
+                    proper_high_val := curr_high
+                
+                // Find last swing low within [cycle_start, proper_high]
+                [pb_low_bar, pb_low_val] = find_last_sl(cycle_start_idx, proper_high_idx)
+                
+                // Check Inducement (#)
+                if not na(pb_low_val) and curr_low < pb_low_val
+                    inducement_done := true
+                    inducement_triggered_now := true
+                    event_triggered_this_candle := true
+                    line.new(pb_low_bar, pb_low_val, bar_index, pb_low_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                    label.new(math.round((pb_low_bar + bar_index) / 2), pb_low_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    
+            else
+                // Post-inducement: check IS, BOS, wick breaks
+                if not na(wick_high_val)
+                    [is_pb_bar, is_pb_val] = find_last_sl(cycle_start_idx, wick_high_idx)
+                    
+                    if not na(is_pb_val) and curr_low < is_pb_val
+                        old_proper_high_idx = proper_high_idx
+                        proper_high_idx := wick_high_idx
+                        proper_high_val := wick_high_val
+                        event_triggered_this_candle := true
+                        line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                        label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                        
+                        
+                        wick_high_idx := na
+                        wick_high_val := na
+                        
+                float target_high = na(wick_high_val) ? proper_high_val : wick_high_val
+                int target_high_idx = na(wick_high_val) ? proper_high_idx : wick_high_idx
+                
+                // BOS: candle CLOSE above target high
+                if curr_close > target_high
+                    event_triggered_this_candle := true
+                    [leg_min_bar, leg_min_val] = find_leg_min(proper_high_idx, bar_index)
+                    
+                    line.new(proper_high_idx, proper_high_val, bar_index, proper_high_val, color=color.new(#2962ff, 0), width=2)
+                    label.new(math.round((proper_high_idx + bar_index) / 2), proper_high_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                    htf_locked := true
+                    
+                    choch_idx := leg_min_bar
+                    choch_val := leg_min_val
+                    
+                    inducement_done := false
+                    wick_high_idx := na
+                    wick_high_val := na
+                    proper_high_idx := bar_index
+                    proper_high_val := curr_high
+                    
+                // Wick break: high > target but close <= target
+                else if curr_high > target_high and curr_close <= target_high
+                    wick_high_idx := bar_index
+                    wick_high_val := curr_high
+                    
+            // ChoCH check: low breaks structural level
+            if not na(choch_val) and curr_low < choch_val
+                event_triggered_this_candle := true
+                line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
+                label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+                htf_locked := true
+                
+                current_trend := -1
+                proper_low_idx := bar_index
+                proper_low_val := curr_low
+                inducement_done := false
+                wick_high_idx := na
+                wick_high_val := na
+                choch_idx := proper_high_idx
+                choch_val := proper_high_val
+                cycle_start_idx := proper_high_idx
+                
+        else if current_trend == -1
+            // ---- DOWNTREND ----
+            if na(proper_low_val)
+                proper_low_idx := bar_index
+                proper_low_val := curr_low
+                
+            if not inducement_done
+                // Update peak low
+                if curr_low <= proper_low_val
+                    proper_low_idx := bar_index
+                    proper_low_val := curr_low
+                
+                // Find last swing high within [cycle_start, proper_low]
+                [pb_high_bar, pb_high_val] = find_last_sh(cycle_start_idx, proper_low_idx)
+                
+                // Check Inducement (#)
+                if not na(pb_high_val) and curr_high > pb_high_val
+                    inducement_done := true
+                    inducement_triggered_now := true
+                    event_triggered_this_candle := true
+                    line.new(pb_high_bar, pb_high_val, bar_index, pb_high_val, color=color.new(#ffd600, 0), style=line.style_solid, width=2)
+                    label.new(math.round((pb_high_bar + bar_index) / 2), pb_high_val, "#", style=label.style_none, textcolor=color.new(#ffd600, 0), size=size.small)
+                    
+            else
+                // Post-inducement: check IS, BOS, wick breaks
+                if not na(wick_low_val)
+                    [is_pb_bar, is_pb_val] = find_last_sh(cycle_start_idx, wick_low_idx)
+                    
+                    if not na(is_pb_val) and curr_high > is_pb_val
+                        old_proper_low_idx = proper_low_idx
+                        proper_low_idx := wick_low_idx
+                        proper_low_val := wick_low_val
+                        event_triggered_this_candle := true
+                        line.new(is_pb_bar, is_pb_val, bar_index, is_pb_val, color=color.new(#00e5ff, 0), style=line.style_solid, width=2)
+                        label.new(math.round((is_pb_bar + bar_index) / 2), is_pb_val, "IS", style=label.style_none, textcolor=color.new(#00e5ff, 0), size=size.small)
+                        
+                        
+                        wick_low_idx := na
+                        wick_low_val := na
+                        
+                float target_low = na(wick_low_val) ? proper_low_val : wick_low_val
+                int target_low_idx = na(wick_low_val) ? proper_low_idx : wick_low_idx
+                
+                // BOS: candle CLOSE below target low
+                if curr_close < target_low
+                    event_triggered_this_candle := true
+                    [leg_max_bar, leg_max_val] = find_leg_max(proper_low_idx, bar_index)
+                    
+                    line.new(proper_low_idx, proper_low_val, bar_index, proper_low_val, color=color.new(#2962ff, 0), width=2)
+                    label.new(math.round((proper_low_idx + bar_index) / 2), proper_low_val, "BOS", style=label.style_none, textcolor=color.new(#2962ff, 0), size=size.small)
+                    htf_locked := true
+                    
+                    choch_idx := leg_max_bar
+                    choch_val := leg_max_val
+                    
+                    inducement_done := false
+                    wick_low_idx := na
+                    wick_low_val := na
+                    proper_low_idx := bar_index
+                    proper_low_val := curr_low
+                    
+                // Wick break
+                else if curr_low < target_low and curr_close >= target_low
+                    wick_low_idx := bar_index
+                    wick_low_val := curr_low
+                    
+            // ChoCH check: high breaks structural level
+            if not na(choch_val) and curr_high > choch_val
+                event_triggered_this_candle := true
+                line.new(choch_idx, choch_val, bar_index, choch_val, color=color.new(#e91e63, 0), width=2)
+                label.new(math.round((choch_idx + bar_index) / 2), choch_val, "ChoCH", style=label.style_none, textcolor=color.new(#e91e63, 0), size=size.small)
+                htf_locked := true
+                
+                current_trend := 1
+                proper_high_idx := bar_index
+                proper_high_val := curr_high
+                inducement_done := false
+                wick_low_idx := na
+                wick_low_val := na
+                choch_idx := proper_low_idx
+                choch_val := proper_low_val
+                cycle_start_idx := proper_low_idx
+                
+        if current_trend == prev_trend or event_triggered_this_candle
+            continue_loop := false
+        trends_processed += 1
+
+// ============================================================================
+// LIQUIDITY SWEEP ENGINE (Institutional Liquidity Grab Detection)
+// ============================================================================
+// Pivots calculated unconditionally on every bar for historical stability
+swp_ph = ta.pivothigh(high, sweep_pivot_len, sweep_pivot_len)
+swp_pl = ta.pivotlow(low, sweep_pivot_len, sweep_pivot_len)
+
+var bool bull_sweep_now = false
+var bool bear_sweep_now = false
+bull_sweep_now := false
+bear_sweep_now := false
+
+if show_sweeps
+    // Register new swing high liquidity pool (resistance)
+    if not na(swp_ph)
+        if array.size(swp_rh_top) >= sweep_max_zones
+            array.shift(swp_rh_top)
+            array.shift(swp_rh_x)
+            array.shift(swp_rh_broken)
+            array.shift(swp_rh_swept)
+        array.push(swp_rh_top, high[sweep_pivot_len])
+        array.push(swp_rh_x, bar_index - sweep_pivot_len)
+        array.push(swp_rh_broken, false)
+        array.push(swp_rh_swept, false)
+
+    // Register new swing low liquidity pool (support)
+    if not na(swp_pl)
+        if array.size(swp_sl_btm) >= sweep_max_zones
+            array.shift(swp_sl_btm)
+            array.shift(swp_sl_x)
+            array.shift(swp_sl_broken)
+            array.shift(swp_sl_swept)
+        array.push(swp_sl_btm, low[sweep_pivot_len])
+        array.push(swp_sl_x, bar_index - sweep_pivot_len)
+        array.push(swp_sl_broken, false)
+        array.push(swp_sl_swept, false)
+
+    // Evaluate active swing highs for sweeps & breaks
+    if array.size(swp_rh_top) > 0
+        for i = array.size(swp_rh_top) - 1 to 0
+            float _top    = array.get(swp_rh_top, i)
+            int   _x      = array.get(swp_rh_x, i)
+            bool  _broken = array.get(swp_rh_broken, i)
+            bool  _swept  = array.get(swp_rh_swept, i)
+
+            if not _broken
+                // Bearish Liquidity Sweep:
+                // Candle wicks above swing high, but closes back below/at level (stop hunt & rejection)
+                if high > _top and close <= _top and not _swept
+                    array.set(swp_rh_swept, i, true)
+                    bear_sweep_now := true
+                    line.new(_x, _top, bar_index, high, xloc=xloc.bar_index, color=sweep_bear_col, style=line.style_solid, width=2)
+                    int mid_x = math.round((_x + bar_index) / 2)
+                    float mid_y = (_top + high) / 2
+                    label.new(mid_x, mid_y, "Sweep", style=label.style_none, textcolor=sweep_bear_col, size=size.small)
+
+                // Break: Candle closes above swing high -> level invalidated
+                if close > _top
+                    array.set(swp_rh_broken, i, true)
+
+    // Evaluate active swing lows for sweeps & breaks
+    if array.size(swp_sl_btm) > 0
+        for i = array.size(swp_sl_btm) - 1 to 0
+            float _btm    = array.get(swp_sl_btm, i)
+            int   _x      = array.get(swp_sl_x, i)
+            bool  _broken = array.get(swp_sl_broken, i)
+            bool  _swept  = array.get(swp_sl_swept, i)
+
+            if not _broken
+                // Bullish Liquidity Sweep:
+                // Candle wicks below swing low, but closes back above/at level (stop hunt & rejection)
+                if low < _btm and close >= _btm and not _swept
+                    array.set(swp_sl_swept, i, true)
+                    bull_sweep_now := true
+                    line.new(_x, _btm, bar_index, low, xloc=xloc.bar_index, color=sweep_bull_col, style=line.style_solid, width=2)
+                    int mid_x = math.round((_x + bar_index) / 2)
+                    float mid_y = (_btm + low) / 2
+                    label.new(mid_x, mid_y, "Sweep", style=label.style_none, textcolor=sweep_bull_col, size=size.small)
+
+                // Break: Candle closes below swing low -> level invalidated
+                if close < _btm
+                    array.set(swp_sl_broken, i, true)
+
+// Background highlight on sweep candle
+bgcolor(show_sweeps and sweep_highlight_bar and (bull_sweep_now or bear_sweep_now) ? (bull_sweep_now ? color.new(sweep_bull_col, 88) : color.new(sweep_bear_col, 88)) : na, title="Sweep Bar Highlight")
+
+// Alert conditions
+alertcondition(bull_sweep_now, "Bullish Liquidity Sweep", "Bullish Liquidity Sweep: Stops grabbed below support!")
+alertcondition(bear_sweep_now, "Bearish Liquidity Sweep", "Bearish Liquidity Sweep: Stops grabbed above resistance!")
+
+// ============================================================================
+// CANDLE STRENGTH
+// ============================================================================
+
+// ==========================================
+// BUYER-SELLER STRENGTH (STATUS LINE)
+// ==========================================
+sellers = (high-close)/(high-low)*100
+buyers  = (low-close)/(high-low)*100
+
+plot(sellers, title="sellers", color=color.red, display=display.status_line + display.data_window, linewidth=3, style=plot.style_histogram)
+plot(buyers, title="buyers", color=color.lime, display=display.status_line + display.data_window, linewidth=3, style=plot.style_histogram)

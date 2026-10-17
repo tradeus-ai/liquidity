@@ -7,6 +7,7 @@ indicator("Tradeus Liquidity Toolkit", overlay=true, max_lines_count=500, max_bo
 show_inside_bars   = input.bool(true, "Show Inside Bar Zones", group="Modules")
 show_fvgs          = input.bool(true, "Show Fair Value Gaps (FVG)", group="Modules")
 show_pullbacks     = input.bool(true, "Show SMC Pullbacks (ZigZag)", group="Modules")
+show_gaps          = input.bool(true, "Show Gaps", group="Modules")
 show_market_struct = input.bool(true, "Show Market Structure (BOS/ChoCH/#/IS)", group="Modules")
 show_sweeps        = input.bool(true, "Show Liquidity Sweeps", group="Modules")
 show_obs           = input.bool(true, "Show Order Blocks (FVG-paired)", group="Modules")
@@ -36,21 +37,53 @@ border_width    = input.int(1, "Border Width", minval=1, maxval=4, group="Inside
 show_bull_fvgs = input.bool(true, "Show Bullish FVGs (Buy)", group="Fair Value Gaps")
 show_bear_fvgs = input.bool(true, "Show Bearish FVGs (Sell)", group="Fair Value Gaps")
 fvg_use_inside_bars = input.bool(true, "Use Inside Bar Logic for FVG", group="Fair Value Gaps")
-fvg_display_mode = input.string("All", "FVG Display Mode", options=["All", "Active Only", "Mitigated Only"], group="Fair Value Gaps")
-max_fvgs       = input.int(50, "Max FVGs to display", minval=1, maxval=500, group="Fair Value Gaps")
-bull_fvg_color = input.color(color.new(#4caf50, 80), "Bullish FVG Color", group="Fair Value Gaps")
-bear_fvg_color = input.color(color.new(#f44336, 80), "Bearish FVG Color", group="Fair Value Gaps")
-mitigated_bull_fvg_color = input.color(color.new(#4caf50, 92), "Mitigated Bullish FVG Color", group="Fair Value Gaps")
-mitigated_bear_fvg_color = input.color(color.new(#f44336, 92), "Mitigated Bearish FVG Color", group="Fair Value Gaps")
-mitigated_bull_border = input.color(color.new(#4caf50, 50), "Mitigated Bull Border", group="Fair Value Gaps")
-mitigated_bear_border = input.color(color.new(#f44336, 50), "Mitigated Bear Border", group="Fair Value Gaps")
+max_fvgs       = input.int(50, "Max Boxes to display (FVG/iFVG/OB)", minval=1, maxval=500, group="Fair Value Gaps")
+remove_closed_ifvgs = input.bool(true, "Remove Closed iFVGs from chart", group="Fair Value Gaps", tooltip="When enabled, if an iFVG is closed by another candle, remove that iFVG drawing from the chart.")
+recent_ifvg_keep    = input.int(25, "Recent iFVGs to keep (if not removed)", minval=1, maxval=100, group="Fair Value Gaps", tooltip="Number of recent iFVGs to display on chart if remove_closed_ifvgs is disabled.")
+// Buy Side (Bullish) FVG Styling - 70% transparency
+bull_fvg_color        = input.color(color.new(#4caf50, 70), "Buy Side FVG Box Fill", group="Fair Value Gaps")
+bull_fvg_border       = input.color(color.new(#4caf50, 70), "Buy Side FVG Border Color", group="Fair Value Gaps")
+bull_fvg_label_col    = input.color(#00ff00, "Buy Side FVG Label Color", group="Fair Value Gaps")
+
+// Sell Side (Bearish) FVG Styling - 70% transparency
+bear_fvg_color        = input.color(color.new(#f44336, 70), "Sell Side FVG Box Fill", group="Fair Value Gaps")
+bear_fvg_border       = input.color(color.new(#f44336, 70), "Sell Side FVG Border Color", group="Fair Value Gaps")
+bear_fvg_label_col    = input.color(#ff1744, "Sell Side FVG Label Color", group="Fair Value Gaps")
+
+// Bullish iFVG Styling (Light Blue) - 70% transparency
+bull_ifvg_color     = input.color(color.new(#2962ff, 70), "Bullish iFVG Box Fill (Light Blue)", group="Fair Value Gaps")
+bull_ifvg_border    = input.color(color.new(#2962ff, 70), "Bullish iFVG Border Color", group="Fair Value Gaps")
+bull_ifvg_label_col = input.color(#00e5ff, "Bullish iFVG Label Color (Fluorescent Blue)", group="Fair Value Gaps")
+
+// Bearish iFVG Styling (Light Orange) - 70% transparency
+bear_ifvg_color     = input.color(color.new(#ff9800, 70), "Bearish iFVG Box Fill (Light Orange)", group="Fair Value Gaps")
+bear_ifvg_border    = input.color(color.new(#ff9800, 70), "Bearish iFVG Border Color", group="Fair Value Gaps")
+bear_ifvg_label_col = input.color(#ff9100, "Bearish iFVG Label Color (Fluorescent Orange)", group="Fair Value Gaps")
 
 // ==========================================
 // INPUTS & STYLING (Order Blocks)
 // ==========================================
-max_obs          = input.int(20, "Max OBs to display", minval=1, maxval=500, group="Order Blocks")
-bull_ob_color    = input.color(color.new(#26a69a, 75), "Bullish OB Color", group="Order Blocks")
-bear_ob_color    = input.color(color.new(#ef5350, 75), "Bearish OB Color", group="Order Blocks")
+show_bull_obs        = input.bool(true, "Show Bullish OBs (Buy)", group="Order Blocks")
+show_bear_obs        = input.bool(true, "Show Bearish OBs (Sell)", group="Order Blocks")
+remove_invalidated_obs = input.bool(true, "Remove Invalidated Order Blocks", group="Order Blocks", tooltip="When enabled, Order Blocks are removed from the chart once invalidated (candle closes above for Sell OB, candle closes below for Buy OB).")
+bull_ob_color        = input.color(color.new(#9c27b0, 75), "Bullish OB Color", group="Order Blocks")
+bear_ob_color        = input.color(color.new(#ffeb3b, 75), "Bearish OB Color", group="Order Blocks")
+
+// ==========================================
+// INPUTS & STYLING (Gaps)
+// ==========================================
+closeGapsPartially       = input.bool(false, "Close Gaps Partially", group="Gaps", display=display.none)
+boxLimitInput            = input.int(15, "Max Number of Gaps", minval=1, maxval=500, group="Gaps", display=display.none)
+minimalDeviationTooltip  = "Specifies the minimal size of detected gaps, as a percentage of the average high-low range for the last 14 bars."
+minimalDeviationInput    = nz(input.float(30.0, "Minimal Deviation (%)", tooltip=minimalDeviationTooltip, minval=1, maxval=100, group="Gaps", display=display.none) / 100 * ta.sma(high - low, 14))
+limitBoxLengthBoolInput  = input.bool(false, "Limit Max Gap Trail Length (bars)", inline="Length Limit", group="Gaps", display=display.none)
+limitBoxLengthIntInput   = input.int(300, "", inline="Length Limit", minval=1, group="Gaps", display=display.none, active=limitBoxLengthBoolInput)
+
+gapGroupName             = "Gaps Colors"
+colorUpBorderInput       = input.color(color.green, "Up Gaps", inline="Gap Up", group=gapGroupName, display=display.none)
+colorUpBackgroundInput   = input.color(color.new(color.green, 85), "", inline="Gap Up", group=gapGroupName, display=display.none)
+colorDownBorderInput     = input.color(color.red, "Down Gaps", inline="Gap Down", group=gapGroupName, display=display.none)
+colorDownBackgroundInput = input.color(color.new(color.red, 85), "", inline="Gap Down", group=gapGroupName, display=display.none)
 
 // ==========================================
 // INPUTS & STYLING (Pullbacks)
@@ -87,24 +120,121 @@ var float ref2_high = na
 var float ref2_low  = na
 var int   ref2_bar  = na
 
-var box[] bull_fvg_boxes = array.new_box()
-var box[] bear_fvg_boxes = array.new_box()
-var box[] mitigated_bull_fvg_boxes = array.new_box()
-var box[] mitigated_bear_fvg_boxes = array.new_box()
+// User-Defined Type for tracking FVG boxes and iFVG status
+type FvgItem
+    box  bx
+    bool is_ifvg
+    int  ifvg_bar
+    bool is_closed
 
-// Helper: enforce max_fvgs limit per type by removing oldest FVGs
-trim_fvg_array(box[] arr) =>
+var bull_fvg_items = array.new<FvgItem>(0)
+var bear_fvg_items = array.new<FvgItem>(0)
+
+// Helper: enforce max_fvgs limit per type by removing oldest items
+trim_fvg_array(FvgItem[] arr) =>
     while array.size(arr) > max_fvgs
-        box.delete(array.shift(arr))
+        FvgItem item = array.shift(arr)
+        box.delete(item.bx)
 
-// Helper: enforce max_obs limit per type by removing oldest OBs
+// Helper: enforce max_fvgs limit per type by removing oldest OBs
 trim_ob_array(box[] arr) =>
-    while array.size(arr) > max_obs
+    while array.size(arr) > max_fvgs
         box.delete(array.shift(arr))
 
 // Order Block State
 var box[] bull_ob_boxes = array.new_box()
 var box[] bear_ob_boxes = array.new_box()
+
+// ==========================================
+// TYPES & METHODS (Gaps)
+// ==========================================
+type AlertInfo
+    int countOpenGap
+    int countClosedGap
+
+method hasOpenedGap(AlertInfo this) =>
+    this.countOpenGap > 0
+
+method hasClosedGap(AlertInfo this) =>
+    this.countClosedGap > 0
+
+AlertInfo alertInfo = AlertInfo.new(0, 0)
+
+//@type A representation of a chart gap and all box drawings that it consists of.
+//@field isActive If 'true', the gap has not yet been closed and is still being extended on the chart.
+//@field isBull The direction of the gap: 'true' for upward gaps and 'false' for downward ones.
+//@field inactiveBoxes An array of all boxes that have been drawn for this gap. The last element of the array is the box on the chart that is currently extended further.
+type Gap
+    bool isActive
+    bool isBull
+    array<box> boxes
+
+//@function Deletes all of the boxes that were drawn to represent the gap.
+method delete(Gap this) =>
+    for _box in this.boxes
+        _box.delete()
+
+//@function Closes the gap partially, stopping the previous box and creating a new, smaller box to continue the gap instead.
+method partialClose(Gap this) =>
+    activeBox = this.boxes.last()
+    activeBox.set_extend(extend.none)
+
+    top = this.isBull ? activeBox.get_top() : low
+    bottom = this.isBull ? high : activeBox.get_bottom()
+
+    this.boxes.push(box.new(
+      bar_index,
+      top,
+      bar_index,
+      bottom, 
+      this.isBull ? colorDownBorderInput : colorUpBorderInput, 
+      bgcolor = this.isBull ? colorDownBackgroundInput : colorUpBackgroundInput))
+
+//@function Closes the gap fully, stopping the box from being extended.
+method fullClose(Gap this) =>
+    alertInfo.countClosedGap += 1
+    activeBox = this.boxes.last()
+    activeBox.set_extend(extend.none)
+    this.isActive := false
+    if closeGapsPartially
+        activeBox.delete()    
+
+method checkForClose(Gap this) =>
+    if this.isActive
+        activeBox = this.boxes.last()
+        top = activeBox.get_top() 
+        bot = activeBox.get_bottom()
+        isBull = this.isBull
+        activeBox.set_right(bar_index)
+
+        if (high > bot and isBull) or (low < top and not isBull)
+            if closeGapsPartially
+                this.partialClose()                
+            else
+                this.fullClose()
+
+        bool forceCloseBoxExceededLengthLimit = (limitBoxLengthBoolInput and bar_index - activeBox.get_left() >= limitBoxLengthIntInput)
+        if ((high > top and isBull) or (low < bot and not isBull)) or forceCloseBoxExceededLengthLimit
+            this.fullClose()
+
+var allGaps = array.new<Gap>()
+
+registerNewGap(bool isGapDown) => 
+    alertInfo.countOpenGap += 1
+    
+    newBox = box.new(
+      bar_index - 1,
+      (isGapDown ? low[1] : low),
+      bar_index,
+      (isGapDown ? high : high[1]),
+      border_color = isGapDown ? colorDownBorderInput : colorUpBorderInput,
+      bgcolor = isGapDown ? colorDownBackgroundInput : colorUpBackgroundInput,
+      extend = extend.right)
+
+    allGaps.push(Gap.new(true, isGapDown, array.from(newBox)))
+
+    if allGaps.size() > boxLimitInput
+        allGaps.shift().delete()
 
 // Pullbacks State
 var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
@@ -190,77 +320,110 @@ process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
         
     [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v, confirmed_sh]
 
-// ==========================================
-// FVG MITIGATION (Runs on all bars)
-// ==========================================
-bool show_active_fvgs = fvg_display_mode == "All" or fvg_display_mode == "Active Only"
-bool show_mitigated_fvgs = fvg_display_mode == "All" or fvg_display_mode == "Mitigated Only"
+curr_open  = round_price(open)
+curr_high  = round_price(high)
+curr_low   = round_price(low)
+curr_close = round_price(close)
 
-// Mitigate bullish FVGs
-if show_fvgs and array.size(bull_fvg_boxes) > 0
-    for i = array.size(bull_fvg_boxes) - 1 to 0
-        bx = array.get(bull_fvg_boxes, i)
+// ==========================================
+// FVG MITIGATION & iFVG CHECK (Runs on all bars)
+// ==========================================
+
+// Mitigate bullish (Buy Side) FVGs & Check iFVG
+if show_fvgs and array.size(bull_fvg_items) > 0
+    int ifvg_count = 0
+    for i = array.size(bull_fvg_items) - 1 to 0
+        FvgItem item = array.get(bull_fvg_items, i)
+        bx = item.bx
         top = box.get_top(bx)
         bottom = box.get_bottom(bx)
-        if show_active_fvgs
-            box.set_right(bx, bar_index)
-        if low <= bottom
-            array.remove(bull_fvg_boxes, i)
-            if show_mitigated_fvgs
-                box.set_bgcolor(bx, mitigated_bull_fvg_color)
-                box.set_border_color(bx, mitigated_bull_border)
-                box.set_border_width(bx, 1)
-                box.set_text(bx, "FVG ✓")
-                array.push(mitigated_bull_fvg_boxes, bx)
-            else
-                box.delete(bx)
-    trim_fvg_array(mitigated_bull_fvg_boxes)
+            
+        bool candle_closed_inside = curr_close >= bottom and curr_close <= top
+        bool candle_closed_below  = curr_close < bottom
 
-// Mitigate bearish FVGs
-if show_fvgs and array.size(bear_fvg_boxes) > 0
-    for i = array.size(bear_fvg_boxes) - 1 to 0
-        bx = array.get(bear_fvg_boxes, i)
+        if not item.is_ifvg
+            box.set_right(bx, bar_index)
+            if candle_closed_inside or candle_closed_below
+                // When a candle closes inside, closes below, or gaps down below Buy Side FVG -> becomes Bearish iFVG (Light Orange with 70% transparency)
+                item.is_ifvg := true
+                item.ifvg_bar := bar_index
+                box.set_bgcolor(bx, bear_ifvg_color)
+                box.set_border_color(bx, bear_ifvg_border)
+                box.set_text(bx, "iFVG")
+                box.set_text_color(bx, bear_ifvg_label_col)
+        else
+            // Already an iFVG: count rank from most recent
+            ifvg_count += 1
+            // Check if closed by another candle (subsequent bar)
+            if bar_index > item.ifvg_bar and not candle_closed_inside
+                item.is_closed := true
+            // Removal: if remove_closed_ifvgs is true, closed iFVGs are removed immediately; otherwise, recent 25 are kept
+            if item.is_closed and (remove_closed_ifvgs or ifvg_count > recent_ifvg_keep)
+                box.delete(bx)
+                array.remove(bull_fvg_items, i)
+
+// Mitigate bearish (Sell Side) FVGs & Check iFVG
+if show_fvgs and array.size(bear_fvg_items) > 0
+    int ifvg_count = 0
+    for i = array.size(bear_fvg_items) - 1 to 0
+        FvgItem item = array.get(bear_fvg_items, i)
+        bx = item.bx
         top = box.get_top(bx)
         bottom = box.get_bottom(bx)
-        if show_active_fvgs
+            
+        bool candle_closed_inside = curr_close >= bottom and curr_close <= top
+        bool candle_closed_above  = curr_close > top
+
+        if not item.is_ifvg
             box.set_right(bx, bar_index)
-        if high >= top
-            array.remove(bear_fvg_boxes, i)
-            if show_mitigated_fvgs
-                box.set_bgcolor(bx, mitigated_bear_fvg_color)
-                box.set_border_color(bx, mitigated_bear_border)
-                box.set_border_width(bx, 1)
-                box.set_text(bx, "FVG ✓")
-                array.push(mitigated_bear_fvg_boxes, bx)
-            else
+            if candle_closed_inside or candle_closed_above
+                // When a candle closes inside, closes above, or gaps up above Sell Side FVG -> becomes Bullish iFVG (Light Blue with 70% transparency)
+                item.is_ifvg := true
+                item.ifvg_bar := bar_index
+                box.set_bgcolor(bx, bull_ifvg_color)
+                box.set_border_color(bx, bull_ifvg_border)
+                box.set_text(bx, "iFVG")
+                box.set_text_color(bx, bull_ifvg_label_col)
+        else
+            // Already an iFVG: count rank from most recent
+            ifvg_count += 1
+            // Check if closed by another candle (subsequent bar)
+            if bar_index > item.ifvg_bar and not candle_closed_inside
+                item.is_closed := true
+            // Removal: if remove_closed_ifvgs is true, closed iFVGs are removed immediately; otherwise, recent 25 are kept
+            if item.is_closed and (remove_closed_ifvgs or ifvg_count > recent_ifvg_keep)
                 box.delete(bx)
-    trim_fvg_array(mitigated_bear_fvg_boxes)
+                array.remove(bear_fvg_items, i)
 
 // ==========================================
-// ORDER BLOCK MITIGATION (Runs on all bars)
+// ORDER BLOCK INVALIDATION (Runs on all bars)
 // ==========================================
 
-// Mitigate bullish OBs (price drops into/below OB)
+// Invalidate bullish (Buy) OBs: candle closes below that OB (curr_close < ob_bottom) -> remove if enabled
 if show_obs and array.size(bull_ob_boxes) > 0
     for i = array.size(bull_ob_boxes) - 1 to 0
         bx = array.get(bull_ob_boxes, i)
         ob_top = box.get_top(bx)
         ob_bottom = box.get_bottom(bx)
         box.set_right(bx, bar_index)
-        if low <= ob_bottom
+        bool buy_ob_invalidated = curr_close < ob_bottom
+        if buy_ob_invalidated
+            if remove_invalidated_obs
+                box.delete(bx)
             array.remove(bull_ob_boxes, i)
-            box.delete(bx)
 
-// Mitigate bearish OBs (price rises into/above OB)
+// Invalidate bearish (Sell) OBs: candle closes above that OB (curr_close > ob_top) -> remove if enabled
 if show_obs and array.size(bear_ob_boxes) > 0
     for i = array.size(bear_ob_boxes) - 1 to 0
         bx = array.get(bear_ob_boxes, i)
         ob_top = box.get_top(bx)
         ob_bottom = box.get_bottom(bx)
         box.set_right(bx, bar_index)
-        if high >= ob_top
+        bool sell_ob_invalidated = curr_close > ob_top
+        if sell_ob_invalidated
+            if remove_invalidated_obs
+                box.delete(bx)
             array.remove(bear_ob_boxes, i)
-            box.delete(bx)
 
 // ==========================================
 // SWING CONFIRMATION FLAGS (used by HTF engine)
@@ -281,11 +444,6 @@ if bar_index == 0
     swing_low_bar := bar_index
     swing_low_val := round_price(low)
 
-curr_open = round_price(open)
-curr_high = round_price(high)
-curr_low = round_price(low)
-curr_close = round_price(close)
-
 if bar_index > 0
     
     // ----------------------------------------------------
@@ -296,26 +454,20 @@ if bar_index > 0
         prev2_low = round_price(low[2])
         if curr_low > prev2_high
             if show_fvgs and show_bull_fvgs
-                color active_bull_bg = show_active_fvgs ? bull_fvg_color : color.new(color.white, 100)
-                color active_bull_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
-                string active_bull_label = show_active_fvgs ? "FVG" : ""
-                bx = box.new(left=bar_index-2, top=curr_low, right=bar_index, bottom=prev2_high, bgcolor=active_bull_bg, border_color=color.new(color.white, 100), text=active_bull_label, text_halign=text.align_right, text_size=size.small, text_color=active_bull_txt)
-                array.push(bull_fvg_boxes, bx)
-                trim_fvg_array(bull_fvg_boxes)
-            if show_obs
+                bx = box.new(left=bar_index-2, top=curr_low, right=bar_index, bottom=prev2_high, bgcolor=bull_fvg_color, border_color=bull_fvg_border, border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=bull_fvg_label_col)
+                array.push(bull_fvg_items, FvgItem.new(bx, false, na, false))
+                trim_fvg_array(bull_fvg_items)
+            if show_obs and show_bull_obs
                 bx_ob = box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
                 array.push(bull_ob_boxes, bx_ob)
                 trim_ob_array(bull_ob_boxes)
 
         if curr_high < prev2_low
             if show_fvgs and show_bear_fvgs
-                color active_bear_bg = show_active_fvgs ? bear_fvg_color : color.new(color.white, 100)
-                color active_bear_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
-                string active_bear_label = show_active_fvgs ? "FVG" : ""
-                bx = box.new(left=bar_index-2, top=prev2_low, right=bar_index, bottom=curr_high, bgcolor=active_bear_bg, border_color=color.new(color.white, 100), text=active_bear_label, text_halign=text.align_right, text_size=size.small, text_color=active_bear_txt)
-                array.push(bear_fvg_boxes, bx)
-                trim_fvg_array(bear_fvg_boxes)
-            if show_obs
+                bx = box.new(left=bar_index-2, top=prev2_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=bear_fvg_border, border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=bear_fvg_label_col)
+                array.push(bear_fvg_items, FvgItem.new(bx, false, na, false))
+                trim_fvg_array(bear_fvg_items)
+            if show_obs and show_bear_obs
                 bx_ob = box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
                 array.push(bear_ob_boxes, bx_ob)
                 trim_ob_array(bear_ob_boxes)
@@ -347,26 +499,20 @@ if bar_index > 0
         if (show_fvgs or show_obs) and fvg_use_inside_bars and not na(ref1_bar)
             if curr_low > ref1_high
                 if show_fvgs and show_bull_fvgs
-                    color ib_bull_bg = show_active_fvgs ? bull_fvg_color : color.new(color.white, 100)
-                    color ib_bull_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
-                    string ib_bull_label = show_active_fvgs ? "FVG" : ""
-                    bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=ib_bull_bg, border_color=color.new(color.white, 100), text=ib_bull_label, text_halign=text.align_right, text_size=size.small, text_color=ib_bull_txt)
-                    array.push(bull_fvg_boxes, bx)
-                    trim_fvg_array(bull_fvg_boxes)
-                if show_obs
+                    bx = box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=bull_fvg_border, border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=bull_fvg_label_col)
+                    array.push(bull_fvg_items, FvgItem.new(bx, false, na, false))
+                    trim_fvg_array(bull_fvg_items)
+                if show_obs and show_bull_obs
                     bx_ob = box.new(left=ref1_bar, top=ref1_high, right=bar_index, bottom=ref1_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
                     array.push(bull_ob_boxes, bx_ob)
                     trim_ob_array(bull_ob_boxes)
 
             if curr_high < ref1_low
                 if show_fvgs and show_bear_fvgs
-                    color ib_bear_bg = show_active_fvgs ? bear_fvg_color : color.new(color.white, 100)
-                    color ib_bear_txt = show_active_fvgs ? color.white : color.new(color.white, 100)
-                    string ib_bear_label = show_active_fvgs ? "FVG" : ""
-                    bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=ib_bear_bg, border_color=color.new(color.white, 100), text=ib_bear_label, text_halign=text.align_right, text_size=size.small, text_color=ib_bear_txt)
-                    array.push(bear_fvg_boxes, bx)
-                    trim_fvg_array(bear_fvg_boxes)
-                if show_obs
+                    bx = box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=bear_fvg_border, border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=bear_fvg_label_col)
+                    array.push(bear_fvg_items, FvgItem.new(bx, false, na, false))
+                    trim_fvg_array(bear_fvg_items)
+                if show_obs and show_bear_obs
                     bx_ob = box.new(left=ref1_bar, top=ref1_high, right=bar_index, bottom=ref1_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
                     array.push(bear_ob_boxes, bx_ob)
                     trim_ob_array(bear_ob_boxes)
@@ -857,6 +1003,30 @@ bgcolor(show_sweeps and sweep_highlight_bar and (bull_sweep_now or bear_sweep_no
 // Alert conditions
 alertcondition(bull_sweep_now, "Bullish Liquidity Sweep", "Bullish Liquidity Sweep: Stops grabbed below support!")
 alertcondition(bear_sweep_now, "Bearish Liquidity Sweep", "Bearish Liquidity Sweep: Stops grabbed above resistance!")
+alertcondition(alertInfo.hasOpenedGap(), "New Gap Appeared", "A new gap has appeared.")
+alertcondition(alertInfo.hasClosedGap(), "Gap Closed", "A gap was closed.")
+
+// ============================================================================
+// GAPS ENGINE
+// ============================================================================
+if show_gaps
+    // Detect gaps.
+    isGapDown = high < low[1] and low[1] - high >= minimalDeviationInput
+    isGapUp   = low > high[1] and low - high[1] >= minimalDeviationInput
+    isGap     = isGapDown or isGapUp
+
+    // Detect covering of gaps.
+    for gap in allGaps
+        gap.checkForClose()
+
+    // Add a box for each new gap, removing the oldest one if needed.
+    if isGap    
+        registerNewGap(isGapDown)
+            
+    if barstate.islastconfirmedhistory and allGaps.size() == 0
+        noGapText = "No gaps found on the current chart. \n The cause could be that some exchanges align the open of new bars on the close of the previous one, resulting in charts with no gaps. Alternatively, your Minimal Deviation might be too high."
+        var infoTable = table.new(position.bottom_right, 1, 1)
+        table.cell(infoTable, 0, 0, text = noGapText, text_color = chart.bg_color, bgcolor = chart.fg_color)
 
 // ============================================================================
 // CANDLE STRENGTH
