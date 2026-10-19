@@ -1,15 +1,46 @@
 //@version=6
-strategy("Tradeus Reaction-Filtered SMC Strategy", overlay=true, max_boxes_count=500, max_lines_count=500, max_labels_count=500, process_orders_on_close=true, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+strategy("Tradeus Reaction-Filtered SMC Strategy", overlay=true, initial_capital=1000000, currency=currency.NONE, margin_long=0, margin_short=0, max_boxes_count=500, max_lines_count=500, max_labels_count=500, process_orders_on_close=true, default_qty_type=strategy.percent_of_equity, default_qty_value=1.0)
 
 // ============================================================================
 // MODULE TOGGLES
 // ============================================================================
 show_all_fvgs        = input.bool(false, "Show All FVGs (Debug Mode)", group="Display", tooltip="When enabled, draws ALL detected FVGs on chart (not just reaction-confirmed ones). Useful for visual debugging.")
 show_all_obs         = input.bool(false, "Show All OBs (Debug Mode)", group="Display", tooltip="When enabled, draws ALL detected OBs on chart. Useful for visual debugging.")
-max_display          = input.int(15, "Max Reaction Setups Displayed", minval=1, maxval=50, group="Display", tooltip="Maximum number of historical reaction setups kept on chart (FIFO queue).")
-max_candidates       = input.int(50, "Max Candidate OBs/FVGs in Memory", minval=10, maxval=200, group="Display")
+max_display          = input.int(50, "Max Reaction Setups Displayed", minval=1, maxval=200, group="Display", tooltip="Maximum number of historical reaction setups kept on chart (FIFO queue).")
+max_candidates       = input.int(500, "Max Candidate OBs/FVGs in Memory", minval=10, maxval=500, group="Display")
 show_zigzag          = input.bool(true, "Show SMC Pullback ZigZag", group="Display")
 show_target_labels   = input.bool(true, "Show Target & SL Price Labels", group="Display")
+
+// ============================================================================
+// ALL-TIME HIGH (ATH) & ALL-TIME LOW (ATL) REVERSAL STRATEGY
+// ============================================================================
+enable_ath_atl_strategy = input.bool(true, "Enable ATH / ATL Reversal Mode", group="ATH / ATL Reversal Strategy", tooltip="When enabled:\n• If market makes an ATH and closes inside recent Bullish FVG -> enters Sell trade with Target at 2nd low pullback.\n• If market makes an ATL and closes inside recent Bearish FVG -> enters Buy trade with Target at 2nd high pullback.")
+ath_detection_scope     = input.string("Chart Lifetime ATH/ATL", "ATH/ATL Scope", options=["Chart Lifetime ATH/ATL", "Rolling Lookback (200 Bars)", "Rolling Lookback (500 Bars)"], group="ATH / ATL Reversal Strategy", tooltip="Chart Lifetime uses entire history. Rolling lookback uses highest/lowest within N bars.")
+ath_max_bars_after      = input.int(30, "Max Bars After ATH/ATL Peak/Trough", minval=1, maxval=200, group="ATH / ATL Reversal Strategy", tooltip="Window in bars after ATH/ATL within which the FVG close must occur.")
+ath_fvg_close_mode      = input.string("Inside FVG (Close between Top & Bottom)", "ATH/ATL FVG Close Trigger", options=["Inside FVG (Close between Top & Bottom)", "Inside or Beyond FVG"], group="ATH / ATL Reversal Strategy")
+
+// ============================================================================
+// MARKET SESSIONS (INDIAN MARKETS: NSE & MCX - IST UTC+5:30)
+// ============================================================================
+market_session_mode   = input.string("Auto-Detect (NSE / MCX) [IST]", "Market Session Mode", options=["Auto-Detect (NSE / MCX) [IST]", "NSE Morning Momentum (09:15 - 11:15 IST)", "NSE Full Day (09:15 - 15:15 IST)", "MCX Evening Active (18:15 - 23:30 IST)", "Both NSE & MCX Windows [IST]", "Custom IST Window"], group="Market Sessions (India - IST UTC+5:30)", tooltip="Restricts reaction trade entries strictly to official Indian trading sessions evaluated in Asia/Kolkata (IST, UTC+5:30).\nAuto-Detect inspects syminfo.prefix (NSE vs MCX).")
+nse_morning_str       = input.session("0915-1115", "NSE Morning Momentum Window (IST)", group="Market Sessions (India - IST UTC+5:30)", tooltip="NSE Morning opening momentum window (09:15 to 11:15 am IST).")
+nse_fullday_str       = input.session("0915-1515", "NSE Full Day Window (IST)", group="Market Sessions (India - IST UTC+5:30)", tooltip="NSE Full session window up to MIS cutoff (09:15 am to 03:15 pm IST).")
+mcx_session_str       = input.session("1815-2300", "MCX Session Window (IST)", group="Market Sessions (India - IST UTC+5:30)", tooltip="MCX Evening active window (06:15 pm to 11:00 pm IST).")
+custom_session_str    = input.session("0915-1515", "Custom Session Window (IST)", group="Market Sessions (India - IST UTC+5:30)", tooltip="Custom entry window evaluated in Asia/Kolkata timezone.")
+show_session_bg       = input.bool(true, "Highlight Entry Session Window", group="Market Sessions (India - IST UTC+5:30)", tooltip="Color code background during active entry windows.")
+session_bg_color      = input.color(color.new(#2196f3, 93), "Session Highlight Color", group="Market Sessions (India - IST UTC+5:30)")
+enable_session_close          = input.bool(true, "Square-off at 3:30 PM (Unless Close to T2)", group="Market Sessions (India - IST UTC+5:30)", tooltip="If enabled, auto squares off open positions at official market close (15:15-15:30 IST for NSE, 23:25 IST for MCX), UNLESS the trade has reached near Target 2.")
+t2_carryforward_threshold_pct = input.float(80.0, "T2 Proximity for Overnight Carryforward (%)", minval=50.0, maxval=95.0, step=5.0, group="Market Sessions (India - IST UTC+5:30)", tooltip="If open trade has achieved at least this % of the distance towards Target 2 by 3:15-3:30 PM IST, carry the position forward overnight. Otherwise, close immediately on the same day.")
+nse_mis_cutoff_str            = input.session("1515-1530", "NSE MIS Square-Off Window (IST)", group="Market Sessions (India - IST UTC+5:30)", tooltip="Official NSE broker intraday square-off window (03:15 pm to 03:30 pm IST).")
+mcx_mis_cutoff_str            = input.session("2325-2330", "MCX MIS Square-Off Window (IST)", group="Market Sessions (India - IST UTC+5:30)", tooltip="Official MCX broker intraday square-off window (11:25 pm to 11:30 pm IST).")
+
+// ============================================================================
+// POSITION SIZING & RISK MANAGEMENT (1% PER TRADE)
+// ============================================================================
+sizing_mode          = input.string("1% Risk of Equity (SL-Based)", "Position Sizing Mode", options=["1% Risk of Equity (SL-Based)", "1% Capital Allocation", "Fixed Contracts/Lots", "Pine Default (1% Equity)"], group="Position Sizing & Risk", tooltip="• 1% Risk of Equity (SL-Based): Sizes contracts so that hitting Stop Loss loses exactly 1% of equity.\n• 1% Capital Allocation: Allocates 1% of total account capital to position.\n• Fixed Contracts/Lots: Trades a user-defined fixed quantity.\n• Pine Default: Trades strategy default 1% of equity.")
+risk_percent         = input.float(1.0, "Risk / Allocation % per Trade", minval=0.01, maxval=100.0, step=0.1, group="Position Sizing & Risk", tooltip="Percentage of account equity per trade (default 1.0%).")
+contract_lot_size    = input.int(1, "Futures Lot Size", minval=1, group="Position Sizing & Risk", tooltip="Minimum lot step for Indian Futures (e.g. NIFTY=25/50, BANKNIFTY=15, CRUDEOIL=100, or 1 for Stocks)")
+fixed_qty_val        = input.int(1, "Fixed Contracts Quantity", minval=1, group="Position Sizing & Risk")
 
 // ============================================================================
 // INPUTS & STYLING
@@ -26,7 +57,21 @@ t2_color             = input.color(color.new(#2e7d32, 0), "Target 2 Line Color",
 sl_color             = input.color(color.new(#f44336, 0), "Stop Loss Line Color", group="Colors")
 
 // Strategy Settings
-sl_buffer_ticks      = input.int(5, "SL Buffer (ticks beyond retested candle)", minval=0, maxval=50, group="Strategy", tooltip="Extra ticks added beyond the first retested candle's extreme for Stop Loss.")
+sl_buffer_ticks         = input.int(5, "SL Buffer (ticks beyond retested candle)", minval=0, maxval=50, group="Strategy", tooltip="Extra ticks added beyond the first retested candle's extreme for Stop Loss.")
+fvg_use_inside_bars     = input.bool(true, "Use Inside Bar Logic for FVG & OB", group="Strategy", tooltip="Absorbs inside bars so FVGs and OBs anchor to true mother candles rather than inside consolidation bars.")
+ob_fvg_close_mode       = input.string("Inside or Beyond FVG", "Standard OB FVG Inversion Trigger", options=["Inside or Beyond FVG", "Inside FVG (Close between Top & Bottom)"], group="Strategy", tooltip="• Inside or Beyond FVG: Impulse close inside or through the opposite FVG.\n• Inside FVG: Close must be contained strictly between FVG Top and Bottom.")
+ob_invalidation_mode    = input.string("Wick Breach (Low < OB Low / High > OB High)", "OB Invalidation on Breach", options=["Wick Breach (Low < OB Low / High > OB High)", "Candle Close Beyond OB (Close < Bottom / Close > Top)"], group="Strategy", tooltip="Determines when an Order Block is breached and invalidated:\n• Wick Breach: Any candle whose Low drops below Bullish OB bottom (or High rises above Bearish OB top) immediately invalidates the OB. No entries will be taken.\n• Candle Close: Only a confirmed candle close beyond the OB boundary invalidates it.")
+ob_mitigation_mode      = input.string("100% Extreme (OB Bottom for Buy / Top for Sell)", "OB Mitigation Threshold", options=["100% Extreme (OB Bottom for Buy / Top for Sell)", "50% Mean Threshold (Equilibrium Midpoint)", "Breach Invalidation Only"], group="Strategy", tooltip="Defines when an Order Block is fully mitigated and retired [D14]:\n• 100% Extreme: OB is fully mitigated when price touches its deepest boundary (Low <= OB Bottom for Buy; High >= OB Top for Sell).\n• 50% Mean Threshold: OB is fully mitigated when price reaches the 50% equilibrium midpoint.\n• Breach Invalidation Only: OB remains active for reactions indefinitely until structurally breached.")
+max_reactions_per_ob    = input.int(0, "Max Reactions per Order Block (0 = Unlimited)", minval=0, maxval=10, group="Strategy", tooltip="Maximum number of reaction entries permitted on a single Order Block before it is retired [D14] (0 = Unlimited, reacting on any valid retest until fully mitigated or breached).")
+min_swings_required     = input.int(1, "Min Swings Required for Target", minval=1, maxval=2, group="Strategy", tooltip="Minimum unbreached swings required to establish targets. 1 allows single-swing targets (more trades); 2 requires dual swings (stricter).")
+allow_fixed_rr_fallback = input.bool(true, "Allow 1:2 R:R Fallback if No Swing Target", group="Strategy", tooltip="If enabled, uses 1:1.5 (T1) and 1:2.0 (T2) Risk-to-Reward when no unbreached historical swing is found.")
+enable_reversal_on_opposite_ob = input.bool(true, "Enable Opposite OB Reaction Handling", group="Strategy", tooltip="If enabled, and a trade is active, a confirmed reaction at an opposite Order Block will react early according to the chosen Opposite OB Action below.")
+opposite_ob_action      = input.string("Exit Current Trade (Strictly 1 Entry & 1 Exit)", "Opposite OB Action on Active Trade", options=["Exit Current Trade (Strictly 1 Entry & 1 Exit)", "Reverse Position (1 Exit & Entry + 1 Exit)"], group="Strategy", tooltip="Action when opposite OB reaction triggers while holding an open trade:\n• Exit Current Trade: Closes running trade early and takes no opposite entry (ensures strictly 1 entry & 1 exit per day).\n• Reverse Position: Closes running trade AND enters opposite position (1 exit & entry + 1 exit on the same day).")
+max_daily_entries       = input.int(1, "Max New Entries Initiated per Day", minval=1, maxval=5, group="Strategy", tooltip="Strictly limits the number of new trade entries that can be initiated on any single calendar day (default: 1).\n• Day starts flat: 1 entry and 1 exit.\n• Day starts with carried trade: 1 exit (carried trade) & 1 entry (new trade) + 1 exit on the same day.")
+stop_trading_on_daily_sl = input.bool(true, "Stop Trading for Day if SL Hit", group="Strategy", tooltip="If a trade hits Stop Loss on a given day, no further new entries are taken on that day.")
+filter_reaches_other_ob    = input.bool(true, "Block Entry if Candle Reaches Other OB", group="Strategy", tooltip="If enabled, blocks trade entry on a side if the reaction candle's low/high reaches into another touched or untouched OB [D13].")
+other_ob_filter_scope      = input.string("Any Other OB (Opposite or Same Direction)", "Other OB Scope Filter", options=["Any Other OB (Opposite or Same Direction)", "Opposite Direction OBs Only"], group="Strategy", tooltip="• Any Other OB: Blocks entry if the reaction candle reaches ANY other valid OB.\n• Opposite Direction OBs Only: Blocks Buy if candle reaches Bearish OB; blocks Sell if candle reaches Bullish OB.")
+include_reacted_obs        = input.bool(true, "Include Prior Reacted OBs in Filter", group="Strategy", tooltip="If true (default), treats all prior touched/reacted OBs as obstacles. If false, only checks untouched candidate OBs.")
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -38,6 +83,80 @@ get_decimals() =>
 round_price(val) =>
     mult = math.pow(10, get_decimals())
     math.round(val * mult) / mult
+
+format_ist(t) =>
+    str.format_time(t, "HH:mm 'IST'", "Asia/Kolkata")
+
+// Position Sizing Calculator (1% per trade)
+calc_trade_qty(entry_p, sl_p) =>
+    float q = na
+    float sl_distance = math.abs(entry_p - sl_p)
+    float pt_val = syminfo.pointvalue > 0 ? syminfo.pointvalue : 1.0
+
+    if sizing_mode == "1% Risk of Equity (SL-Based)"
+        float cash_risk = strategy.equity * (risk_percent / 100.0)
+        if sl_distance > 0
+            float raw_q = cash_risk / (sl_distance * pt_val)
+            int num_lots = math.max(1, math.floor(raw_q / contract_lot_size))
+            q := num_lots * contract_lot_size
+    else if sizing_mode == "1% Capital Allocation"
+        float cash_alloc = strategy.equity * (risk_percent / 100.0)
+        if entry_p > 0
+            float raw_q = cash_alloc / (entry_p * pt_val)
+            int num_lots = math.max(1, math.floor(raw_q / contract_lot_size))
+            q := num_lots * contract_lot_size
+    else if sizing_mode == "Fixed Contracts/Lots"
+        q := fixed_qty_val
+    else if sizing_mode == "Pine Default (1% Equity)"
+        if entry_p > 0
+            q := math.max(1, math.floor((strategy.equity * 0.01) / (entry_p * pt_val)))
+
+    // Capital guard: ensure order size does not exceed account equity
+    float max_affordable = entry_p > 0 ? math.floor(strategy.equity / (entry_p * pt_val)) : 1.0
+    if not na(q) and max_affordable > 0
+        q := math.min(q, max_affordable)
+    if na(q) or q <= 0
+        q := 1
+    q
+
+// ============================================================================
+// CANONICAL IST TIMING & SESSION FILTER (Asia/Kolkata UTC+5:30)
+// ============================================================================
+// Indian markets trade Monday through Friday (days 2 to 6 in Pine Script)
+is_india_sym = syminfo.prefix == "NSE" or syminfo.prefix == "BSE"
+is_mcx_sym   = syminfo.prefix == "MCX"
+
+// Weekday filter (23456 = Mon, Tue, Wed, Thu, Fri in Asia/Kolkata)
+in_nse_morning = not na(time(timeframe.period, nse_morning_str + ":23456", "Asia/Kolkata"))
+in_nse_fullday = not na(time(timeframe.period, nse_fullday_str + ":23456", "Asia/Kolkata"))
+in_mcx_time    = not na(time(timeframe.period, mcx_session_str + ":23456", "Asia/Kolkata"))
+in_custom_time = not na(time(timeframe.period, custom_session_str + ":23456", "Asia/Kolkata"))
+
+bool is_trade_session = false
+if not timeframe.isintraday
+    // Higher timeframes (Daily 1D, Weekly 1W) bypass intraday session windows
+    is_trade_session := true
+else if market_session_mode == "Auto-Detect (NSE / MCX) [IST]"
+    // Auto-Detect uses Full Day (09:15 - 15:15 IST) for Indian equities/futures
+    is_trade_session := is_mcx_sym ? in_mcx_time : (is_india_sym ? in_nse_fullday : (in_nse_fullday or in_mcx_time))
+else if market_session_mode == "NSE Morning Momentum (09:15 - 11:15 IST)"
+    is_trade_session := in_nse_morning
+else if market_session_mode == "NSE Full Day (09:15 - 15:15 IST)"
+    is_trade_session := in_nse_fullday
+else if market_session_mode == "MCX Evening Active (18:15 - 23:30 IST)"
+    is_trade_session := in_mcx_time
+else if market_session_mode == "Both NSE & MCX Windows [IST]"
+    is_trade_session := in_nse_fullday or in_mcx_time
+else if market_session_mode == "Custom IST Window"
+    is_trade_session := in_custom_time
+
+// Background tint for active trading session
+bgcolor(show_session_bg and is_trade_session ? session_bg_color : na, title="Trading Session Active")
+
+// Intraday MIS Square-Off Trigger (Separated from Entry Session)
+in_nse_mis_close = not na(time(timeframe.period, nse_mis_cutoff_str + ":23456", "Asia/Kolkata"))
+in_mcx_mis_close = not na(time(timeframe.period, mcx_mis_cutoff_str + ":23456", "Asia/Kolkata"))
+bool is_mis_squareoff = is_mcx_sym ? in_mcx_mis_close : in_nse_mis_close
 
 // ============================================================================
 // USER-DEFINED TYPES
@@ -57,8 +176,13 @@ type CandidateOB
     float  touch_high         // High of first retested candle (anchors SL; if breached, look at next OB) [D7]
     bool   is_retest_breached // True if retested candle extreme breached prior to reaction [D7]
     bool   is_invalidated     // Closed below bottom (Buy) or above top (Sell) - OB structure destroyed [D7]
+    int    invalidation_bar   // bar_index when OB was invalidated (na until invalidated) [D13]
     bool   is_reacted         // Successfully met reaction criteria
     box    drawn_box          // Reaction visualization box (persisted on chart even if SL hit) [D9]
+    int    retest_touch_bar   // bar_index of most recent retest wave entry [D14]
+    bool   is_fully_mitigated // True when price reaches mitigation threshold [D14]
+    int    last_reaction_bar  // bar_index of the most recent reaction entry [D14]
+    int    reactions_count    // Total number of reaction entries triggered on this OB [D14]
 
 // Candidate Fair Value Gap (tracked in memory)
 type CandidateFVG
@@ -94,6 +218,11 @@ type ReactionSetup
     label  t1_label
     label  t2_label
     label  sl_label
+    bool   is_active
+    bool   t1_hit
+    bool   t2_hit
+    bool   sl_hit
+    int    exit_bar
 
 // ============================================================================
 // STATE VARIABLES
@@ -114,6 +243,21 @@ var float swing_low_val     = na
 var int   last_confirmed_bar = na
 var float last_confirmed_val = na
 
+// Daily Stop Loss tracking & Frequency Guards (IST UTC+5:30) [D11, D12]
+var int  day_entries_count         = 0     // Total new entries initiated on current calendar day
+var int  day_exits_count           = 0     // Total trade exits on current calendar day
+var bool started_day_with_position = false // True if day opened with an overnight trade from yesterday
+var bool day_trade_completed       = false // True once today's initiated trade has exited (locks further entries)
+var bool day_sl_hit                = false
+
+bool is_new_ist_day = ta.change(time("D", "Asia/Kolkata")) != 0
+if is_new_ist_day
+    day_entries_count         := 0
+    day_exits_count           := 0
+    started_day_with_position := (strategy.position_size != 0)
+    day_trade_completed       := false
+    day_sl_hit                := false
+
 // Swing history for target discovery (mirrors toolkit reference)
 var int[] sl_bars = array.new_int()
 var float[] sl_vals = array.new_float()
@@ -121,12 +265,40 @@ var int[] sh_bars = array.new_int()
 var float[] sh_vals = array.new_float()
 
 // Shared Reference Bar (for inside bar + FVG detection)
-var float ref_high = na
-var float ref_low  = na
-var int   ref_bar  = na
+var float ref_high  = na
+var float ref_low   = na
+var int   ref_bar   = na
+var float ref1_high = na
+var float ref1_low  = na
+var int   ref1_bar  = na
+var float ref2_high = na
+var float ref2_low  = na
+var int   ref2_bar  = na
 
 // Reaction setups (materialized on chart)
 var ReactionSetup[] active_setups = array.new<ReactionSetup>(0)
+
+// Helper to finalize active setup visuals on early exit / reversal [D10]
+finalize_active_setups(target_is_long, exit_bar_idx) =>
+    if array.size(active_setups) > 0
+        for i = 0 to array.size(active_setups) - 1
+            ReactionSetup setup = array.get(active_setups, i)
+            if setup.is_active and setup.is_long == target_is_long
+                setup.is_active := false
+                setup.exit_bar  := exit_bar_idx
+                if not na(setup.ob_box)
+                    box.set_right(setup.ob_box, exit_bar_idx)
+                line.set_x2(setup.t2_line, exit_bar_idx)
+                line.set_x2(setup.sl_line, exit_bar_idx)
+                if not na(setup.t2_label)
+                    label.set_x(setup.t2_label, exit_bar_idx)
+                if not na(setup.sl_label)
+                    label.set_x(setup.sl_label, exit_bar_idx)
+                if not setup.t1_hit
+                    setup.t1_hit := true
+                    line.set_x2(setup.t1_line, exit_bar_idx)
+                    if not na(setup.t1_label)
+                        label.set_x(setup.t1_label, exit_bar_idx)
 
 // ============================================================================
 // PULLBACK HELPER FUNCTIONS
@@ -198,6 +370,40 @@ curr_low   = round_price(low)
 curr_close = round_price(close)
 
 // ============================================================================
+// ATH / ATL TRACKING STATE
+// ============================================================================
+var float lifetime_ath_high = na
+var int   lifetime_ath_bar  = na
+var float lifetime_atl_low  = na
+var int   lifetime_atl_bar  = na
+var int   last_ath_traded_bar = na
+var int   last_atl_traded_bar = na
+
+if na(lifetime_ath_high) or curr_high >= lifetime_ath_high
+    lifetime_ath_high := curr_high
+    lifetime_ath_bar  := bar_index
+
+if na(lifetime_atl_low) or curr_low <= lifetime_atl_low
+    lifetime_atl_low := curr_low
+    lifetime_atl_bar := bar_index
+
+float current_ath_high = lifetime_ath_high
+int   current_ath_bar  = lifetime_ath_bar
+float current_atl_low  = lifetime_atl_low
+int   current_atl_bar  = lifetime_atl_bar
+
+if ath_detection_scope == "Rolling Lookback (200 Bars)"
+    current_ath_high := ta.highest(high, 200)
+    current_ath_bar  := bar_index - ta.highestbars(high, 200)
+    current_atl_low  := ta.lowest(low, 200)
+    current_atl_bar  := bar_index - ta.lowestbars(low, 200)
+else if ath_detection_scope == "Rolling Lookback (500 Bars)"
+    current_ath_high := ta.highest(high, 500)
+    current_ath_bar  := bar_index - ta.highestbars(high, 500)
+    current_atl_low  := ta.lowest(low, 500)
+    current_atl_bar  := bar_index - ta.lowestbars(low, 500)
+
+// ============================================================================
 // CANDIDATE OB & FVG DETECTION (Silent — no chart drawing unless debug mode)
 // ============================================================================
 
@@ -212,8 +418,8 @@ trim_candidates() =>
         if not na(oldest.drawn_box)
             box.delete(oldest.drawn_box)
 
-// --- Traditional 3-candle FVG + OB Detection ---
-if bar_index >= 2
+// --- Traditional 3-candle FVG + OB Detection (when inside bar logic is disabled) ---
+if not fvg_use_inside_bars and bar_index >= 2
     prev2_high = round_price(high[2])
     prev2_low  = round_price(low[2])
 
@@ -230,7 +436,7 @@ if bar_index >= 2
         box debug_ob_box = na
         if show_all_obs
             debug_ob_box := box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
-        array.push(cand_obs, CandidateOB.new(ob_id_counter, true, bar_index-2, prev2_high, prev2_low, false, na, na, na, na, false, false, false, debug_ob_box))
+        array.push(cand_obs, CandidateOB.new(ob_id_counter, true, bar_index-2, prev2_high, prev2_low, false, na, na, na, na, false, false, na, false, debug_ob_box, na, false, na, 0))
 
     // Bearish FVG: curr_high < prev2_low (gap down)
     if curr_high < prev2_low
@@ -245,7 +451,7 @@ if bar_index >= 2
         box debug_ob_box = na
         if show_all_obs
             debug_ob_box := box.new(left=bar_index-2, top=prev2_high, right=bar_index, bottom=prev2_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
-        array.push(cand_obs, CandidateOB.new(ob_id_counter, false, bar_index-2, prev2_high, prev2_low, false, na, na, na, na, false, false, false, debug_ob_box))
+        array.push(cand_obs, CandidateOB.new(ob_id_counter, false, bar_index-2, prev2_high, prev2_low, false, na, na, na, na, false, false, na, false, debug_ob_box, na, false, na, 0))
 
     trim_candidates()
 
@@ -255,7 +461,7 @@ if bar_index >= 2
 if array.size(cand_obs) > 0
     for i = array.size(cand_obs) - 1 to 0
         CandidateOB ob = array.get(cand_obs, i)
-        if ob.is_invalidated or ob.is_reacted
+        if ob.is_invalidated or ob.is_fully_mitigated
             continue
 
         // Extend debug box if visible
@@ -263,16 +469,32 @@ if array.size(cand_obs) > 0
             box.set_right(ob.drawn_box, bar_index)
 
         if ob.is_bullish
-            // Buy OB invalidated: candle closes below OB bottom [D7]
-            if curr_close < ob.bottom
+            // Buy OB invalidated / breached: check breach of OB bottom [D7, D12]
+            bool is_breached = ob_invalidation_mode == "Wick Breach (Low < OB Low / High > OB High)" ? (curr_low < ob.bottom) : (curr_close < ob.bottom)
+            if is_breached
                 ob.is_invalidated := true
+                ob.invalidation_bar := bar_index
                 if not na(ob.drawn_box)
                     box.delete(ob.drawn_box)
                     ob.drawn_box := na
                 continue
 
-            // Touch & Retest handling
-            bool in_zone = curr_low <= ob.top and curr_close >= ob.bottom
+            // Full Mitigation Check [D14]
+            bool is_mitigated = false
+            if ob_mitigation_mode == "100% Extreme (OB Bottom for Buy / Top for Sell)"
+                is_mitigated := curr_low <= ob.bottom
+            else if ob_mitigation_mode == "50% Mean Threshold (Equilibrium Midpoint)"
+                float ob_mid = (ob.top + ob.bottom) / 2.0
+                is_mitigated := curr_low <= ob_mid
+
+            if is_mitigated
+                ob.is_fully_mitigated := true
+                if not na(ob.drawn_box)
+                    box.delete(ob.drawn_box)
+                    ob.drawn_box := na
+
+            // Touch & Retest handling (must be within OB zone and not breaching bottom)
+            bool in_zone = curr_low <= ob.top and curr_low >= ob.bottom
             if not ob.is_touched
                 if in_zone
                     ob.is_touched := true
@@ -281,25 +503,43 @@ if array.size(cand_obs) > 0
                     ob.touch_low := curr_low
                     ob.touch_high := curr_high
             else
-                // Track if retest is breached: price trades below first retested candle's low [D7]
-                // Once hit, abandon this retest (strategy will look at next candidate OB)
-                if not ob.is_retest_breached and curr_low < ob.touch_low
-                    ob.is_retest_breached := true
-
-                // Update last_touch_bar whenever candle touches OB [D6]
                 if in_zone
+                    // Fresh retest wave: price moved outside OB and returned [D14]
+                    if not na(ob.last_touch_bar) and (bar_index > ob.last_touch_bar + 1)
+                        ob.retest_touch_bar := bar_index
+                        ob.touch_low := curr_low
+                        ob.touch_high := curr_high
+                    else
+                        ob.touch_low := math.min(ob.touch_low, curr_low)
+                        ob.touch_high := math.max(ob.touch_high, curr_high)
                     ob.last_touch_bar := bar_index
         else
-            // Sell OB invalidated: candle closes above OB top [D7]
-            if curr_close > ob.top
+            // Sell OB invalidated / breached: check breach of OB top [D7, D12]
+            bool is_breached = ob_invalidation_mode == "Wick Breach (Low < OB Low / High > OB High)" ? (curr_high > ob.top) : (curr_close > ob.top)
+            if is_breached
                 ob.is_invalidated := true
+                ob.invalidation_bar := bar_index
                 if not na(ob.drawn_box)
                     box.delete(ob.drawn_box)
                     ob.drawn_box := na
                 continue
 
-            // Touch & Retest handling
-            bool in_zone = curr_high >= ob.bottom and curr_close <= ob.top
+            // Full Mitigation Check [D14]
+            bool is_mitigated = false
+            if ob_mitigation_mode == "100% Extreme (OB Bottom for Buy / Top for Sell)"
+                is_mitigated := curr_high >= ob.top
+            else if ob_mitigation_mode == "50% Mean Threshold (Equilibrium Midpoint)"
+                float ob_mid = (ob.top + ob.bottom) / 2.0
+                is_mitigated := curr_high >= ob_mid
+
+            if is_mitigated
+                ob.is_fully_mitigated := true
+                if not na(ob.drawn_box)
+                    box.delete(ob.drawn_box)
+                    ob.drawn_box := na
+
+            // Touch & Retest handling (must be within OB zone and not breaching top)
+            bool in_zone = curr_high >= ob.bottom and curr_high <= ob.top
             if not ob.is_touched
                 if in_zone
                     ob.is_touched := true
@@ -308,13 +548,15 @@ if array.size(cand_obs) > 0
                     ob.touch_high := curr_high
                     ob.touch_low := curr_low
             else
-                // Track if retest is breached: price trades above first retested candle's high [D7]
-                // Once hit, abandon this retest (strategy will look at next candidate OB)
-                if not ob.is_retest_breached and curr_high > ob.touch_high
-                    ob.is_retest_breached := true
-
-                // Update last_touch_bar whenever candle touches OB [D6]
                 if in_zone
+                    // Fresh retest wave: price moved outside OB and returned [D14]
+                    if not na(ob.last_touch_bar) and (bar_index > ob.last_touch_bar + 1)
+                        ob.retest_touch_bar := bar_index
+                        ob.touch_high := curr_high
+                        ob.touch_low := curr_low
+                    else
+                        ob.touch_high := math.max(ob.touch_high, curr_high)
+                        ob.touch_low := math.min(ob.touch_low, curr_low)
                     ob.last_touch_bar := bar_index
 
 // ============================================================================
@@ -408,6 +650,45 @@ if bar_index > 0
                     [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
                     current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
 
+        // Shift reference bars for inside bar absorbed FVG detection
+        ref1_high := ref2_high
+        ref1_low  := ref2_low
+        ref1_bar  := ref2_bar
+
+        ref2_high := ref_high
+        ref2_low  := ref_low
+        ref2_bar  := ref_bar
+
+        // Detect gaps anchored across absorbed inside bars
+        if fvg_use_inside_bars and not na(ref1_bar)
+            if curr_low > ref1_high
+                fvg_id_counter += 1
+                box debug_fvg_box = na
+                if show_all_fvgs
+                    debug_fvg_box := box.new(left=ref1_bar, top=curr_low, right=bar_index, bottom=ref1_high, bgcolor=bull_fvg_color, border_color=color.new(color.white, 50), border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                array.push(cand_fvgs, CandidateFVG.new(fvg_id_counter, true, bar_index, curr_low, ref1_high, false, na, false, debug_fvg_box))
+
+                ob_id_counter += 1
+                box debug_ob_box = na
+                if show_all_obs
+                    debug_ob_box := box.new(left=ref1_bar, top=ref1_high, right=bar_index, bottom=ref1_low, bgcolor=bull_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                array.push(cand_obs, CandidateOB.new(ob_id_counter, true, ref1_bar, ref1_high, ref1_low, false, na, na, na, na, false, false, na, false, debug_ob_box, na, false, na, 0))
+
+            if curr_high < ref1_low
+                fvg_id_counter += 1
+                box debug_fvg_box = na
+                if show_all_fvgs
+                    debug_fvg_box := box.new(left=ref1_bar, top=ref1_low, right=bar_index, bottom=curr_high, bgcolor=bear_fvg_color, border_color=color.new(color.white, 50), border_width=1, text="FVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                array.push(cand_fvgs, CandidateFVG.new(fvg_id_counter, false, bar_index, ref1_low, curr_high, false, na, false, debug_fvg_box))
+
+                ob_id_counter += 1
+                box debug_ob_box = na
+                if show_all_obs
+                    debug_ob_box := box.new(left=ref1_bar, top=ref1_high, right=bar_index, bottom=ref1_low, bgcolor=bear_ob_color, border_color=color.new(color.white, 100), text="OB", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+                array.push(cand_obs, CandidateOB.new(ob_id_counter, false, ref1_bar, ref1_high, ref1_low, false, na, na, na, na, false, false, na, false, debug_ob_box, na, false, na, 0))
+
+            trim_candidates()
+
         ref_high := curr_high
         ref_low  := curr_low
         ref_bar  := bar_index
@@ -431,39 +712,379 @@ if is_sh
         array.shift(sh_vals)
 
 // ============================================================================
-// CONFLUENCE REACTION SCANNER & EXECUTION ENGINE
+// OTHER OB CONFLICT CHECKER [D13, D15]
 // ============================================================================
-// Single-Position Concurrency Guard [D3]: Only scan when flat
-if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_fvgs) > 0
+// Checks if a candle's low or high reaches into any other touched or untouched OB.
+// If reached, trade entry on that side is rejected.
+check_candle_reaches_other_ob(int reacting_ob_id, int check_bar, bool reacting_is_bullish) =>
+    bool reached = false
+    if filter_reaches_other_ob and array.size(cand_obs) > 0 and not na(check_bar) and check_bar <= bar_index
+        int bars_back = bar_index - check_bar
+        float c_low  = low[bars_back]
+        float c_high = high[bars_back]
+
+        for m = 0 to array.size(cand_obs) - 1
+            CandidateOB other = array.get(cand_obs, m)
+            // Skip the reacting OB itself
+            if other.id == reacting_ob_id
+                continue
+            // Only inspect established historical OBs (formed before or on check_bar)
+            if other.start_bar >= check_bar
+                continue
+            // Skip OBs structurally breached/invalidated on prior bars
+            if other.is_invalidated and not na(other.invalidation_bar) and other.invalidation_bar < check_bar
+                continue
+            // Skip prior reacted OBs if explicitly excluded by user setting
+            if not include_reacted_obs and other.is_reacted
+                continue
+            // Polarity scope check: Opposite Direction OBs Only (if user selected)
+            if other_ob_filter_scope == "Opposite Direction OBs Only" and other.is_bullish == reacting_is_bullish
+                continue
+            // Check interval intersection [c_low, c_high] with other OB range [other.bottom, other.top]
+            // Any touched or untouched OB reached by the candle's low or high triggers conflict
+            if c_high >= other.bottom and c_low <= other.top
+                reached := true
+                break
+    reached
+
+// ============================================================================
+// ALL-TIME HIGH (ATH) & ALL-TIME LOW (ATL) REVERSAL ENGINE
+// ============================================================================
+bool ath_atl_triggered = false
+
+bool can_scan_ath_atl = enable_ath_atl_strategy and is_trade_session and (not stop_trading_on_daily_sl or not day_sl_hit) and not day_trade_completed and (day_entries_count < max_daily_entries or (enable_reversal_on_opposite_ob and strategy.position_size != 0)) and array.size(cand_fvgs) > 0
+if can_scan_ath_atl
+    // --- 1. ATH SELL SETUP (Market at All-Time High -> Closes inside Bullish FVG -> Sell) ---
+    bool can_take_ath_short = (strategy.position_size == 0 and day_entries_count < max_daily_entries) or (strategy.position_size > 0 and enable_reversal_on_opposite_ob)
+    bool is_recent_ath = can_take_ath_short and bar_index >= 20 and not na(current_ath_bar) and (bar_index >= current_ath_bar) and (bar_index - current_ath_bar <= ath_max_bars_after) and (na(last_ath_traded_bar) or last_ath_traded_bar != current_ath_bar)
+    if is_recent_ath
+        // Look for the most recent active Bullish FVG formed near or before the ATH
+        CandidateFVG matched_bull_fvg = na
+        for j = array.size(cand_fvgs) - 1 to 0
+            CandidateFVG fvg = array.get(cand_fvgs, j)
+            if not fvg.is_bullish or fvg.is_used
+                continue
+            if fvg.start_bar > bar_index or (current_ath_bar - fvg.start_bar > 100)
+                continue
+            // Check if current close is inside the Bullish FVG
+            bool closes_inside = ath_fvg_close_mode == "Inside FVG (Close between Top & Bottom)" ? (curr_close <= fvg.top and curr_close >= fvg.bottom) : (curr_close <= fvg.top)
+            if closes_inside
+                matched_bull_fvg := fvg
+                break
+
+        if not na(matched_bull_fvg)
+            // Scan swing lows strictly left of ATH for Target 1 & Target 2 (2nd low pullback)
+            float t1_price = na
+            float t2_price = na
+            int sz_sl = array.size(sl_bars)
+            if sz_sl > 0
+                for k = sz_sl - 1 to 0
+                    int s_bar = array.get(sl_bars, k)
+                    float s_val = array.get(sl_vals, k)
+
+                    // Strictly left of ATH bar
+                    if s_bar >= current_ath_bar
+                        continue
+
+                    // Must be below entry price
+                    if s_val >= curr_close
+                        continue
+
+                    // Check if breached prior to entry
+                    bool breached = false
+                    int bars_back = bar_index - s_bar
+                    if bars_back > 0
+                        int max_b = math.min(bars_back - 1, 500)
+                        for b = 0 to max_b
+                            if low[b] < s_val
+                                breached := true
+                                break
+                    if breached
+                        continue
+
+                    // Target 1 = 1st recent low, Target 2 = 2nd low pullback
+                    if na(t1_price)
+                        t1_price := s_val
+                    else if na(t2_price)
+                        t2_price := s_val
+                        break
+
+            // Target determination based on min_swings_required and allow_fixed_rr_fallback
+            if min_swings_required == 2
+                if (na(t1_price) or na(t2_price)) and allow_fixed_rr_fallback
+                    float fallback_risk = math.max(syminfo.mintick * 10, math.abs(current_ath_high - curr_close))
+                    t1_price := round_price(curr_close - 1.5 * fallback_risk)
+                    t2_price := round_price(curr_close - 2.0 * fallback_risk)
+            else // min_swings_required == 1
+                if na(t1_price) and na(t2_price)
+                    if allow_fixed_rr_fallback
+                        float fallback_risk = math.max(syminfo.mintick * 10, math.abs(current_ath_high - curr_close))
+                        t1_price := round_price(curr_close - 1.5 * fallback_risk)
+                        t2_price := round_price(curr_close - 2.0 * fallback_risk)
+                else if not na(t1_price) and na(t2_price)
+                    t2_price := t1_price
+
+            // Execute trade if targets are determined and reaction candle did not reach an active OB [D13, D15]
+            if not na(t1_price) and not na(t2_price) and not check_candle_reaches_other_ob(-1, bar_index, false)
+                float final_t1 = math.max(t1_price, t2_price)
+                float final_t2 = math.min(t1_price, t2_price)  // 2nd low pullback is trade target
+
+                float sl_price = round_price(current_ath_high + (sl_buffer_ticks * syminfo.mintick))
+                float entry_price = curr_close
+
+                matched_bull_fvg.is_used := true
+                matched_bull_fvg.is_inverted := true
+                matched_bull_fvg.inversion_bar := bar_index
+
+                // Materialize ATH FVG box (Orange) - only shown till the first candle closes inside FVG
+                box fvg_bx = box.new(left=matched_bull_fvg.start_bar, top=matched_bull_fvg.top, right=bar_index, bottom=matched_bull_fvg.bottom, bgcolor=bear_ifvg_color, border_color=color.new(#ff9100, 30), border_width=2, text="ATH iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+
+                // Draw Target & SL Lines (extend.none, initialized to bar_index)
+                line t1_ln = line.new(x1=bar_index, y1=final_t1, x2=bar_index, y2=final_t1, xloc=xloc.bar_index, extend=extend.none, color=t1_color, style=line.style_dashed, width=1)
+                line t2_ln = line.new(x1=bar_index, y1=final_t2, x2=bar_index, y2=final_t2, xloc=xloc.bar_index, extend=extend.none, color=t2_color, style=line.style_solid, width=2)
+                line sl_ln = line.new(x1=bar_index, y1=sl_price, x2=bar_index, y2=sl_price, xloc=xloc.bar_index, extend=extend.none, color=sl_color, style=line.style_dotted, width=1)
+
+                label t1_lbl = na
+                label t2_lbl = na
+                label sl_lbl = na
+                if show_target_labels
+                    t1_lbl := label.new(x=bar_index, y=final_t1, text="T1: " + str.tostring(round_price(final_t1)), style=label.style_label_left, color=color.new(t1_color, 85), textcolor=color.white, size=size.small)
+                    t2_lbl := label.new(x=bar_index, y=final_t2, text="T2 (2nd Low): " + str.tostring(round_price(final_t2)), style=label.style_label_left, color=color.new(t2_color, 85), textcolor=color.white, size=size.small)
+                    sl_lbl := label.new(x=bar_index, y=sl_price, text="ATH SL: " + str.tostring(round_price(sl_price)), style=label.style_label_left, color=color.new(sl_color, 85), textcolor=color.white, size=size.small)
+
+                float order_qty = calc_trade_qty(entry_price, sl_price)
+
+                if strategy.position_size > 0
+                    if opposite_ob_action == "Exit Current Trade (Strictly 1 Entry & 1 Exit)"
+                        strategy.close("Long", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                        strategy.close("ATL Long", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                        finalize_active_setups(true, bar_index)
+                        day_exits_count += 1
+                        if day_entries_count > 0
+                            day_trade_completed := true
+                        ath_atl_triggered := true
+                        last_ath_traded_bar := current_ath_bar
+                    else
+                        strategy.close("Long", comment="[ATH Rev Short @ " + format_ist(time) + "]")
+                        strategy.close("ATL Long", comment="[ATH Rev Short @ " + format_ist(time) + "]")
+                        finalize_active_setups(true, bar_index)
+                        day_exits_count += 1
+                        strategy.entry("ATH Short", strategy.short, qty=order_qty, comment="[ATH Short @ " + format_ist(time) + "]")
+                        strategy.exit("ATH Short Exit", "ATH Short", stop=sl_price, limit=final_t2, comment_loss="[ATH SL @ " + format_ist(time) + "]", comment_profit="[ATH TP2 @ " + format_ist(time) + "]")
+                        day_entries_count += 1
+                        array.push(active_setups, ReactionSetup.new(false, bar_index, entry_price, sl_price, final_t1, final_t2, na, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl, true, false, false, false, na))
+                        ath_atl_triggered := true
+                        last_ath_traded_bar := current_ath_bar
+                else if strategy.position_size == 0 and not day_trade_completed and day_entries_count < max_daily_entries
+                    strategy.entry("ATH Short", strategy.short, qty=order_qty, comment="[ATH Short @ " + format_ist(time) + "]")
+                    strategy.exit("ATH Short Exit", "ATH Short", stop=sl_price, limit=final_t2, comment_loss="[ATH SL @ " + format_ist(time) + "]", comment_profit="[ATH TP2 @ " + format_ist(time) + "]")
+                    day_entries_count += 1
+                    array.push(active_setups, ReactionSetup.new(false, bar_index, entry_price, sl_price, final_t1, final_t2, na, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl, true, false, false, false, na))
+                    ath_atl_triggered := true
+                    last_ath_traded_bar := current_ath_bar
+
+    // --- 2. ATL BUY SETUP (Market at All-Time Low -> Closes inside Bearish FVG -> Buy) ---
+    bool can_take_atl_long = (strategy.position_size == 0 and day_entries_count < max_daily_entries) or (strategy.position_size < 0 and enable_reversal_on_opposite_ob)
+    bool is_recent_atl = not ath_atl_triggered and can_take_atl_long and bar_index >= 20 and not na(current_atl_bar) and (bar_index >= current_atl_bar) and (bar_index - current_atl_bar <= ath_max_bars_after) and (na(last_atl_traded_bar) or last_atl_traded_bar != current_atl_bar)
+    if is_recent_atl
+        // Look for the most recent active Bearish FVG formed near or before the ATL
+        CandidateFVG matched_bear_fvg = na
+        for j = array.size(cand_fvgs) - 1 to 0
+            CandidateFVG fvg = array.get(cand_fvgs, j)
+            if fvg.is_bullish or fvg.is_used
+                continue
+            if fvg.start_bar > bar_index or (current_atl_bar - fvg.start_bar > 100)
+                continue
+            // Check if current close is inside the Bearish FVG
+            bool closes_inside = ath_fvg_close_mode == "Inside FVG (Close between Top & Bottom)" ? (curr_close >= fvg.bottom and curr_close <= fvg.top) : (curr_close >= fvg.bottom)
+            if closes_inside
+                matched_bear_fvg := fvg
+                break
+
+        if not na(matched_bear_fvg)
+            // Scan swing highs strictly left of ATL for Target 1 & Target 2 (2nd high pullback)
+            float t1_price = na
+            float t2_price = na
+            int sz_sh = array.size(sh_bars)
+            if sz_sh > 0
+                for k = sz_sh - 1 to 0
+                    int s_bar = array.get(sh_bars, k)
+                    float s_val = array.get(sh_vals, k)
+
+                    // Strictly left of ATL bar
+                    if s_bar >= current_atl_bar
+                        continue
+
+                    // Must be above entry price
+                    if s_val <= curr_close
+                        continue
+
+                    // Check if breached prior to entry
+                    bool breached = false
+                    int bars_back = bar_index - s_bar
+                    if bars_back > 0
+                        int max_b = math.min(bars_back - 1, 500)
+                        for b = 0 to max_b
+                            if high[b] > s_val
+                                breached := true
+                                break
+                    if breached
+                        continue
+
+                    // Target 1 = 1st recent high, Target 2 = 2nd high pullback
+                    if na(t1_price)
+                        t1_price := s_val
+                    else if na(t2_price)
+                        t2_price := s_val
+                        break
+
+            // Target determination based on min_swings_required and allow_fixed_rr_fallback
+            if min_swings_required == 2
+                if (na(t1_price) or na(t2_price)) and allow_fixed_rr_fallback
+                    float fallback_risk = math.max(syminfo.mintick * 10, math.abs(curr_close - current_atl_low))
+                    t1_price := round_price(curr_close + 1.5 * fallback_risk)
+                    t2_price := round_price(curr_close + 2.0 * fallback_risk)
+            else // min_swings_required == 1
+                if na(t1_price) and na(t2_price)
+                    if allow_fixed_rr_fallback
+                        float fallback_risk = math.max(syminfo.mintick * 10, math.abs(curr_close - current_atl_low))
+                        t1_price := round_price(curr_close + 1.5 * fallback_risk)
+                        t2_price := round_price(curr_close + 2.0 * fallback_risk)
+                else if not na(t1_price) and na(t2_price)
+                    t2_price := t1_price
+
+            // Execute trade if targets are determined and reaction candle did not reach an active OB [D13, D15]
+            if not na(t1_price) and not na(t2_price) and not check_candle_reaches_other_ob(-1, bar_index, true)
+                float final_t1 = math.min(t1_price, t2_price)
+                float final_t2 = math.max(t1_price, t2_price)  // 2nd high pullback is trade target
+
+                float sl_price = round_price(current_atl_low - (sl_buffer_ticks * syminfo.mintick))
+                float entry_price = curr_close
+
+                matched_bear_fvg.is_used := true
+                matched_bear_fvg.is_inverted := true
+                matched_bear_fvg.inversion_bar := bar_index
+
+                // Materialize ATL FVG box (Blue) - only shown till the first candle closes inside FVG
+                box fvg_bx = box.new(left=matched_bear_fvg.start_bar, top=matched_bear_fvg.top, right=bar_index, bottom=matched_bear_fvg.bottom, bgcolor=bull_ifvg_color, border_color=color.new(#00bcd4, 30), border_width=2, text="ATL iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+
+                // Draw Target & SL Lines (extend.none, initialized to bar_index)
+                line t1_ln = line.new(x1=bar_index, y1=final_t1, x2=bar_index, y2=final_t1, xloc=xloc.bar_index, extend=extend.none, color=t1_color, style=line.style_dashed, width=1)
+                line t2_ln = line.new(x1=bar_index, y1=final_t2, x2=bar_index, y2=final_t2, xloc=xloc.bar_index, extend=extend.none, color=t2_color, style=line.style_solid, width=2)
+                line sl_ln = line.new(x1=bar_index, y1=sl_price, x2=bar_index, y2=sl_price, xloc=xloc.bar_index, extend=extend.none, color=sl_color, style=line.style_dotted, width=1)
+
+                label t1_lbl = na
+                label t2_lbl = na
+                label sl_lbl = na
+                if show_target_labels
+                    t1_lbl := label.new(x=bar_index, y=final_t1, text="T1: " + str.tostring(round_price(final_t1)), style=label.style_label_left, color=color.new(t1_color, 85), textcolor=color.white, size=size.small)
+                    t2_lbl := label.new(x=bar_index, y=final_t2, text="T2 (2nd High): " + str.tostring(round_price(final_t2)), style=label.style_label_left, color=color.new(t2_color, 85), textcolor=color.white, size=size.small)
+                    sl_lbl := label.new(x=bar_index, y=sl_price, text="ATL SL: " + str.tostring(round_price(sl_price)), style=label.style_label_left, color=color.new(sl_color, 85), textcolor=color.white, size=size.small)
+
+                float order_qty = calc_trade_qty(entry_price, sl_price)
+
+                if strategy.position_size < 0
+                    if opposite_ob_action == "Exit Current Trade (Strictly 1 Entry & 1 Exit)"
+                        strategy.close("Short", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                        strategy.close("ATH Short", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                        finalize_active_setups(false, bar_index)
+                        day_exits_count += 1
+                        if day_entries_count > 0
+                            day_trade_completed := true
+                        ath_atl_triggered := true
+                        last_atl_traded_bar := current_atl_bar
+                    else
+                        strategy.close("Short", comment="[ATL Rev Long @ " + format_ist(time) + "]")
+                        strategy.close("ATH Short", comment="[ATL Rev Long @ " + format_ist(time) + "]")
+                        finalize_active_setups(false, bar_index)
+                        day_exits_count += 1
+                        strategy.entry("ATL Long", strategy.long, qty=order_qty, comment="[ATL Long @ " + format_ist(time) + "]")
+                        strategy.exit("ATL Long Exit", "ATL Long", stop=sl_price, limit=final_t2, comment_loss="[ATL SL @ " + format_ist(time) + "]", comment_profit="[ATL TP2 @ " + format_ist(time) + "]")
+                        day_entries_count += 1
+                        array.push(active_setups, ReactionSetup.new(true, bar_index, entry_price, sl_price, final_t1, final_t2, na, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl, true, false, false, false, na))
+                        ath_atl_triggered := true
+                        last_atl_traded_bar := current_atl_bar
+                else if strategy.position_size == 0 and not day_trade_completed and day_entries_count < max_daily_entries
+                    strategy.entry("ATL Long", strategy.long, qty=order_qty, comment="[ATL Long @ " + format_ist(time) + "]")
+                    strategy.exit("ATL Long Exit", "ATL Long", stop=sl_price, limit=final_t2, comment_loss="[ATL SL @ " + format_ist(time) + "]", comment_profit="[ATL TP2 @ " + format_ist(time) + "]")
+                    day_entries_count += 1
+                    array.push(active_setups, ReactionSetup.new(true, bar_index, entry_price, sl_price, final_t1, final_t2, na, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl, true, false, false, false, na))
+                    ath_atl_triggered := true
+                    last_atl_traded_bar := current_atl_bar
+
+// ============================================================================
+// CONFLUENCE REACTION SCANNER & EXECUTION ENGINE (Standard OB Retest)
+// ============================================================================
+// Concurrency & Session Guard [D3, D10, D11, D12]: Scan when flat or when reversal is allowed, daily SL limit not hit, and within active trading session
+bool can_scan_standard = not ath_atl_triggered and is_trade_session and (not stop_trading_on_daily_sl or not day_sl_hit) and not day_trade_completed and (day_entries_count < max_daily_entries or (enable_reversal_on_opposite_ob and strategy.position_size != 0)) and array.size(cand_obs) > 0 and array.size(cand_fvgs) > 0
+if can_scan_standard
+    bool block_buy_side  = false
+    bool block_sell_side = false
     for i = array.size(cand_obs) - 1 to 0
         CandidateOB ob = array.get(cand_obs, i)
 
-        // 1. Skip if not touched, already reacted, structurally invalidated, or retest breached [D7]
-        if not ob.is_touched or ob.is_reacted or ob.is_invalidated or ob.is_retest_breached
+        // 1. Skip if not touched, structurally invalidated, or fully mitigated [D7, D14]
+        if not ob.is_touched or ob.is_invalidated or ob.is_fully_mitigated
             continue
 
-        // 2. CANDLE SEPARATION GATE [D6] (CRITICAL RULE):
-        // Same candle CANNOT touch the OB and close inside opposite FVG!
-        // Reaction candle MUST occur strictly on a separate subsequent bar:
-        if bar_index <= ob.last_touch_bar
+        // Max reactions check (if max_reactions_per_ob > 0) [D14]
+        if max_reactions_per_ob > 0 and ob.reactions_count >= max_reactions_per_ob
+            continue
+
+        // Prevent multiple reactions on the very same bar [D14]
+        if not na(ob.last_reaction_bar) and bar_index <= ob.last_reaction_bar
+            continue
+
+        // Require fresh retest wave for subsequent reactions [D14]
+        if ob.reactions_count > 0
+            if na(ob.retest_touch_bar) or ob.retest_touch_bar <= ob.last_reaction_bar
+                continue
+
+        // 2. CANDLE SEPARATION GATE [D6, D14] (CRITICAL RULE):
+        // Reaction candle MUST occur strictly after the touch bar for the active wave
+        int anchor_touch_bar = not na(ob.retest_touch_bar) ? ob.retest_touch_bar : ob.touch_bar
+        if bar_index <= anchor_touch_bar
             continue
 
         if ob.is_bullish
             // ====================================================================
             // BUY SIDE (LONG TRIGGER)
             // ====================================================================
-            // Find most recent active unconsumed Bearish FVG
+            // Guard: Skip if already Long, or if Buy side blocked due to other OB reach conflict [D10, D15]
+            if block_buy_side or strategy.position_size > 0
+                continue
+
+            // Requirement 1: If OB low is breached, NO ENTRY! [D12]
+            bool ob_low_breached = ob_invalidation_mode == "Wick Breach (Low < OB Low / High > OB High)" ? (curr_low < ob.bottom) : (curr_close < ob.bottom)
+            if ob_low_breached or ob.is_invalidated
+                ob.is_invalidated := true
+                ob.invalidation_bar := bar_index
+                continue
+
+            // Requirement 2: Guard if flat and daily entry limit reached
+            if strategy.position_size == 0 and (day_trade_completed or day_entries_count >= max_daily_entries)
+                continue
+
+            // Find most recent active unconsumed Bearish FVG / iFVG
             CandidateFVG matched_fvg = na
             for j = array.size(cand_fvgs) - 1 to 0
                 CandidateFVG fvg = array.get(cand_fvgs, j)
                 if fvg.is_bullish or fvg.is_used
                     continue
                 // Check if current close is inside or beyond the bearish FVG [D4]
-                if curr_close >= fvg.bottom
+                bool closes_inside = ob_fvg_close_mode == "Inside FVG (Close between Top & Bottom)" ? (curr_close >= fvg.bottom and curr_close <= fvg.top) : (curr_close >= fvg.bottom)
+                if closes_inside
                     matched_fvg := fvg
                     break
 
             if na(matched_fvg)
+                continue
+
+            // Requirement 13 [D13, D15]: If reaction candle or touch candle reaches other touched / untouched OB, do not take entry on this side
+            bool reaction_candle_conflict = check_candle_reaches_other_ob(ob.id, bar_index, true)
+            bool touch_candle_conflict    = check_candle_reaches_other_ob(ob.id, anchor_touch_bar, true)
+            if reaction_candle_conflict or touch_candle_conflict
+                block_buy_side := true
                 continue
 
             // 3. TARGET DISCOVERY VIA SMC PULLBACKS [D2, D8]
@@ -479,8 +1100,8 @@ if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_
                     int s_bar = array.get(sh_bars, k)
                     float s_val = array.get(sh_vals, k)
 
-                    // Strictly left of first retested candle [D8]
-                    if s_bar >= ob.touch_bar
+                    // Strictly left of active retest touch candle [D8, D14]
+                    if s_bar >= anchor_touch_bar
                         continue
 
                     // Must be above entry price
@@ -508,46 +1129,98 @@ if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_
                         t2_bar   := s_bar
                         break
 
-            // Strict Filter: Must have >= 2 valid unbreached swings left of retest [D2]
-            if na(t1_price) or na(t2_price)
-                continue  // Abort entry completely, look at next candidate
+            // Target determination based on min_swings_required and allow_fixed_rr_fallback
+            if min_swings_required == 2
+                if (na(t1_price) or na(t2_price)) and allow_fixed_rr_fallback
+                    float fallback_risk = math.max(syminfo.mintick * 10, math.abs(curr_close - ob.touch_low))
+                    t1_price := round_price(curr_close + 1.5 * fallback_risk)
+                    t2_price := round_price(curr_close + 2.0 * fallback_risk)
+                else if na(t1_price) or na(t2_price)
+                    continue
+            else // min_swings_required == 1
+                if na(t1_price) and na(t2_price)
+                    if allow_fixed_rr_fallback
+                        float fallback_risk = math.max(syminfo.mintick * 10, math.abs(curr_close - ob.touch_low))
+                        t1_price := round_price(curr_close + 1.5 * fallback_risk)
+                        t2_price := round_price(curr_close + 2.0 * fallback_risk)
+                    else
+                        continue
+                else if not na(t1_price) and na(t2_price)
+                    t2_price := t1_price
 
-            // 4. STOP LOSS & EXECUTION [D1, D7, D9]
-            float sl_price = round_price(ob.touch_low - (sl_buffer_ticks * syminfo.mintick))
+            // Target Alignment: Target 1 is closer milestone, Target 2 is full TP runner limit
+            float final_t1 = math.min(t1_price, t2_price)
+            float final_t2 = math.max(t1_price, t2_price)
+
+            // 4. STOP LOSS & EXECUTION [D1, D7, D9, D12]
+            float sl_price = round_price(math.min(ob.touch_low, ob.bottom) - (sl_buffer_ticks * syminfo.mintick))
             float entry_price = curr_close
 
-            // Mark candidates as reacted/used
-            ob.is_reacted := true
             matched_fvg.is_used := true
             if not matched_fvg.is_inverted
                 matched_fvg.is_inverted := true
                 matched_fvg.inversion_bar := bar_index
 
+            // If currently Short: Handle Opposite OB Reaction [D10, D12]
+            if strategy.position_size < 0
+                if opposite_ob_action == "Exit Current Trade (Strictly 1 Entry & 1 Exit)"
+                    strategy.close("Short", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                    strategy.close("ATH Short", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                    finalize_active_setups(false, bar_index)
+                    day_exits_count += 1
+                    if day_entries_count > 0
+                        day_trade_completed := true
+                    ob.is_reacted := true
+                    ob.reactions_count += 1
+                    ob.last_reaction_bar := bar_index
+                    if not na(ob.drawn_box)
+                        box.delete(ob.drawn_box)
+                        ob.drawn_box := na
+                    if not na(matched_fvg.drawn_box)
+                        box.delete(matched_fvg.drawn_box)
+                        matched_fvg.drawn_box := na
+                    break
+                else
+                    strategy.close("Short", comment="[Rev Long @ " + format_ist(time) + "]")
+                    strategy.close("ATH Short", comment="[Rev Long @ " + format_ist(time) + "]")
+                    finalize_active_setups(false, bar_index)
+                    day_exits_count += 1
+
+            ob.is_reacted := true
+            ob.reactions_count += 1
+            ob.last_reaction_bar := bar_index
+
             // Draw Reacting Bullish OB box (Purple)
             box ob_bx = box.new(left=ob.start_bar, top=ob.top, right=bar_index, bottom=ob.bottom, bgcolor=bull_ob_color, border_color=color.new(#9c27b0, 30), border_width=2, text="OB ✓", text_halign=text.align_right, text_size=size.small, text_color=color.white)
 
             // Draw Reacting Inverted Bearish FVG box (Orange)
-            box fvg_bx = box.new(left=matched_fvg.start_bar, top=matched_fvg.top, right=bar_index, bottom=matched_fvg.bottom, bgcolor=bear_ifvg_color, border_color=color.new(#ff9100, 30), border_width=2, text="iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+            // FVG box must be shown only till the first candle closes inside FVG
+            int fvg_end_bar = not na(matched_fvg.inversion_bar) ? matched_fvg.inversion_bar : bar_index
+            box fvg_bx = box.new(left=matched_fvg.start_bar, top=matched_fvg.top, right=fvg_end_bar, bottom=matched_fvg.bottom, bgcolor=bear_ifvg_color, border_color=color.new(#ff9100, 30), border_width=2, text="iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
 
-            // Draw Target Lines & Labels
-            line t1_ln = line.new(x1=bar_index, y1=t1_price, x2=bar_index + 10, y2=t1_price, xloc=xloc.bar_index, extend=extend.right, color=t1_color, style=line.style_dashed, width=1)
-            line t2_ln = line.new(x1=bar_index, y1=t2_price, x2=bar_index + 10, y2=t2_price, xloc=xloc.bar_index, extend=extend.right, color=t2_color, style=line.style_solid, width=2)
-            line sl_ln = line.new(x1=bar_index, y1=sl_price, x2=bar_index + 10, y2=sl_price, xloc=xloc.bar_index, extend=extend.right, color=sl_color, style=line.style_dotted, width=1)
+            // Draw Target Lines & Labels (extend.none, initialized to bar_index)
+            line t1_ln = line.new(x1=bar_index, y1=final_t1, x2=bar_index, y2=final_t1, xloc=xloc.bar_index, extend=extend.none, color=t1_color, style=line.style_dashed, width=1)
+            line t2_ln = line.new(x1=bar_index, y1=final_t2, x2=bar_index, y2=final_t2, xloc=xloc.bar_index, extend=extend.none, color=t2_color, style=line.style_solid, width=2)
+            line sl_ln = line.new(x1=bar_index, y1=sl_price, x2=bar_index, y2=sl_price, xloc=xloc.bar_index, extend=extend.none, color=sl_color, style=line.style_dotted, width=1)
 
             label t1_lbl = na
             label t2_lbl = na
             label sl_lbl = na
             if show_target_labels
-                t1_lbl := label.new(x=bar_index, y=t1_price, text="T1: " + str.tostring(round_price(t1_price)), style=label.style_label_left, color=color.new(t1_color, 85), textcolor=color.white, size=size.small)
-                t2_lbl := label.new(x=bar_index, y=t2_price, text="T2: " + str.tostring(round_price(t2_price)), style=label.style_label_left, color=color.new(t2_color, 85), textcolor=color.white, size=size.small)
+                t1_lbl := label.new(x=bar_index, y=final_t1, text="T1: " + str.tostring(round_price(final_t1)), style=label.style_label_left, color=color.new(t1_color, 85), textcolor=color.white, size=size.small)
+                t2_lbl := label.new(x=bar_index, y=final_t2, text="T2: " + str.tostring(round_price(final_t2)), style=label.style_label_left, color=color.new(t2_color, 85), textcolor=color.white, size=size.small)
                 sl_lbl := label.new(x=bar_index, y=sl_price, text="SL: " + str.tostring(round_price(sl_price)), style=label.style_label_left, color=color.new(sl_color, 85), textcolor=color.white, size=size.small)
 
-            // Order Execution: Market entry on close, exit at SL and Target 2 limit
-            strategy.entry("Long", strategy.long)
-            strategy.exit("Long Exit", "Long", stop=sl_price, limit=t2_price)
+            // Dynamic 1% Position Sizing Calculation
+            float order_qty = calc_trade_qty(entry_price, sl_price)
 
-            // Store active setup (kept on chart even if SL is taken [D9])
-            array.push(active_setups, ReactionSetup.new(true, bar_index, entry_price, sl_price, t1_price, t2_price, ob_bx, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl))
+            // Order Execution: Market entry on close, exit at SL and Target 2 limit
+            strategy.entry("Long", strategy.long, qty=order_qty, comment="[Long @ " + format_ist(time) + "]")
+            strategy.exit("Long Exit", "Long", stop=sl_price, limit=final_t2, comment_loss="[SL @ " + format_ist(time) + "]", comment_profit="[TP2 @ " + format_ist(time) + "]")
+            day_entries_count += 1
+
+            // Store active setup (tracked bar-by-bar until T2 or SL is hit)
+            array.push(active_setups, ReactionSetup.new(true, bar_index, entry_price, sl_price, final_t1, final_t2, ob_bx, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl, true, false, false, false, na))
 
             // Delete debug boxes if any existed
             if not na(ob.drawn_box)
@@ -563,18 +1236,41 @@ if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_
             // ====================================================================
             // SELL SIDE (SHORT TRIGGER)
             // ====================================================================
-            // Find most recent active unconsumed Bullish FVG
+            // Guard: Skip if already Short, or if Sell side blocked due to other OB reach conflict [D10, D15]
+            if block_sell_side or strategy.position_size < 0
+                continue
+
+            // Requirement 1: If OB high is breached, NO ENTRY! [D12]
+            bool ob_high_breached = ob_invalidation_mode == "Wick Breach (Low < OB Low / High > OB High)" ? (curr_high > ob.top) : (curr_close > ob.top)
+            if ob_high_breached or ob.is_invalidated
+                ob.is_invalidated := true
+                ob.invalidation_bar := bar_index
+                continue
+
+            // Requirement 2: Guard if flat and daily entry limit reached
+            if strategy.position_size == 0 and (day_trade_completed or day_entries_count >= max_daily_entries)
+                continue
+
+            // Find most recent active unconsumed Bullish FVG / iFVG
             CandidateFVG matched_fvg = na
             for j = array.size(cand_fvgs) - 1 to 0
                 CandidateFVG fvg = array.get(cand_fvgs, j)
                 if not fvg.is_bullish or fvg.is_used
                     continue
                 // Check if current close is inside or beyond the bullish FVG [D4]
-                if curr_close <= fvg.top
+                bool closes_inside = ob_fvg_close_mode == "Inside FVG (Close between Top & Bottom)" ? (curr_close <= fvg.top and curr_close >= fvg.bottom) : (curr_close <= fvg.top)
+                if closes_inside
                     matched_fvg := fvg
                     break
 
             if na(matched_fvg)
+                continue
+
+            // Requirement 13 [D13, D15]: If reaction candle or touch candle reaches other touched / untouched OB, do not take entry on this side
+            bool reaction_candle_conflict = check_candle_reaches_other_ob(ob.id, bar_index, false)
+            bool touch_candle_conflict    = check_candle_reaches_other_ob(ob.id, anchor_touch_bar, false)
+            if reaction_candle_conflict or touch_candle_conflict
+                block_sell_side := true
                 continue
 
             // 3. TARGET DISCOVERY VIA SMC PULLBACKS [D2, D8]
@@ -590,8 +1286,8 @@ if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_
                     int s_bar = array.get(sl_bars, k)
                     float s_val = array.get(sl_vals, k)
 
-                    // Strictly left of first retested candle [D8]
-                    if s_bar >= ob.touch_bar
+                    // Strictly left of active retest touch candle [D8, D14]
+                    if s_bar >= anchor_touch_bar
                         continue
 
                     // Must be below entry price
@@ -619,46 +1315,98 @@ if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_
                         t2_bar   := s_bar
                         break
 
-            // Strict Filter: Must have >= 2 valid unbreached swings left of retest [D2]
-            if na(t1_price) or na(t2_price)
-                continue  // Abort entry completely, look at next candidate
+            // Target determination based on min_swings_required and allow_fixed_rr_fallback
+            if min_swings_required == 2
+                if (na(t1_price) or na(t2_price)) and allow_fixed_rr_fallback
+                    float fallback_risk = math.max(syminfo.mintick * 10, math.abs(ob.touch_high - curr_close))
+                    t1_price := round_price(curr_close - 1.5 * fallback_risk)
+                    t2_price := round_price(curr_close - 2.0 * fallback_risk)
+                else if na(t1_price) or na(t2_price)
+                    continue
+            else // min_swings_required == 1
+                if na(t1_price) and na(t2_price)
+                    if allow_fixed_rr_fallback
+                        float fallback_risk = math.max(syminfo.mintick * 10, math.abs(ob.touch_high - curr_close))
+                        t1_price := round_price(curr_close - 1.5 * fallback_risk)
+                        t2_price := round_price(curr_close - 2.0 * fallback_risk)
+                    else
+                        continue
+                else if not na(t1_price) and na(t2_price)
+                    t2_price := t1_price
 
-            // 4. STOP LOSS & EXECUTION [D1, D7, D9]
-            float sl_price = round_price(ob.touch_high + (sl_buffer_ticks * syminfo.mintick))
+            // Target Alignment: Target 1 is closer milestone, Target 2 is full TP runner limit
+            float final_t1 = math.max(t1_price, t2_price)
+            float final_t2 = math.min(t1_price, t2_price)
+
+            // 4. STOP LOSS & EXECUTION [D1, D7, D9, D12]
+            float sl_price = round_price(math.max(ob.touch_high, ob.top) + (sl_buffer_ticks * syminfo.mintick))
             float entry_price = curr_close
 
-            // Mark candidates as reacted/used
-            ob.is_reacted := true
             matched_fvg.is_used := true
             if not matched_fvg.is_inverted
                 matched_fvg.is_inverted := true
                 matched_fvg.inversion_bar := bar_index
 
+            // If currently Long: Handle Opposite OB Reaction [D10, D12]
+            if strategy.position_size > 0
+                if opposite_ob_action == "Exit Current Trade (Strictly 1 Entry & 1 Exit)"
+                    strategy.close("Long", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                    strategy.close("ATL Long", comment="[Opposite OB Exit @ " + format_ist(time) + "]")
+                    finalize_active_setups(true, bar_index)
+                    day_exits_count += 1
+                    if day_entries_count > 0
+                        day_trade_completed := true
+                    ob.is_reacted := true
+                    ob.reactions_count += 1
+                    ob.last_reaction_bar := bar_index
+                    if not na(ob.drawn_box)
+                        box.delete(ob.drawn_box)
+                        ob.drawn_box := na
+                    if not na(matched_fvg.drawn_box)
+                        box.delete(matched_fvg.drawn_box)
+                        matched_fvg.drawn_box := na
+                    break
+                else
+                    strategy.close("Long", comment="[Rev Short @ " + format_ist(time) + "]")
+                    strategy.close("ATL Long", comment="[Rev Short @ " + format_ist(time) + "]")
+                    finalize_active_setups(true, bar_index)
+                    day_exits_count += 1
+
+            ob.is_reacted := true
+            ob.reactions_count += 1
+            ob.last_reaction_bar := bar_index
+
             // Draw Reacting Bearish OB box (Yellow)
             box ob_bx = box.new(left=ob.start_bar, top=ob.top, right=bar_index, bottom=ob.bottom, bgcolor=bear_ob_color, border_color=color.new(#ffeb3b, 30), border_width=2, text="OB ✓", text_halign=text.align_right, text_size=size.small, text_color=color.white)
 
             // Draw Reacting Inverted Bullish FVG box (Blue)
-            box fvg_bx = box.new(left=matched_fvg.start_bar, top=matched_fvg.top, right=bar_index, bottom=matched_fvg.bottom, bgcolor=bull_ifvg_color, border_color=color.new(#00bcd4, 30), border_width=2, text="iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
+            // FVG box must be shown only till the first candle closes inside FVG
+            int fvg_end_bar = not na(matched_fvg.inversion_bar) ? matched_fvg.inversion_bar : bar_index
+            box fvg_bx = box.new(left=matched_fvg.start_bar, top=matched_fvg.top, right=fvg_end_bar, bottom=matched_fvg.bottom, bgcolor=bull_ifvg_color, border_color=color.new(#00bcd4, 30), border_width=2, text="iFVG", text_halign=text.align_right, text_size=size.small, text_color=color.white)
 
-            // Draw Target Lines & Labels
-            line t1_ln = line.new(x1=bar_index, y1=t1_price, x2=bar_index + 10, y2=t1_price, xloc=xloc.bar_index, extend=extend.right, color=t1_color, style=line.style_dashed, width=1)
-            line t2_ln = line.new(x1=bar_index, y1=t2_price, x2=bar_index + 10, y2=t2_price, xloc=xloc.bar_index, extend=extend.right, color=t2_color, style=line.style_solid, width=2)
-            line sl_ln = line.new(x1=bar_index, y1=sl_price, x2=bar_index + 10, y2=sl_price, xloc=xloc.bar_index, extend=extend.right, color=sl_color, style=line.style_dotted, width=1)
+            // Draw Target Lines & Labels (extend.none, initialized to bar_index)
+            line t1_ln = line.new(x1=bar_index, y1=final_t1, x2=bar_index, y2=final_t1, xloc=xloc.bar_index, extend=extend.none, color=t1_color, style=line.style_dashed, width=1)
+            line t2_ln = line.new(x1=bar_index, y1=final_t2, x2=bar_index, y2=final_t2, xloc=xloc.bar_index, extend=extend.none, color=t2_color, style=line.style_solid, width=2)
+            line sl_ln = line.new(x1=bar_index, y1=sl_price, x2=bar_index, y2=sl_price, xloc=xloc.bar_index, extend=extend.none, color=sl_color, style=line.style_dotted, width=1)
 
             label t1_lbl = na
             label t2_lbl = na
             label sl_lbl = na
             if show_target_labels
-                t1_lbl := label.new(x=bar_index, y=t1_price, text="T1: " + str.tostring(round_price(t1_price)), style=label.style_label_left, color=color.new(t1_color, 85), textcolor=color.white, size=size.small)
-                t2_lbl := label.new(x=bar_index, y=t2_price, text="T2: " + str.tostring(round_price(t2_price)), style=label.style_label_left, color=color.new(t2_color, 85), textcolor=color.white, size=size.small)
+                t1_lbl := label.new(x=bar_index, y=final_t1, text="T1: " + str.tostring(round_price(final_t1)), style=label.style_label_left, color=color.new(t1_color, 85), textcolor=color.white, size=size.small)
+                t2_lbl := label.new(x=bar_index, y=final_t2, text="T2: " + str.tostring(round_price(final_t2)), style=label.style_label_left, color=color.new(t2_color, 85), textcolor=color.white, size=size.small)
                 sl_lbl := label.new(x=bar_index, y=sl_price, text="SL: " + str.tostring(round_price(sl_price)), style=label.style_label_left, color=color.new(sl_color, 85), textcolor=color.white, size=size.small)
 
-            // Order Execution: Market entry on close, exit at SL and Target 2 limit
-            strategy.entry("Short", strategy.short)
-            strategy.exit("Short Exit", "Short", stop=sl_price, limit=t2_price)
+            // Dynamic 1% Position Sizing Calculation
+            float order_qty = calc_trade_qty(entry_price, sl_price)
 
-            // Store active setup (kept on chart even if SL is taken [D9])
-            array.push(active_setups, ReactionSetup.new(false, bar_index, entry_price, sl_price, t1_price, t2_price, ob_bx, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl))
+            // Order Execution: Market entry on close, exit at SL and Target 2 limit
+            strategy.entry("Short", strategy.short, qty=order_qty, comment="[Short @ " + format_ist(time) + "]")
+            strategy.exit("Short Exit", "Short", stop=sl_price, limit=final_t2, comment_loss="[SL @ " + format_ist(time) + "]", comment_profit="[TP2 @ " + format_ist(time) + "]")
+            day_entries_count += 1
+
+            // Store active setup (tracked bar-by-bar until T2 or SL is hit)
+            array.push(active_setups, ReactionSetup.new(false, bar_index, entry_price, sl_price, final_t1, final_t2, ob_bx, fvg_bx, t1_ln, t2_ln, sl_ln, t1_lbl, t2_lbl, sl_lbl, true, false, false, false, na))
 
             // Delete debug boxes if any existed
             if not na(ob.drawn_box)
@@ -669,6 +1417,165 @@ if strategy.position_size == 0 and array.size(cand_obs) > 0 and array.size(cand_
                 matched_fvg.drawn_box := na
 
             break  // 1 reaction trigger per bar
+
+// ============================================================================
+// ACTIVE SETUP LIFECYCLE MANAGEMENT
+// ============================================================================
+// Dynamically extends OB boxes and Target/SL lines bar-by-bar while the trade is live.
+// Freezes OB boxes when T2 gets hit or SL gets hit by a candle.
+// Freezes T1 line when Target 1 or SL is hit.
+// Freezes T2 and SL lines when Target 2 or SL is hit.
+if array.size(active_setups) > 0
+    for idx = 0 to array.size(active_setups) - 1
+        ReactionSetup setup = array.get(active_setups, idx)
+        if setup.is_active and bar_index > setup.entry_bar
+            if setup.is_long
+                // 1. Check Long Target 1 Hit
+                if not setup.t1_hit and curr_high >= setup.t1_price
+                    setup.t1_hit := true
+                    line.set_x2(setup.t1_line, bar_index)
+                    if not na(setup.t1_label)
+                        label.set_x(setup.t1_label, bar_index)
+                else if not setup.t1_hit
+                    line.set_x2(setup.t1_line, bar_index)
+                    if not na(setup.t1_label)
+                        label.set_x(setup.t1_label, bar_index)
+
+                // 2. Check Long Target 2 Hit (Trade Won)
+                if curr_high >= setup.t2_price
+                    setup.t2_hit := true
+                    setup.is_active := false
+                    setup.exit_bar := bar_index
+                    // Terminate OB Box at T2 hit candle
+                    if not na(setup.ob_box)
+                        box.set_right(setup.ob_box, bar_index)
+                    // Terminate T2 and SL lines at T2 hit candle
+                    line.set_x2(setup.t2_line, bar_index)
+                    line.set_x2(setup.sl_line, bar_index)
+                    if not na(setup.t2_label)
+                        label.set_x(setup.t2_label, bar_index)
+                    if not na(setup.sl_label)
+                        label.set_x(setup.sl_label, bar_index)
+                    // Ensure T1 line also terminates
+                    if not setup.t1_hit
+                        setup.t1_hit := true
+                        line.set_x2(setup.t1_line, bar_index)
+                        if not na(setup.t1_label)
+                            label.set_x(setup.t1_label, bar_index)
+
+                // 3. Check Long Stop Loss Hit (Trade Stopped Out)
+                else if curr_low <= setup.sl_price
+                    setup.sl_hit := true
+                    setup.is_active := false
+                    setup.exit_bar := bar_index
+                    day_sl_hit := true
+                    // Terminate OB Box at SL hit candle
+                    if not na(setup.ob_box)
+                        box.set_right(setup.ob_box, bar_index)
+                    // Terminate T2 and SL lines at SL hit candle
+                    line.set_x2(setup.sl_line, bar_index)
+                    line.set_x2(setup.t2_line, bar_index)
+                    if not na(setup.sl_label)
+                        label.set_x(setup.sl_label, bar_index)
+                    if not na(setup.t2_label)
+                        label.set_x(setup.t2_label, bar_index)
+                    // Ensure T1 line terminates if not already hit
+                    if not setup.t1_hit
+                        setup.t1_hit := true
+                        line.set_x2(setup.t1_line, bar_index)
+                        if not na(setup.t1_label)
+                            label.set_x(setup.t1_label, bar_index)
+
+                // 4. Trade Still Active (Neither T2 nor SL Hit)
+                else
+                    if not na(setup.ob_box)
+                        box.set_right(setup.ob_box, bar_index)
+                    line.set_x2(setup.t2_line, bar_index)
+                    line.set_x2(setup.sl_line, bar_index)
+                    if not na(setup.t2_label)
+                        label.set_x(setup.t2_label, bar_index)
+                    if not na(setup.sl_label)
+                        label.set_x(setup.sl_label, bar_index)
+
+            else // Short Setup
+                // 1. Check Short Target 1 Hit
+                if not setup.t1_hit and curr_low <= setup.t1_price
+                    setup.t1_hit := true
+                    line.set_x2(setup.t1_line, bar_index)
+                    if not na(setup.t1_label)
+                        label.set_x(setup.t1_label, bar_index)
+                else if not setup.t1_hit
+                    line.set_x2(setup.t1_line, bar_index)
+                    if not na(setup.t1_label)
+                        label.set_x(setup.t1_label, bar_index)
+
+                // 2. Check Short Target 2 Hit (Trade Won)
+                if curr_low <= setup.t2_price
+                    setup.t2_hit := true
+                    setup.is_active := false
+                    setup.exit_bar := bar_index
+                    // Terminate OB Box at T2 hit candle
+                    if not na(setup.ob_box)
+                        box.set_right(setup.ob_box, bar_index)
+                    // Terminate T2 and SL lines at T2 hit candle
+                    line.set_x2(setup.t2_line, bar_index)
+                    line.set_x2(setup.sl_line, bar_index)
+                    if not na(setup.t2_label)
+                        label.set_x(setup.t2_label, bar_index)
+                    if not na(setup.sl_label)
+                        label.set_x(setup.sl_label, bar_index)
+                    // Ensure T1 line also terminates
+                    if not setup.t1_hit
+                        setup.t1_hit := true
+                        line.set_x2(setup.t1_line, bar_index)
+                        if not na(setup.t1_label)
+                            label.set_x(setup.t1_label, bar_index)
+
+                // 3. Check Short Stop Loss Hit (Trade Stopped Out)
+                else if curr_high >= setup.sl_price
+                    setup.sl_hit := true
+                    setup.is_active := false
+                    setup.exit_bar := bar_index
+                    day_sl_hit := true
+                    // Terminate OB Box at SL hit candle
+                    if not na(setup.ob_box)
+                        box.set_right(setup.ob_box, bar_index)
+                    // Terminate T2 and SL lines at SL hit candle
+                    line.set_x2(setup.sl_line, bar_index)
+                    line.set_x2(setup.t2_line, bar_index)
+                    if not na(setup.sl_label)
+                        label.set_x(setup.sl_label, bar_index)
+                    if not na(setup.t2_label)
+                        label.set_x(setup.t2_label, bar_index)
+                    if not setup.t1_hit
+                        setup.t1_hit := true
+                        line.set_x2(setup.t1_line, bar_index)
+                        if not na(setup.t1_label)
+                            label.set_x(setup.t1_label, bar_index)
+
+                // 4. Trade Still Active (Neither T2 nor SL Hit)
+                else
+                    if not na(setup.ob_box)
+                        box.set_right(setup.ob_box, bar_index)
+                    line.set_x2(setup.t2_line, bar_index)
+                    line.set_x2(setup.sl_line, bar_index)
+                    if not na(setup.t2_label)
+                        label.set_x(setup.t2_label, bar_index)
+                    if not na(setup.sl_label)
+                        label.set_x(setup.sl_label, bar_index)
+
+// Synchronize daily trade tracking & SL detection with broker closed trades engine [D11, D12]
+if strategy.closedtrades > strategy.closedtrades[1]
+    int trades_closed_now = strategy.closedtrades - strategy.closedtrades[1]
+    day_exits_count += trades_closed_now
+    if strategy.closedtrades.profit(strategy.closedtrades - 1) < 0
+        string exit_comm = strategy.closedtrades.exit_comment(strategy.closedtrades - 1)
+        if str.contains(exit_comm, "SL")
+            day_sl_hit := true
+    // If flat and today had an entry, mark day trade as completed (Rule 2)
+    if strategy.position_size == 0 and day_entries_count > 0
+        day_trade_completed := true
+
 
 // ============================================================================
 // TRIM ACTIVE SETUPS (FIFO Capacity Queue)
@@ -695,9 +1602,46 @@ while array.size(active_setups) > max_display
         label.delete(oldest.sl_label)
 
 // ============================================================================
-// ALERTS
+// INTRADAY SESSION SQUARE-OFF (MIS - IST TIMED with T2 Carryforward Guard)
 // ============================================================================
-if strategy.position_size > 0 and strategy.position_size[1] == 0
-    alert("Reaction-Filtered LONG entry triggered! SL and Targets set.", alert.freq_once_per_bar_close)
-if strategy.position_size < 0 and strategy.position_size[1] == 0
-    alert("Reaction-Filtered SHORT entry triggered! SL and Targets set.", alert.freq_once_per_bar_close)
+// Auto square-off open positions at official market close (15:15-15:30 IST for NSE, 23:25 IST for MCX),
+// UNLESS the active position has reached near Target 2 (>= threshold %).
+// If close to T2: carry forward overnight to hit limit.
+// If NOT close to T2: exit immediately on the same day!
+if enable_session_close and is_mis_squareoff and strategy.position_size != 0
+    bool is_near_t2 = false
+    if array.size(active_setups) > 0
+        for idx = array.size(active_setups) - 1 to 0
+            ReactionSetup setup = array.get(active_setups, idx)
+            if setup.is_active
+                if setup.is_long
+                    float total_dist = setup.t2_price - setup.entry_price
+                    if total_dist > 0
+                        float progress = curr_close - setup.entry_price
+                        float pct = (progress / total_dist) * 100.0
+                        if pct >= t2_carryforward_threshold_pct
+                            is_near_t2 := true
+                else
+                    float total_dist = setup.entry_price - setup.t2_price
+                    if total_dist > 0
+                        float progress = setup.entry_price - curr_close
+                        float pct = (progress / total_dist) * 100.0
+                        if pct >= t2_carryforward_threshold_pct
+                            is_near_t2 := true
+                break
+
+    if not is_near_t2
+        strategy.close_all(comment="[EOD Exit (Not Near T2) @ " + format_ist(time) + "]")
+        finalize_active_setups(true, bar_index)
+        finalize_active_setups(false, bar_index)
+        day_exits_count += 1
+        if day_entries_count > 0
+            day_trade_completed := true
+
+// ============================================================================
+// ALERTS (IST TIMED)
+// ============================================================================
+if strategy.position_size > 0 and strategy.position_size[1] <= 0
+    alert("[IST " + format_ist(time) + "] Reaction-Filtered LONG entry triggered! SL and Targets set.", alert.freq_once_per_bar_close)
+if strategy.position_size < 0 and strategy.position_size[1] >= 0
+    alert("[IST " + format_ist(time) + "] Reaction-Filtered SHORT entry triggered! SL and Targets set.", alert.freq_once_per_bar_close)
