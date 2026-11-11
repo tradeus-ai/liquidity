@@ -399,31 +399,35 @@ if show_fvgs and array.size(bear_fvg_items) > 0
 // ORDER BLOCK INVALIDATION (Runs on all bars)
 // ==========================================
 
-// Invalidate bullish (Buy) OBs: candle closes below that OB (curr_close < ob_bottom) -> remove if enabled
+// Invalidate bullish (Buy) OBs: only when a candle close is below that OB (curr_close < ob_bottom) -> remove if enabled
 if show_obs and array.size(bull_ob_boxes) > 0
     for i = array.size(bull_ob_boxes) - 1 to 0
         bx = array.get(bull_ob_boxes, i)
         ob_top = box.get_top(bx)
         ob_bottom = box.get_bottom(bx)
         box.set_right(bx, bar_index)
-        bool buy_ob_invalidated = curr_close < ob_bottom
-        if buy_ob_invalidated
-            if remove_invalidated_obs
-                box.delete(bx)
-            array.remove(bull_ob_boxes, i)
+        // Guard with barstate.isconfirmed so intrabar wicks on real-time candles do NOT prematurely invalidate
+        if barstate.isconfirmed
+            bool buy_ob_invalidated = curr_close < ob_bottom
+            if buy_ob_invalidated
+                if remove_invalidated_obs
+                    box.delete(bx)
+                array.remove(bull_ob_boxes, i)
 
-// Invalidate bearish (Sell) OBs: candle closes above that OB (curr_close > ob_top) -> remove if enabled
+// Invalidate bearish (Sell) OBs: only when a candle close is above that OB (curr_close > ob_top) -> remove if enabled
 if show_obs and array.size(bear_ob_boxes) > 0
     for i = array.size(bear_ob_boxes) - 1 to 0
         bx = array.get(bear_ob_boxes, i)
         ob_top = box.get_top(bx)
         ob_bottom = box.get_bottom(bx)
         box.set_right(bx, bar_index)
-        bool sell_ob_invalidated = curr_close > ob_top
-        if sell_ob_invalidated
-            if remove_invalidated_obs
-                box.delete(bx)
-            array.remove(bear_ob_boxes, i)
+        // Guard with barstate.isconfirmed so intrabar wicks on real-time candles do NOT prematurely invalidate
+        if barstate.isconfirmed
+            bool sell_ob_invalidated = curr_close > ob_top
+            if sell_ob_invalidated
+                if remove_invalidated_obs
+                    box.delete(bx)
+                array.remove(bear_ob_boxes, i)
 
 // ==========================================
 // SWING CONFIRMATION FLAGS (used by HTF engine)
