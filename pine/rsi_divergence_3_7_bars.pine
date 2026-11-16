@@ -1,0 +1,516 @@
+//@version=6
+indicator(title = "RSI Divergence 3-7 Bars (Aligned)", shorttitle = "RSI Div 3-7b", overlay = false, max_lines_count = 500, max_labels_count = 500, precision = 2)
+
+// v2 visual refinement (systematic-debugging pass):
+// - One unified bar count on chart + RSI (always inside the required range).
+// - Compact centered mid-line badges + endpoint dots pinned to exact swing bars.
+// - RSI edge markers off by default; consecutive-swing comparison (no crossing lines).
+// - Fixed "Either" range early-outs; pivot lbL default 2 to cut noise.
+
+// ============================================================================
+// 1. INPUTS — OSCILLATOR (RSI & MOVING AVERAGE)
+// ============================================================================
+grp_osc = "Oscillator Settings"
+oscSrc        = input.source(close, "RSI Source", group = grp_osc, inline = "A")
+oscLen        = input.int(14, "RSI Length", minval = 1, group = grp_osc, inline = "A")
+showMA        = input.bool(true, "Show RSI MA", group = grp_osc, inline = "B")
+maTypeInput   = input.string("SMA", "MA Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"], group = grp_osc, inline = "B")
+maLengthInput = input.int(14, "MA Length", minval = 1, group = grp_osc, inline = "B")
+
+// ============================================================================
+// 2. INPUTS — DIVERGENCE PARAMETERS & ALIGNMENT
+// ============================================================================
+grp_div = "Divergence Lookback & Alignment"
+rangeLower   = input.int(3, "Min Bars Between Swings", minval = 1, maxval = 20, group = grp_div, tooltip = "Minimum number of bars between the two peaks or troughs (Default: 3).")
+rangeUpper   = input.int(7, "Max Bars Between Swings", minval = 2, maxval = 50, group = grp_div, tooltip = "Maximum number of bars between the two peaks or troughs (Default: 7).")
+lbL          = input.int(2, "Pivot Left Strength (lbL)", minval = 1, maxval = 10, group = grp_div, inline = "Piv", tooltip = "Bars to the left for swing pivot detection. 2 filters noise while still allowing fast 3-7 bar swings.")
+lbR          = input.int(1, "Pivot Right Confirmation (lbR)", minval = 1, maxval = 5, group = grp_div, inline = "Piv", tooltip = "Bars to the right for swing pivot confirmation.")
+alignWindow  = input.int(1, "Price/RSI Alignment Window (+/- bars)", minval = 0, maxval = 3, group = grp_div, tooltip = "Searches +/- N bars around the RSI swing to find the true Price High/Low. This adjusts position when RSI peak and Price peak differ by 1-2 bars.")
+distMeasure  = input.string("Price Bars", "Measure Distance By", options = ["Price Bars", "RSI Bars", "Either"], group = grp_div, tooltip = "Which bar distance must satisfy the 3-7 bar range requirement.")
+consecutiveOnly = input.bool(true, "Compare Consecutive Swings Only", group = grp_div, tooltip = "When true, each swing is compared only with the most recent prior swing. Prevents overlapping/crossing lines. Disable to search deeper history.")
+confirmBars  = input.bool(true, "Wait for Candle Close (No Repaint)", group = grp_div, tooltip = "When true, waits for the candle to close before confirming divergence to avoid intrabar repainting.")
+
+grp_types = "Divergence Types"
+plotBull       = input.bool(true,  "Regular Bullish", group = grp_types, inline = "T1")
+plotBear       = input.bool(true,  "Regular Bearish", group = grp_types, inline = "T1")
+plotHiddenBull = input.bool(false, "Hidden Bullish",  group = grp_types, inline = "T2")
+plotHiddenBear = input.bool(false, "Hidden Bearish",  group = grp_types, inline = "T2")
+
+// ============================================================================
+// 3. INPUTS — VISUAL APPEARANCE (PRICE CHART & RSI PANE)
+// ============================================================================
+grp_chart_vis = "Main Price Chart Visuals"
+showChartLines   = input.bool(true, "Draw Lines on Main Chart", group = grp_chart_vis)
+showChartLabels  = input.bool(true, "Show Bar Count Label on Main Chart", group = grp_chart_vis)
+showChartMarkers = input.bool(true, "Show Markers on Price Candles", group = grp_chart_vis)
+chartLineWidth   = input.int(2, "Chart Line Width", minval = 1, maxval = 4, group = grp_chart_vis)
+chartLineStyleStr = input.string("Solid", "Chart Line Style", options = ["Solid", "Dashed", "Dotted"], group = grp_chart_vis)
+
+grp_rsi_vis = "RSI Pane Visuals"
+showRsiLines   = input.bool(true, "Draw Lines on RSI Pane", group = grp_rsi_vis)
+showRsiLabels  = input.bool(true, "Show Bar Count Label on RSI Pane", group = grp_rsi_vis)
+showRsiMarkers = input.bool(false, "Show Markers on RSI Pane", group = grp_rsi_vis)
+rsiLineWidth   = input.int(2, "RSI Line Width", minval = 1, maxval = 4, group = grp_rsi_vis)
+rsiLineStyleStr = input.string("Solid", "RSI Line Style", options = ["Solid", "Dashed", "Dotted"], group = grp_rsi_vis)
+
+grp_colors = "Colors & Label Formatting"
+bullColor       = input.color(#00e676, "Bullish Line/Label Color", group = grp_colors)
+bearColor       = input.color(#ff5252, "Bearish Line/Label Color", group = grp_colors)
+hiddenBullColor = input.color(#69f0ae, "Hidden Bullish Color", group = grp_colors)
+hiddenBearColor = input.color(#ff8a80, "Hidden Bearish Color", group = grp_colors)
+labelTextColor  = input.color(color.white, "Label Text Color", group = grp_colors)
+labelFormatStr  = input.string("Bars Only (e.g. 5)", "Label Text Format", options = ["Bars Only (e.g. 5)", "With Suffix (e.g. 5 bars)"], group = grp_colors)
+labelStyleType  = input.string("Centered Badge", "Label Style", options = ["Pointed Label", "Centered Badge", "Text Only"], group = grp_colors)
+labelSizeStr    = input.string("Tiny", "Label Size", options = ["Tiny", "Small", "Normal"], group = grp_colors)
+showEndpointDots = input.bool(true, "Show Endpoint Dots on Lines", group = grp_colors, tooltip = "Draws small dots pinned to the exact aligned swing bars at each end of the divergence lines.")
+maxDrawings     = input.int(50, "Max Divergence Lines to Retain", minval = 5, maxval = 150, group = grp_colors)
+
+grp_tbl = "Dashboard Table"
+showTable = input.bool(true, "Show Information Table", group = grp_tbl)
+tablePos  = input.string("Top Right", "Table Position", options = ["Top Right", "Bottom Right", "Top Left", "Bottom Left"], group = grp_tbl)
+
+// ============================================================================
+// 4. UTILITY FUNCTIONS
+// ============================================================================
+ma(source, length, type) =>
+    switch type
+        "SMA"         => ta.sma(source, length)
+        "EMA"         => ta.ema(source, length)
+        "SMMA (RMA)"  => ta.rma(source, length)
+        "WMA"         => ta.wma(source, length)
+        "VWMA"        => ta.vwma(source, length)
+        => ta.sma(source, length)
+
+get_line_style(string s) =>
+    switch s
+        "Solid"  => line.style_solid
+        "Dashed" => line.style_dashed
+        "Dotted" => line.style_dotted
+        => line.style_solid
+
+get_label_size(string s) =>
+    switch s
+        "Tiny"   => size.tiny
+        "Small"  => size.small
+        "Normal" => size.normal
+        => size.small
+
+get_table_pos(string s) =>
+    switch s
+        "Top Right"    => position.top_right
+        "Bottom Right" => position.bottom_right
+        "Top Left"     => position.top_left
+        "Bottom Left"  => position.bottom_left
+        => position.top_right
+
+get_label_style(string s, bool is_bullish) =>
+    switch s
+        "Pointed Label"  => is_bullish ? label.style_label_up : label.style_label_down
+        "Centered Badge" => label.style_label_center
+        "Text Only"      => label.style_none
+        => is_bullish ? label.style_label_up : label.style_label_down
+
+chartLineStyle = get_line_style(chartLineStyleStr)
+rsiLineStyle   = get_line_style(rsiLineStyleStr)
+lblSize        = get_label_size(labelSizeStr)
+
+// ============================================================================
+// 5. RSI & MOVING AVERAGE CALCULATION & PLOTTING
+// ============================================================================
+osc   = ta.rsi(oscSrc, oscLen)
+oscMA = ma(osc, maLengthInput, maTypeInput)
+
+// Bounds & Pane Grid
+oscUB = hline(70, "Upper Bound (70)", color = color.new(#787b86, 50), linestyle = hline.style_dashed)
+oscMB = hline(50, "Middle Bound (50)", color = color.new(#787b86, 65), linestyle = hline.style_dotted)
+oscLB = hline(30, "Lower Bound (30)", color = color.new(#787b86, 50), linestyle = hline.style_dashed)
+fill(oscUB, oscLB, color = color.rgb(126, 87, 194, 92), title = "RSI Channel Background Fill")
+
+oscRSIPlot = plot(osc, title = "RSI", color = #d1d4dc, linewidth = 2)
+plot(showMA ? oscMA : na, title = "RSI Moving Average", color = #ffd600, linewidth = 1)
+
+midPlot = plot(50, color = na, editable = false, display = display.none)
+fill(oscRSIPlot, midPlot, 100, 70, top_color = color.new(#ff5252, 20), bottom_color = color.new(#ff5252, 95), title = "Overbought Gradient")
+fill(oscRSIPlot, midPlot, 30, 0,   top_color = color.new(#00e676, 95), bottom_color = color.new(#00e676, 20), title = "Oversold Gradient")
+
+// ============================================================================
+// 6. PEAK / TROUGH SEARCH WITH POSITION ALIGNMENT
+// ============================================================================
+// When RSI High and Price High differ:
+// Searches +/- alignWindow bars around the pivot offset to find the exact peak/trough bar and value.
+
+find_price_high(int pivot_offset, int window) =>
+    int min_k = math.max(0, pivot_offset - window)
+    int max_k = math.min(bar_index, pivot_offset + window)
+    float best_p = -1.0e20
+    int best_bar = na
+    for k = min_k to max_k
+        float p = high[k]
+        if p > best_p
+            best_p := p
+            best_bar := bar_index - k
+    [best_bar, best_p]
+
+find_price_low(int pivot_offset, int window) =>
+    int min_k = math.max(0, pivot_offset - window)
+    int max_k = math.min(bar_index, pivot_offset + window)
+    float best_p = 1.0e20
+    int best_bar = na
+    for k = min_k to max_k
+        float p = low[k]
+        if p < best_p
+            best_p := p
+            best_bar := bar_index - k
+    [best_bar, best_p]
+
+find_rsi_high(int pivot_offset, int window) =>
+    int min_k = math.max(0, pivot_offset - window)
+    int max_k = math.min(bar_index, pivot_offset + window)
+    float best_r = -1.0e20
+    int best_bar = na
+    for k = min_k to max_k
+        float r = osc[k]
+        if r > best_r
+            best_r := r
+            best_bar := bar_index - k
+    [best_bar, best_r]
+
+find_rsi_low(int pivot_offset, int window) =>
+    int min_k = math.max(0, pivot_offset - window)
+    int max_k = math.min(bar_index, pivot_offset + window)
+    float best_r = 1.0e20
+    int best_bar = na
+    for k = min_k to max_k
+        float r = osc[k]
+        if r < best_r
+            best_r := r
+            best_bar := bar_index - k
+    [best_bar, best_r]
+
+// ============================================================================
+// 7. SWING HISTORY ARRAYS & FIFO DRAWING MANAGEMENT
+// ============================================================================
+// Stored confirmed swing points: [price_bar, price_val, rsi_bar, rsi_val]
+var int[]   ph_p_bars = array.new_int()
+var float[] ph_p_vals = array.new_float()
+var int[]   ph_r_bars = array.new_int()
+var float[] ph_r_vals = array.new_float()
+
+var int[]   pl_p_bars = array.new_int()
+var float[] pl_p_vals = array.new_float()
+var int[]   pl_r_bars = array.new_int()
+var float[] pl_r_vals = array.new_float()
+
+// Drawing tracking arrays for FIFO cleanup
+var line[]  chart_lines  = array.new_line()
+var label[] chart_labels = array.new_label()
+var line[]  rsi_lines    = array.new_line()
+var label[] rsi_labels   = array.new_label()
+
+// One bar-count number, identical on the price chart and the RSI pane, and always
+// inside the required range (for "Either", the leg that satisfied the range wins).
+pick_display_bars(int p_bars, int r_bars) =>
+    distMeasure == "RSI Bars" ? r_bars : distMeasure == "Either" ? ((p_bars >= rangeLower and p_bars <= rangeUpper) ? p_bars : r_bars) : p_bars
+
+add_divergence_drawings(int x1_p, float y1_p, int x2_p, float y2_p,
+                       int x1_r, float y1_r, int x2_r, float y2_r,
+                       color col, bool is_bullish) =>
+    int p_bars = math.abs(x2_p - x1_p)
+    int r_bars = math.abs(x2_r - x1_r)
+    int disp_bars = pick_display_bars(p_bars, r_bars)
+
+    string lbl_text = (labelFormatStr == "Bars Only (e.g. 5)") ? str.tostring(disp_bars) : str.tostring(disp_bars) + " bars"
+
+    string sty = get_label_style(labelStyleType, is_bullish)
+
+    // 1. Draw on Main Price Chart (force_overlay = true)
+    if showChartLines
+        line cl = line.new(x1 = x1_p, y1 = y1_p, x2 = x2_p, y2 = y2_p,
+                           xloc = xloc.bar_index, color = col, width = chartLineWidth, style = chartLineStyle,
+                           force_overlay = true)
+        array.push(chart_lines, cl)
+        while array.size(chart_lines) > maxDrawings
+            line.delete(array.shift(chart_lines))
+
+    if showChartLabels
+        int mid_x_p   = math.round((x1_p + x2_p) / 2.0)
+        float mid_y_p = (y1_p + y2_p) / 2.0
+        label clb = label.new(x = mid_x_p, y = mid_y_p, text = lbl_text,
+                              xloc = xloc.bar_index, yloc = yloc.price,
+                              color = col, textcolor = labelTextColor, style = sty, size = lblSize,
+                              force_overlay = true)
+        array.push(chart_labels, clb)
+        while array.size(chart_labels) > maxDrawings
+            label.delete(array.shift(chart_labels))
+
+    // Endpoint dots pin the exact aligned swing bars (plotshape offset is fixed and
+    // cannot track the dynamic +/- alignment window, so labels carry the anchors).
+    if showEndpointDots
+        label cdot1 = label.new(x = x1_p, y = y1_p, text = "", xloc = xloc.bar_index, yloc = yloc.price,
+                                color = col, style = label.style_circle, size = size.tiny, force_overlay = true)
+        label cdot2 = label.new(x = x2_p, y = y2_p, text = "", xloc = xloc.bar_index, yloc = yloc.price,
+                                color = col, style = label.style_circle, size = size.tiny, force_overlay = true)
+        array.push(chart_labels, cdot1)
+        array.push(chart_labels, cdot2)
+        while array.size(chart_labels) > maxDrawings
+            label.delete(array.shift(chart_labels))
+
+    // 2. Draw on RSI Indicator Pane (force_overlay = false)
+    if showRsiLines
+        line rl = line.new(x1 = x1_r, y1 = y1_r, x2 = x2_r, y2 = y2_r,
+                           xloc = xloc.bar_index, color = col, width = rsiLineWidth, style = rsiLineStyle,
+                           force_overlay = false)
+        array.push(rsi_lines, rl)
+        while array.size(rsi_lines) > maxDrawings
+            line.delete(array.shift(rsi_lines))
+
+    if showRsiLabels
+        int mid_x_r   = math.round((x1_r + x2_r) / 2.0)
+        float mid_y_r = (y1_r + y2_r) / 2.0
+        label rlb = label.new(x = mid_x_r, y = mid_y_r, text = lbl_text,
+                              xloc = xloc.bar_index, yloc = yloc.price,
+                              color = col, textcolor = labelTextColor, style = sty, size = lblSize,
+                              force_overlay = false)
+        array.push(rsi_labels, rlb)
+        while array.size(rsi_labels) > maxDrawings
+            label.delete(array.shift(rsi_labels))
+
+    if showEndpointDots
+        label rdot1 = label.new(x = x1_r, y = y1_r, text = "", xloc = xloc.bar_index, yloc = yloc.price,
+                                color = col, style = label.style_circle, size = size.tiny, force_overlay = false)
+        label rdot2 = label.new(x = x2_r, y = y2_r, text = "", xloc = xloc.bar_index, yloc = yloc.price,
+                                color = col, style = label.style_circle, size = size.tiny, force_overlay = false)
+        array.push(rsi_labels, rdot1)
+        array.push(rsi_labels, rdot2)
+        while array.size(rsi_labels) > maxDrawings
+            label.delete(array.shift(rsi_labels))
+
+// ============================================================================
+// 8. DIVERGENCE DETECTION ENGINE
+// ============================================================================
+phFound = not na(ta.pivothigh(osc, lbL, lbR))
+plFound = not na(ta.pivotlow(osc, lbL, lbR))
+
+can_process = not confirmBars or barstate.isconfirmed
+
+bool bullCond       = false
+bool bearCond       = false
+bool hiddenBullCond = false
+bool hiddenBearCond = false
+
+// ---- A. BEARISH DIVERGENCE (HIGH TO HIGH) ----
+if phFound and can_process
+    // 1. Find aligned Price High and RSI High around confirmed pivot
+    [cur_p_bar, cur_p_val] = find_price_high(lbR, alignWindow)
+    [cur_r_bar, cur_r_val] = find_rsi_high(lbR, alignWindow)
+
+    // Check if this peak was already processed
+    bool is_new_peak = true
+    if array.size(ph_p_bars) > 0
+        if cur_p_bar == array.get(ph_p_bars, array.size(ph_p_bars) - 1) and cur_r_bar == array.get(ph_r_bars, array.size(ph_r_bars) - 1)
+            is_new_peak := false
+
+    if is_new_peak and not na(cur_p_bar) and not na(cur_r_bar)
+        // Compare against prior peak(s): consecutive-only (default) avoids crossing lines.
+        if array.size(ph_p_bars) > 0
+            int j_start = array.size(ph_p_bars) - 1
+            int j_end = consecutiveOnly ? j_start : 0
+            for j = j_start to j_end
+                int prev_p_bar   = array.get(ph_p_bars, j)
+                float prev_p_val = array.get(ph_p_vals, j)
+                int prev_r_bar   = array.get(ph_r_bars, j)
+                float prev_r_val = array.get(ph_r_vals, j)
+
+                int p_bars = cur_p_bar - prev_p_bar
+                int r_bars = cur_r_bar - prev_r_bar
+
+                bool p_in = (p_bars >= rangeLower and p_bars <= rangeUpper)
+                bool r_in = (r_bars >= rangeLower and r_bars <= rangeUpper)
+                bool in_range = distMeasure == "Price Bars" ? p_in : distMeasure == "RSI Bars" ? r_in : (p_in or r_in)
+
+                // Early-outs honour the active measure, so "Either" never skips a leg that is in range.
+                int gov_bars = distMeasure == "RSI Bars" ? r_bars : distMeasure == "Price Bars" ? p_bars : math.min(p_bars, r_bars)
+
+                if distMeasure == "Either" ? (gov_bars < rangeLower and not in_range) : (gov_bars < rangeLower)
+                    continue // Too close, check next
+
+                if gov_bars > rangeUpper
+                    break // Too far, stop searching older peaks
+
+                if in_range
+                    // Verify there is a trough (valley) between the two peaks
+                    int k_start = bar_index - cur_r_bar + 1
+                    int k_end   = bar_index - prev_r_bar - 1
+                    bool valley_found = true
+                    if k_start <= k_end
+                        float min_mid_r = 1000.0
+                        for k = k_start to k_end
+                            min_mid_r := math.min(min_mid_r, osc[k])
+                        if min_mid_r >= math.min(prev_r_val, cur_r_val)
+                            valley_found := false
+
+                    if valley_found
+                        // Check Regular Bearish: Price Higher High, RSI Lower High
+                        if (cur_p_val > prev_p_val) and (cur_r_val < prev_r_val) and plotBear
+                            bearCond := true
+                            add_divergence_drawings(prev_p_bar, prev_p_val, cur_p_bar, cur_p_val,
+                                                   prev_r_bar, prev_r_val, cur_r_bar, cur_r_val,
+                                                   bearColor, false)
+                            break
+
+                        // Check Hidden Bearish: Price Lower High, RSI Higher High
+                        else if (cur_p_val < prev_p_val) and (cur_r_val > prev_r_val) and plotHiddenBear
+                            hiddenBearCond := true
+                            add_divergence_drawings(prev_p_bar, prev_p_val, cur_p_bar, cur_p_val,
+                                                   prev_r_bar, prev_r_val, cur_r_bar, cur_r_val,
+                                                   hiddenBearColor, false)
+                            break
+
+        // Store current confirmed peak into history
+        array.push(ph_p_bars, cur_p_bar)
+        array.push(ph_p_vals, cur_p_val)
+        array.push(ph_r_bars, cur_r_bar)
+        array.push(ph_r_vals, cur_r_val)
+        while array.size(ph_p_bars) > 30
+            array.shift(ph_p_bars)
+            array.shift(ph_p_vals)
+            array.shift(ph_r_bars)
+            array.shift(ph_r_vals)
+
+// ---- B. BULLISH DIVERGENCE (LOW TO LOW) ----
+if plFound and can_process
+    // 1. Find aligned Price Low and RSI Low around confirmed pivot
+    [cur_p_bar, cur_p_val] = find_price_low(lbR, alignWindow)
+    [cur_r_bar, cur_r_val] = find_rsi_low(lbR, alignWindow)
+
+    // Check if this trough was already processed
+    bool is_new_trough = true
+    if array.size(pl_p_bars) > 0
+        if cur_p_bar == array.get(pl_p_bars, array.size(pl_p_bars) - 1) and cur_r_bar == array.get(pl_r_bars, array.size(pl_r_bars) - 1)
+            is_new_trough := false
+
+    if is_new_trough and not na(cur_p_bar) and not na(cur_r_bar)
+        // Compare against prior trough(s): consecutive-only (default) avoids crossing lines.
+        if array.size(pl_p_bars) > 0
+            int j_start = array.size(pl_p_bars) - 1
+            int j_end = consecutiveOnly ? j_start : 0
+            for j = j_start to j_end
+                int prev_p_bar   = array.get(pl_p_bars, j)
+                float prev_p_val = array.get(pl_p_vals, j)
+                int prev_r_bar   = array.get(pl_r_bars, j)
+                float prev_r_val = array.get(pl_r_vals, j)
+
+                int p_bars = cur_p_bar - prev_p_bar
+                int r_bars = cur_r_bar - prev_r_bar
+
+                bool p_in = (p_bars >= rangeLower and p_bars <= rangeUpper)
+                bool r_in = (r_bars >= rangeLower and r_bars <= rangeUpper)
+                bool in_range = distMeasure == "Price Bars" ? p_in : distMeasure == "RSI Bars" ? r_in : (p_in or r_in)
+
+                // Early-outs honour the active measure, so "Either" never skips a leg that is in range.
+                int gov_bars = distMeasure == "RSI Bars" ? r_bars : distMeasure == "Price Bars" ? p_bars : math.min(p_bars, r_bars)
+
+                if distMeasure == "Either" ? (gov_bars < rangeLower and not in_range) : (gov_bars < rangeLower)
+                    continue // Too close, check next
+
+                if gov_bars > rangeUpper
+                    break // Too far, stop searching older troughs
+
+                if in_range
+                    // Verify there is a peak between the two troughs
+                    int k_start = bar_index - cur_r_bar + 1
+                    int k_end   = bar_index - prev_r_bar - 1
+                    bool peak_found = true
+                    if k_start <= k_end
+                        float max_mid_r = -1000.0
+                        for k = k_start to k_end
+                            max_mid_r := math.max(max_mid_r, osc[k])
+                        if max_mid_r <= math.max(prev_r_val, cur_r_val)
+                            peak_found := false
+
+                    if peak_found
+                        // Check Regular Bullish: Price Lower Low, RSI Higher Low
+                        if (cur_p_val < prev_p_val) and (cur_r_val > prev_r_val) and plotBull
+                            bullCond := true
+                            add_divergence_drawings(prev_p_bar, prev_p_val, cur_p_bar, cur_p_val,
+                                                   prev_r_bar, prev_r_val, cur_r_bar, cur_r_val,
+                                                   bullColor, true)
+                            break
+
+                        // Check Hidden Bullish: Price Higher Low, RSI Lower Low
+                        else if (cur_p_val > prev_p_val) and (cur_r_val < prev_r_val) and plotHiddenBull
+                            hiddenBullCond := true
+                            add_divergence_drawings(prev_p_bar, prev_p_val, cur_p_bar, cur_p_val,
+                                                   prev_r_bar, prev_r_val, cur_r_bar, cur_r_val,
+                                                   hiddenBullColor, true)
+                            break
+
+        // Store current confirmed trough into history
+        array.push(pl_p_bars, cur_p_bar)
+        array.push(pl_p_vals, cur_p_val)
+        array.push(pl_r_bars, cur_r_bar)
+        array.push(pl_r_vals, cur_r_val)
+        while array.size(pl_p_bars) > 30
+            array.shift(pl_p_bars)
+            array.shift(pl_p_vals)
+            array.shift(pl_r_bars)
+            array.shift(pl_r_vals)
+
+// ============================================================================
+// 9. CHART MARKER PLOTS & ALERTS
+// ============================================================================
+// Markers on RSI Pane
+plotshape(showRsiMarkers and bullCond,       title = "RSI Bullish Marker",      style = shape.triangleup,   location = location.bottom, color = bullColor,       size = size.tiny, force_overlay = false)
+plotshape(showRsiMarkers and bearCond,       title = "RSI Bearish Marker",      style = shape.triangledown, location = location.top,    color = bearColor,       size = size.tiny, force_overlay = false)
+plotshape(showRsiMarkers and hiddenBullCond, title = "RSI Hidden Bull Marker",  style = shape.triangleup,   location = location.bottom, color = hiddenBullColor, size = size.tiny, force_overlay = false)
+plotshape(showRsiMarkers and hiddenBearCond, title = "RSI Hidden Bear Marker",  style = shape.triangledown, location = location.top,    color = hiddenBearColor, size = size.tiny, force_overlay = false)
+
+// Markers on Main Price Chart
+plotshape(showChartMarkers and bullCond,       title = "Price Bullish Marker",     style = shape.triangleup,   location = location.belowbar, color = bullColor,       size = size.tiny, force_overlay = true)
+plotshape(showChartMarkers and bearCond,       title = "Price Bearish Marker",     style = shape.triangledown, location = location.abovebar, color = bearColor,       size = size.tiny, force_overlay = true)
+plotshape(showChartMarkers and hiddenBullCond, title = "Price Hidden Bull Marker", style = shape.triangleup,   location = location.belowbar, color = hiddenBullColor, size = size.tiny, force_overlay = true)
+plotshape(showChartMarkers and hiddenBearCond, title = "Price Hidden Bear Marker", style = shape.triangledown, location = location.abovebar, color = hiddenBearColor, size = size.tiny, force_overlay = true)
+
+// Alerts
+alertcondition(bullCond,       title = "Bullish Divergence (3-7b)",        message = "Bullish Divergence (3-7 bars) detected on {{ticker}} at {{close}}")
+alertcondition(bearCond,       title = "Bearish Divergence (3-7b)",        message = "Bearish Divergence (3-7 bars) detected on {{ticker}} at {{close}}")
+alertcondition(hiddenBullCond, title = "Hidden Bull Divergence (3-7b)", message = "Hidden Bullish Divergence (3-7 bars) detected on {{ticker}} at {{close}}")
+alertcondition(hiddenBearCond, title = "Hidden Bear Divergence (3-7b)", message = "Hidden Bearish Divergence (3-7 bars) detected on {{ticker}} at {{close}}")
+
+// ============================================================================
+// 10. REAL-TIME STATS DASHBOARD TABLE
+// ============================================================================
+var table info_tbl = table.new(get_table_pos(tablePos), 2, 4, bgcolor = color.new(#1e222d, 15), border_color = color.new(#363c4e, 30), border_width = 1)
+
+var string last_div_type = "None"
+var int    last_div_bar_idx = na
+
+if bearCond
+    last_div_type := "Regular Bearish"
+    last_div_bar_idx := bar_index
+if hiddenBearCond
+    last_div_type := "Hidden Bearish"
+    last_div_bar_idx := bar_index
+if bullCond
+    last_div_type := "Regular Bullish"
+    last_div_bar_idx := bar_index
+if hiddenBullCond
+    last_div_type := "Hidden Bullish"
+    last_div_bar_idx := bar_index
+
+if showTable and barstate.islast
+    color div_col = str.contains(last_div_type, "Bear") ? bearColor : (str.contains(last_div_type, "Bull") ? bullColor : #787b86)
+    int bars_ago = na(last_div_bar_idx) ? 0 : (bar_index - last_div_bar_idx)
+    string div_stat = (last_div_type == "None") ? "None" : last_div_type + " (" + str.tostring(bars_ago) + "b ago)"
+
+    table.cell(info_tbl, 0, 0, "RSI (" + str.tostring(oscLen) + ")", text_color = color.white, text_size = size.small, bgcolor = color.new(#2a2e39, 40))
+    table.cell(info_tbl, 1, 0, str.tostring(osc, "#.##"), text_color = osc > 70 ? bearColor : (osc < 30 ? bullColor : color.white), text_size = size.small, text_font_family = font.family_monospace)
+
+    table.cell(info_tbl, 0, 1, "RSI MA", text_color = color.white, text_size = size.small, bgcolor = color.new(#2a2e39, 40))
+    table.cell(info_tbl, 1, 1, str.tostring(oscMA, "#.##"), text_color = #ffd600, text_size = size.small, text_font_family = font.family_monospace)
+
+    table.cell(info_tbl, 0, 2, "Last Div", text_color = color.white, text_size = size.small, bgcolor = color.new(#2a2e39, 40))
+    table.cell(info_tbl, 1, 2, div_stat, text_color = div_col, text_size = size.small, text_font_family = font.family_monospace)
+
+    table.cell(info_tbl, 0, 3, "Range Window", text_color = color.white, text_size = size.small, bgcolor = color.new(#2a2e39, 40))
+    table.cell(info_tbl, 1, 3, str.tostring(rangeLower) + " - " + str.tostring(rangeUpper) + " bars", text_color = color.white, text_size = size.small, text_font_family = font.family_monospace)

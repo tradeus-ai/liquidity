@@ -1,0 +1,430 @@
+//@version=6
+indicator("Tradeus Session Range & SMC Swing Levels", overlay=true, max_boxes_count=500, max_lines_count=500, max_labels_count=500)
+
+// ============================================================================
+// MODULE TOGGLES & INPUTS — Session Timing
+// ============================================================================
+grp_time = "Session Timing"
+show_session_range = input.bool(true,  "Show Session Range Box",       group=grp_time)
+start_hour         = input.int(8,      "Start Hour (0-23)",  minval=0, maxval=23, group=grp_time)
+start_min          = input.int(30,     "Start Minute (0-59)", minval=0, maxval=59, group=grp_time)
+end_hour           = input.int(10,     "End Hour (0-23)",    minval=0, maxval=23, group=grp_time)
+end_min            = input.int(30,     "End Minute (0-59)",  minval=0, maxval=59, group=grp_time)
+session_tz         = input.string("Asia/Kolkata", "Timezone", options=["Asia/Kolkata", "America/New_York", "America/Chicago", "Europe/London", "Asia/Tokyo", "UTC"], group=grp_time, tooltip="Timezone for session boundary detection.")
+
+// ============================================================================
+// INPUTS — Session Box Appearance
+// ============================================================================
+grp_sess_style = "Session Box Appearance"
+box_fill_clr    = input.color(color.new(#2196f3, 82), "Box Fill Color",      group=grp_sess_style)
+box_border_clr  = input.color(color.new(#2196f3, 30), "Box Border Color",    group=grp_sess_style)
+border_w        = input.int(1, "Border Width",        minval=1, maxval=4,    group=grp_sess_style)
+show_midline    = input.bool(true,  "Show 50% Midpoint Line",               group=grp_sess_style)
+midline_clr     = input.color(color.new(#ff9800, 30), "Midpoint Line Color", group=grp_sess_style)
+show_labels     = input.bool(true,  "Show High / Low Price Labels",         group=grp_sess_style)
+label_clr       = input.color(#2196f3, "Label Color",                       group=grp_sess_style)
+show_box_text   = input.bool(true,  "Show Session Time on Box",             group=grp_sess_style)
+max_sessions    = input.int(20, "Max Sessions to Display", minval=1, maxval=100, group=grp_sess_style)
+
+// ============================================================================
+// INPUTS — SMC Swing Levels (Pullback Highs & Lows)
+// ============================================================================
+grp_pb            = "SMC Pullback Swing Lines"
+show_sh_lines     = input.bool(true, "Show Swing High Lines", group=grp_pb)
+show_sl_lines     = input.bool(true, "Show Swing Low Lines", group=grp_pb)
+sh_line_color     = input.color(#f23645, "Swing High Line Color", group=grp_pb)
+sl_line_color     = input.color(#089981, "Swing Low Line Color", group=grp_pb)
+pb_line_style_str = input.string("Dotted", "Line Style", options=["Dotted", "Dashed", "Solid"], group=grp_pb)
+pb_line_width     = input.int(1, "Line Width", minval=1, maxval=4, group=grp_pb)
+pb_extend_mode    = input.string("Until Broken", "Line Extension", options=["Until Broken", "Extend to Current Bar", "Fixed Length", "Infinite"], group=grp_pb, tooltip="'Until Broken': Line extends horizontally until price breaks it.\n'Extend to Current Bar': Line extends to the latest active bar.\n'Fixed Length': Line extends by a fixed number of bars.\n'Infinite': Line extends endlessly into the future.")
+pb_break_by       = input.string("Candle Close", "Break Level By", options=["Candle Close", "Wick Crossing"], group=grp_pb, tooltip="Condition that marks a swing level as broken.")
+show_broken_lines = input.bool(true, "Keep Broken Lines Visible", group=grp_pb, tooltip="If false, swing lines are deleted immediately when broken. If true, they freeze at the break bar.")
+pb_fixed_bars     = input.int(25, "Fixed Length (Bars)", minval=2, maxval=200, group=grp_pb, tooltip="Number of bars to extend when 'Fixed Length' is selected.")
+show_pb_labels    = input.bool(false, "Show Price Labels", group=grp_pb)
+pb_label_format   = input.string("Type & Price", "Label Format", options=["Type & Price", "Price Only", "Type Only"], group=grp_pb)
+pb_label_size     = input.string("Tiny", "Label Size", options=["Tiny", "Small", "Normal"], group=grp_pb)
+max_pb_lines      = input.int(40, "Max Lines per Swing Type", minval=5, maxval=150, group=grp_pb, tooltip="Maximum number of swing lines to retain on chart.")
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+get_decimals() =>
+    is_forex = syminfo.type == "forex" or syminfo.type == "metals"
+    is_forex ? 5 : 2
+
+round_price(val) =>
+    mult = math.pow(10, get_decimals())
+    math.round(val * mult) / mult
+
+pad(int n) =>
+    n < 10 ? "0" + str.tostring(n) : str.tostring(n)
+
+get_line_style(string s) =>
+    switch s
+        "Solid"  => line.style_solid
+        "Dashed" => line.style_dashed
+        => line.style_dotted
+
+get_label_size(string s) =>
+    switch s
+        "Tiny"   => size.tiny
+        "Small"  => size.small
+        => size.normal
+
+curr_open  = round_price(open)
+curr_high  = round_price(high)
+curr_low   = round_price(low)
+curr_close = round_price(close)
+
+// ============================================================================
+// SESSION DETECTION & TIMING
+// ============================================================================
+session_str = pad(start_hour) + pad(start_min) + "-" + pad(end_hour) + pad(end_min)
+session_display = pad(start_hour) + ":" + pad(start_min) + " – " + pad(end_hour) + ":" + pad(end_min)
+
+in_session    = not na(time(timeframe.period, session_str, session_tz))
+session_start = in_session and not in_session[1]
+session_end   = not in_session and in_session[1]
+
+// ============================================================================
+// SESSION RANGE STATE & ENGINE
+// ============================================================================
+var float sess_high     = na
+var float sess_low      = na
+var int   sess_start_bi = na
+
+var box   active_box    = na   // Box currently being drawn during active session
+var line  active_mid    = na   // Midline during active session
+
+// Cleanup arrays (FIFO: oldest removed first when limit exceeded)
+var box[]   hist_boxes  = array.new_box()
+var line[]  hist_lines  = array.new_line()
+var label[] hist_labels = array.new_label()
+
+if show_session_range
+    // ---- NEW SESSION BEGINS ----
+    if session_start
+        sess_high     := high
+        sess_low      := low
+        sess_start_bi := bar_index
+
+        string box_txt     = show_box_text ? session_display : ""
+        color  box_txt_clr = show_box_text ? box_border_clr : color.new(color.white, 100)
+        active_box := box.new(bar_index, high, bar_index, low, border_color=box_border_clr, bgcolor=box_fill_clr, border_width=border_w, text=box_txt, text_halign=text.align_center, text_valign=text.align_center, text_size=size.small, text_color=box_txt_clr)
+        array.push(hist_boxes, active_box)
+
+        if show_midline
+            float mid = (high + low) / 2
+            active_mid := line.new(bar_index, mid, bar_index, mid, color=midline_clr, style=line.style_dashed, width=1)
+            array.push(hist_lines, active_mid)
+
+        while array.size(hist_boxes) > max_sessions
+            box.delete(array.shift(hist_boxes))
+        while array.size(hist_lines) > max_sessions
+            line.delete(array.shift(hist_lines))
+        while array.size(hist_labels) > max_sessions * 2
+            label.delete(array.shift(hist_labels))
+
+    // ---- UPDATE DURING ACTIVE SESSION ----
+    if in_session
+        sess_high := math.max(sess_high, high)
+        sess_low  := math.min(sess_low, low)
+
+        if not na(active_box)
+            box.set_top(active_box, sess_high)
+            box.set_bottom(active_box, sess_low)
+            box.set_right(active_box, bar_index)
+
+        if show_midline and not na(active_mid)
+            float mid = (sess_high + sess_low) / 2
+            line.set_y1(active_mid, mid)
+            line.set_y2(active_mid, mid)
+            line.set_x2(active_mid, bar_index)
+
+    // ---- SESSION ENDS (Box locked strictly to session boundary) ----
+    if session_end and not na(active_box)
+        if show_labels
+            label lbl_h = label.new(sess_start_bi, sess_high, str.tostring(sess_high, format.mintick), style=label.style_label_down, color=color.new(label_clr, 88), textcolor=label_clr, size=size.small)
+            label lbl_l = label.new(sess_start_bi, sess_low,  str.tostring(sess_low,  format.mintick), style=label.style_label_up,   color=color.new(label_clr, 88), textcolor=label_clr, size=size.small)
+            array.push(hist_labels, lbl_h)
+            array.push(hist_labels, lbl_l)
+
+        // Lock right edge strictly at the last bar of the session (bar_index - 1)
+        box.set_right(active_box, bar_index - 1)
+        if show_midline and not na(active_mid)
+            line.set_x2(active_mid, bar_index - 1)
+
+        active_box := na
+        active_mid := na
+
+// ============================================================================
+// SMC PULLBACK ENGINE (identifies swing highs/lows — matches smc_pullback.py)
+// ============================================================================
+var int current_dir = 0  // 0 = neutral, 1 = UP, -1 = DOWN
+var int ref_bar = na
+var float ref_high = na
+var float ref_low = na
+
+var int swing_high_bar = na
+var float swing_high_val = na
+var int swing_low_bar = na
+var float swing_low_val = na
+var int last_confirmed_bar = na
+var float last_confirmed_val = na
+
+var int inside_count = 0
+var int last_inside_bar = na
+
+// User-defined type for tracking swing levels
+type SwingLevel
+    line  ln
+    label lbl
+    float val
+    int   start_bar
+    bool  is_high
+    bool  is_broken
+
+var SwingLevel[] active_sh_levels = array.new<SwingLevel>()
+var SwingLevel[] active_sl_levels = array.new<SwingLevel>()
+
+add_swing_level(bool is_high, int x1, float y_val, int curr_b) =>
+    bool can_draw = is_high ? show_sh_lines : show_sl_lines
+    if can_draw and not na(x1) and not na(y_val)
+        color col = is_high ? sh_line_color : sl_line_color
+        string l_style = get_line_style(pb_line_style_str)
+
+        int x2 = curr_b
+        string ext = extend.none
+        if pb_extend_mode == "Infinite"
+            ext := extend.right
+            x2 := curr_b
+        else if pb_extend_mode == "Fixed Length"
+            x2 := x1 + pb_fixed_bars
+        else
+            x2 := curr_b
+
+        line ln = line.new(x1, y_val, x2, y_val, xloc=xloc.bar_index, extend=ext, color=col, style=l_style, width=pb_line_width)
+
+        label lbl = na
+        if show_pb_labels
+            string tag = ""
+            if pb_label_format == "Type & Price"
+                tag := (is_high ? "SH: " : "SL: ") + str.tostring(y_val, format.mintick)
+            else if pb_label_format == "Price Only"
+                tag := str.tostring(y_val, format.mintick)
+            else
+                tag := is_high ? "SH" : "SL"
+            string lbl_style = is_high ? label.style_label_down : label.style_label_up
+            lbl := label.new(x2, y_val, tag, xloc=xloc.bar_index, style=lbl_style, color=color.new(col, 85), textcolor=col, size=get_label_size(pb_label_size))
+
+        SwingLevel lvl = SwingLevel.new(ln, lbl, y_val, x1, is_high, false)
+
+        if is_high
+            array.push(active_sh_levels, lvl)
+            while array.size(active_sh_levels) > max_pb_lines
+                SwingLevel old_item = array.shift(active_sh_levels)
+                if not na(old_item.ln)
+                    line.delete(old_item.ln)
+                if not na(old_item.lbl)
+                    label.delete(old_item.lbl)
+        else
+            array.push(active_sl_levels, lvl)
+            while array.size(active_sl_levels) > max_pb_lines
+                SwingLevel old_item = array.shift(active_sl_levels)
+                if not na(old_item.ln)
+                    line.delete(old_item.ln)
+                if not na(old_item.lbl)
+                    label.delete(old_item.lbl)
+
+process_up_break(c_dir, sl_b, sl_v, sh_b, sh_v, lc_b, lc_v, b_idx, h_val) =>
+    int n_dir = c_dir
+    int n_sh_b = sh_b
+    float n_sh_v = sh_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sl = false
+
+    if c_dir == -1
+        add_swing_level(false, sl_b, sl_v, b_idx)
+        confirmed_sl := true
+        n_lc_b := sl_b
+        n_lc_v := sl_v
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+    else if c_dir == 1
+        if h_val >= sh_v
+            n_sh_b := b_idx
+            n_sh_v := h_val
+    else
+        n_dir := 1
+        n_sh_b := b_idx
+        n_sh_v := h_val
+
+    [n_dir, n_sh_b, n_sh_v, n_lc_b, n_lc_v, confirmed_sl]
+
+process_down_break(c_dir, sh_b, sh_v, sl_b, sl_v, lc_b, lc_v, b_idx, l_val) =>
+    int n_dir = c_dir
+    int n_sl_b = sl_b
+    float n_sl_v = sl_v
+    int n_lc_b = lc_b
+    float n_lc_v = lc_v
+    bool confirmed_sh = false
+
+    if c_dir == 1
+        add_swing_level(true, sh_b, sh_v, b_idx)
+        confirmed_sh := true
+        n_lc_b := sh_b
+        n_lc_v := sh_v
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+    else if c_dir == -1
+        if l_val <= sl_v
+            n_sl_b := b_idx
+            n_sl_v := l_val
+    else
+        n_dir := -1
+        n_sl_b := b_idx
+        n_sl_v := l_val
+
+    [n_dir, n_sl_b, n_sl_v, n_lc_b, n_lc_v, confirmed_sh]
+
+if bar_index == 0
+    ref_bar := bar_index
+    ref_high := curr_high
+    ref_low := curr_low
+    swing_high_bar := bar_index
+    swing_high_val := curr_high
+    swing_low_bar := bar_index
+    swing_low_val := curr_low
+
+bool is_sh = false
+bool is_sl = false
+
+if bar_index > 0
+    open_broke_high = curr_open > ref_high
+    open_broke_low  = curr_open < ref_low
+
+    broke_high = (curr_high > ref_high) or open_broke_high
+    broke_low  = (curr_low < ref_low) or open_broke_low
+
+    bool conf_sl = false
+    bool conf_sh = false
+
+    if broke_high or broke_low
+        if broke_high and broke_low
+            int taken_first = 0
+            if open_broke_high
+                taken_first := 1
+            else if open_broke_low
+                taken_first := -1
+            else
+                dist_high = math.abs(curr_open - ref_high)
+                dist_low = math.abs(curr_open - ref_low)
+                if dist_low < dist_high
+                    taken_first := -1
+                else
+                    taken_first := 1
+
+            if taken_first == 1
+                [d1, sh_b1, sh_v1, lc_b1, lc_v1, csl1] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d1, swing_high_bar := sh_b1, swing_high_val := sh_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sl := csl1
+
+                [d2, sl_b2, sl_v2, lc_b2, lc_v2, csh2] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d2, swing_low_bar := sl_b2, swing_low_val := sl_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sh := csh2
+            else
+                [d1, sl_b1, sl_v1, lc_b1, lc_v1, csh1] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                current_dir := d1, swing_low_bar := sl_b1, swing_low_val := sl_v1, last_confirmed_bar := lc_b1, last_confirmed_val := lc_v1, conf_sh := csh1
+
+                [d2, sh_b2, sh_v2, lc_b2, lc_v2, csl2] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                current_dir := d2, swing_high_bar := sh_b2, swing_high_val := sh_v2, last_confirmed_bar := lc_b2, last_confirmed_val := lc_v2, conf_sl := csl2
+        else
+            if current_dir == 1
+                if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+                else if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+            else if current_dir == -1
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+            else
+                if broke_high
+                    [d, sh_b, sh_v, lc_b, lc_v, csl] = process_up_break(current_dir, swing_low_bar, swing_low_val, swing_high_bar, swing_high_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_high)
+                    current_dir := d, swing_high_bar := sh_b, swing_high_val := sh_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sl := csl
+                else if broke_low
+                    [d, sl_b, sl_v, lc_b, lc_v, csh] = process_down_break(current_dir, swing_high_bar, swing_high_val, swing_low_bar, swing_low_val, last_confirmed_bar, last_confirmed_val, bar_index, curr_low)
+                    current_dir := d, swing_low_bar := sl_b, swing_low_val := sl_v, last_confirmed_bar := lc_b, last_confirmed_val := lc_v, conf_sh := csh
+
+        ref_high := curr_high
+        ref_low  := curr_low
+        ref_bar  := bar_index
+        inside_count := 0
+        last_inside_bar := na
+        is_sh := conf_sh
+        is_sl := conf_sl
+    else
+        inside_count += 1
+        last_inside_bar := bar_index
+
+// ============================================================================
+// EXTEND / UPDATE ACTIVE SWING LINES
+// ============================================================================
+if (pb_extend_mode == "Until Broken" or pb_extend_mode == "Extend to Current Bar") and bar_index > 0
+    // 1. Update Swing Highs
+    if array.size(active_sh_levels) > 0
+        for i = 0 to array.size(active_sh_levels) - 1
+            SwingLevel item = array.get(active_sh_levels, i)
+            if not item.is_broken
+                if pb_extend_mode == "Until Broken"
+                    bool broke = pb_break_by == "Candle Close" ? curr_close > item.val : curr_high > item.val
+                    if broke
+                        item.is_broken := true
+                        if show_broken_lines
+                            line.set_x2(item.ln, bar_index)
+                            if not na(item.lbl)
+                                label.set_x(item.lbl, bar_index)
+                        else
+                            line.delete(item.ln)
+                            if not na(item.lbl)
+                                label.delete(item.lbl)
+                    else
+                        line.set_x2(item.ln, bar_index)
+                        if not na(item.lbl)
+                            label.set_x(item.lbl, bar_index)
+                else // "Extend to Current Bar"
+                    line.set_x2(item.ln, bar_index)
+                    if not na(item.lbl)
+                        label.set_x(item.lbl, bar_index)
+
+    // 2. Update Swing Lows
+    if array.size(active_sl_levels) > 0
+        for i = 0 to array.size(active_sl_levels) - 1
+            SwingLevel item = array.get(active_sl_levels, i)
+            if not item.is_broken
+                if pb_extend_mode == "Until Broken"
+                    bool broke = pb_break_by == "Candle Close" ? curr_close < item.val : curr_low < item.val
+                    if broke
+                        item.is_broken := true
+                        if show_broken_lines
+                            line.set_x2(item.ln, bar_index)
+                            if not na(item.lbl)
+                                label.set_x(item.lbl, bar_index)
+                        else
+                            line.delete(item.ln)
+                            if not na(item.lbl)
+                                label.delete(item.lbl)
+                    else
+                        line.set_x2(item.ln, bar_index)
+                        if not na(item.lbl)
+                            label.set_x(item.lbl, bar_index)
+                else // "Extend to Current Bar"
+                    line.set_x2(item.ln, bar_index)
+                    if not na(item.lbl)
+                        label.set_x(item.lbl, bar_index)
