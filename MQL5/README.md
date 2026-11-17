@@ -122,3 +122,12 @@ To run the automated Python-to-MT5 trade placement client:
 python3 MQL5/Python/mt5_auto_trader.py
 ```
 
+---
+
+## ⚠️ Account & Runtime Notes
+
+- **Hedging vs Netting:** Multi-target splitting (1–3 separate TP positions) requires a **Hedging** account. On a **Netting** account the EA detects the margin mode at startup, shows an alert, and collapses the trade into a single combined position at TP1 (same approach as EarnForex Position Sizer).
+- **Auto Break-Even / Trailing** apply to positions opened by this EA (its Magic Number) on the chart symbol. Use the Manage Trades panel buttons or the standalone Scripts to manage manual trades.
+- **Python live trading** (`mt5_auto_trader.py`) needs Windows with the MetaTrader 5 terminal installed and the `MetaTrader5` pip package; on any other platform it runs in simulation mode. Order filling falls back automatically (IOC → FOK → RETURN) when a broker rejects a mode.
+- **Hotkeys** act on the chart the EA is attached to. `Esc` closes popup windows first, then hides/shows the visual lines.
+

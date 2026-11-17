@@ -50,7 +50,7 @@ void OnStart()
       double min_vol = SymbolInfoDouble(sym, SYMBOL_VOLUME_MIN);
       double step    = SymbolInfoDouble(sym, SYMBOL_VOLUME_STEP);
 
-      int lot_digits = 2;
+      int lot_digits = 0;
       double s = step;
       while(s < 1.0 && lot_digits < 8) { s *= 10.0; lot_digits++; }
 

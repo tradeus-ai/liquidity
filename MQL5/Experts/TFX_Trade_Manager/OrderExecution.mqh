@@ -66,18 +66,28 @@ public:
          return false;
       }
 
+      // Netting accounts merge same-symbol positions: collapse multi-target splits
+      // into one combined position (mirrors EarnForex Position Sizer behavior).
+      bool netting_collapse = ((ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE) == ACCOUNT_MARGIN_MODE_RETAIL_NETTING && plan.num_targets > 1);
+      if(netting_collapse)
+         Print("TFX Trade Manager: Netting account - placing single combined position of ", DoubleToString(plan.total_lots, 2), " lots (TP1).");
+
+      int eff_targets = netting_collapse ? 1 : plan.num_targets;
       int orders_sent = 0;
       double ask = SymbolInfoDouble(m_symbol, SYMBOL_ASK);
       double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
 
       // Loop through each active target and place individual order/position
-      for(int i = 0; i < plan.num_targets; i++)
+      for(int i = 0; i < eff_targets; i++)
       {
-         double lot = plan.target_lots[i];
+         double lot = netting_collapse ? plan.total_lots : plan.target_lots[i];
          if(lot <= 0.0)
+         {
+            PrintFormat("TFX Trade Manager: Target %d skipped - allocated volume below broker minimum.", i + 1);
             continue;
+         }
 
-         double tp = (i < plan.num_targets) ? plan.tp_prices[i] : 0.0;
+         double tp = plan.tp_prices[i];
          string sub_comment = StringFormat("%s-T%d", comment, i + 1);
 
          // 1. Market Instant Order

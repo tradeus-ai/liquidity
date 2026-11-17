@@ -25,8 +25,11 @@ private:
    string               m_symbol;
    ENUM_THEME           m_theme;
    ENUM_PANEL_MODE      m_panel_mode;
+   ENUM_PANEL_MODE      m_rendered_mode;
    bool                 m_show_trades_wnd;
    bool                 m_show_exposure_wnd;
+   bool                 m_trades_drawn;
+   bool                 m_exposure_drawn;
    bool                 m_hide_money;
 
    // UI Coordinates & Dimensions
@@ -55,7 +58,7 @@ private:
    }
 
    // GUI Object creation helpers
-   bool CreateRect(string name, int x, int y, int w, int h, color bg_col, color border_col)
+   bool CreateRect(string name, int x, int y, int w, int h, color bg_col, color border_col, bool selectable = false)
    {
       string obj_name = PREFIX_GUI + name;
       if(ObjectFind(m_chart_id, obj_name) < 0)
@@ -72,7 +75,8 @@ private:
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_BACK, false);
-      ObjectSetInteger(m_chart_id, obj_name, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(m_chart_id, obj_name, OBJPROP_SELECTABLE, selectable);
+      ObjectSetInteger(m_chart_id, obj_name, OBJPROP_SELECTED, false);
       return true;
    }
 
@@ -121,7 +125,9 @@ private:
    bool CreateEdit(string name, int x, int y, int w, int h, string text, color bg_col, color text_col, int font_size = 9)
    {
       string obj_name = PREFIX_GUI + name;
-      if(ObjectFind(m_chart_id, obj_name) < 0)
+      bool exists = (ObjectFind(m_chart_id, obj_name) >= 0);
+      string cur_text = exists ? ObjectGetString(m_chart_id, obj_name, OBJPROP_TEXT) : "";
+      if(!exists)
       {
          if(!ObjectCreate(m_chart_id, obj_name, OBJ_EDIT, m_subwin, 0, 0))
             return false;
@@ -130,7 +136,13 @@ private:
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_YDISTANCE, y);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_XSIZE, w);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_YSIZE, h);
-      ObjectSetString(m_chart_id, obj_name, OBJPROP_TEXT, text);
+      // Preserve in-progress typing: per-tick re-renders must not wipe the edit box.
+      // Only overwrite when the numeric value actually changed.
+      string cur_tmp = cur_text, new_tmp = text;
+      StringReplace(cur_tmp, "%", ""); StringReplace(cur_tmp, "$", "");
+      StringReplace(new_tmp, "%", ""); StringReplace(new_tmp, "$", "");
+      if(!exists || MathAbs(StringToDouble(cur_tmp) - StringToDouble(new_tmp)) > 0.0000001)
+         ObjectSetString(m_chart_id, obj_name, OBJPROP_TEXT, text);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_BGCOLOR, bg_col);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_COLOR, text_col);
       ObjectSetInteger(m_chart_id, obj_name, OBJPROP_BORDER_COLOR, m_col_border);
@@ -151,8 +163,11 @@ public:
       m_symbol            = _Symbol;
       m_theme             = THEME_DARK;
       m_panel_mode        = PANEL_MODE_FULL;
+      m_rendered_mode     = (ENUM_PANEL_MODE)(-1);
       m_show_trades_wnd   = false;
       m_show_exposure_wnd = false;
+      m_trades_drawn      = false;
+      m_exposure_drawn    = false;
       m_hide_money        = false;
 
       m_x      = 25;
@@ -213,11 +228,18 @@ public:
    //+------------------------------------------------------------------+
    void RenderMainPanel(const STradePlan &plan, ENUM_RISK_MODE risk_mode, double risk_input_val)
    {
+      // Panel mode changed: wipe stale mode-specific objects before redraw
+      if(m_panel_mode != m_rendered_mode)
+      {
+         DestroyMainPanel();
+         m_rendered_mode = m_panel_mode;
+      }
+
       // If Minimized to logo only
       if(m_panel_mode == PANEL_MODE_MINIMIZED)
       {
          DestroyMainPanel();
-         CreateRect("MINI_BG", m_x, m_y, 140, 26, m_col_bg, m_col_accent);
+         CreateRect("MINI_BG", m_x, m_y, 140, 26, m_col_bg, m_col_accent, true);
          CreateButton("BTN_LOGO", m_x + 2, m_y + 2, 100, 22, "TFX Manager", m_col_panel, m_col_accent, 8);
          CreateButton("BTN_MINIMIZE", m_x + 106, m_y + 2, 30, 22, "[+]", m_col_panel, m_col_text_pri, 8);
          ChartRedraw(m_chart_id);
@@ -228,7 +250,7 @@ public:
 
       // 1. Background Frames
       CreateRect("MAIN_BG", m_x, m_y, m_width, cur_h, m_col_bg, m_col_border);
-      CreateRect("HEADER_BG", m_x + 1, m_y + 1, m_width - 2, 28, m_col_panel, m_col_border);
+      CreateRect("HEADER_BG", m_x + 1, m_y + 1, m_width - 2, 28, m_col_panel, m_col_border, true);
 
       // Header Bar
       CreateLabel("LBL_TITLE", m_x + 10, m_y + 6, "TFX Trade Manager", m_col_accent, 10, "Segoe UI Bold");
@@ -342,7 +364,11 @@ public:
    {
       if(!m_show_trades_wnd)
       {
-         DestroyTradesWindow();
+         if(m_trades_drawn)
+         {
+            DestroyTradesWindow();
+            m_trades_drawn = false;
+         }
          return;
       }
 
@@ -392,6 +418,7 @@ public:
       string pnl_str = StringFormat("Floating Profit:  %s%s", (total_pnl >= 0 ? "+" : ""), FormatMoney(total_pnl));
       CreateLabel("TRD_LBL_PNL", wx + 16, by + 44, pnl_str, pnl_col, 9, "Segoe UI Bold");
 
+      m_trades_drawn = true;
       ChartRedraw(m_chart_id);
    }
 
@@ -402,14 +429,18 @@ public:
    {
       if(!m_show_exposure_wnd)
       {
-         DestroyExposureWindow();
+         if(m_exposure_drawn)
+         {
+            DestroyExposureWindow();
+            m_exposure_drawn = false;
+         }
          return;
       }
 
       int wx = m_x + m_width + 10;
       int wy = m_y + (m_show_trades_wnd ? 250 : 0);
       int ww = 320;
-      int wh = 210;
+      int wh = 300;
 
       CreateRect("EXP_BG", wx, wy, ww, wh, m_col_bg, m_col_border);
       CreateRect("EXP_HEADER", wx + 1, wy + 1, ww - 2, 28, m_col_panel, m_col_border);
@@ -429,7 +460,7 @@ public:
       CreateLabel("EXP_LBL_FREE", wx + 16, ly + 60, StringFormat("Free Margin:     %s", FormatMoney(free_m)), m_col_text_sec, 8);
       CreateLabel("EXP_LBL_LVL",  wx + 16, ly + 80, StringFormat("Margin Level:    %.2f%%", m_lvl), m_col_highlight, 8);
 
-      // Symbol Net Exposure
+      // Current Chart Symbol Net Exposure
       double sym_buy = 0.0, sym_sell = 0.0;
       for(int i = 0; i < PositionsTotal(); i++)
       {
@@ -444,10 +475,54 @@ public:
       }
       double net_exp = sym_buy - sym_sell;
       color net_col = (net_exp > 0) ? m_col_btn_buy : (net_exp < 0 ? m_col_btn_sell : m_col_text_sec);
-      string exp_str = StringFormat("%s Net Exposure: %+.2f Lots (L: %.2f / S: %.2f)",
-                                    m_symbol, net_exp, sym_buy, sym_sell);
+      string net_sign = (net_exp >= 0.0) ? "+" : "";
+      string exp_str = StringFormat("%s Net: %s%.2f Lots (L: %.2f / S: %.2f)",
+                                    m_symbol, net_sign, net_exp, sym_buy, sym_sell);
       CreateLabel("EXP_LBL_SYM", wx + 16, ly + 110, exp_str, net_col, 9, "Segoe UI Bold");
 
+      // Per-Symbol Exposure Breakdown (all open symbols, top 5 by listing order)
+      ObjectsDeleteAll(m_chart_id, PREFIX_GUI + "EXP_SYM_");
+      string agg_syms[];
+      double agg_buy[], agg_sell[];
+      for(int i = 0; i < PositionsTotal(); i++)
+      {
+         ulong ticket = PositionGetTicket(i);
+         if(ticket <= 0)
+            continue;
+         string ps = PositionGetString(POSITION_SYMBOL);
+         double pv = PositionGetDouble(POSITION_VOLUME);
+         bool is_buy = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY);
+         int si = -1;
+         for(int k = 0; k < ArraySize(agg_syms); k++)
+         {
+            if(agg_syms[k] == ps) { si = k; break; }
+         }
+         if(si < 0)
+         {
+            si = ArraySize(agg_syms);
+            ArrayResize(agg_syms, si + 1);
+            ArrayResize(agg_buy, si + 1);
+            ArrayResize(agg_sell, si + 1);
+            agg_syms[si] = ps;
+         }
+         if(is_buy)
+            agg_buy[si] += pv;
+         else
+            agg_sell[si] += pv;
+      }
+      int exp_rows = MathMin(ArraySize(agg_syms), 5);
+      for(int r = 0; r < exp_rows; r++)
+      {
+         double net_r = agg_buy[r] - agg_sell[r];
+         color rc = (net_r > 0) ? m_col_btn_buy : (net_r < 0 ? m_col_btn_sell : m_col_text_sec);
+         string rsign = (net_r >= 0.0) ? "+" : "";
+         string row_txt = StringFormat("%s: %s%.2f (L %.2f / S %.2f)", agg_syms[r], rsign, net_r, agg_buy[r], agg_sell[r]);
+         CreateLabel("EXP_SYM_" + IntegerToString(r), wx + 16, ly + 132 + r * 18, row_txt, rc, 8);
+      }
+      if(ArraySize(agg_syms) > 5)
+         CreateLabel("EXP_SYM_MORE", wx + 16, ly + 132 + 5 * 18, StringFormat("+%d more symbols...", ArraySize(agg_syms) - 5), m_col_text_sec, 8);
+
+      m_exposure_drawn = true;
       ChartRedraw(m_chart_id);
    }
 
@@ -464,6 +539,24 @@ public:
                          COrderExecution &exec,
                          CVisualTradeTool &visual)
    {
+      // 0. Panel dragging (movable windows): header drag re-anchors the whole panel
+      if(id == CHARTEVENT_OBJECT_DRAG)
+      {
+         if(sparam == PREFIX_GUI + "HEADER_BG" || sparam == PREFIX_GUI + "MINI_BG")
+         {
+            int nx = (int)ObjectGetInteger(m_chart_id, sparam, OBJPROP_XDISTANCE);
+            int ny = (int)ObjectGetInteger(m_chart_id, sparam, OBJPROP_YDISTANCE);
+            int cw = (int)ChartGetInteger(m_chart_id, CHART_WIDTH_IN_PIXELS);
+            int ch = (int)ChartGetInteger(m_chart_id, CHART_HEIGHT_IN_PIXELS);
+            int hdr_off = (sparam == PREFIX_GUI + "HEADER_BG") ? 1 : 0;
+            m_x = MathMax(0, MathMin(nx - hdr_off, MathMax(0, cw - 60)));
+            m_y = MathMax(0, MathMin(ny - hdr_off, MathMax(0, ch - 60)));
+            ObjectSetInteger(m_chart_id, sparam, OBJPROP_SELECTED, false);
+            return true; // main EA re-renders everything at the new anchor
+         }
+         return false;
+      }
+
       // 1. Button Clicks
       if(id == CHARTEVENT_OBJECT_CLICK)
       {
@@ -696,6 +789,18 @@ public:
    void DestroyAll(void)
    {
       ObjectsDeleteAll(m_chart_id, PREFIX_GUI);
+      ChartRedraw(m_chart_id);
+   }
+
+   // Hide popups (Esc key): close windows without toggling them back on
+   void HidePopups(void)
+   {
+      m_show_trades_wnd = false;
+      m_show_exposure_wnd = false;
+      DestroyTradesWindow();
+      DestroyExposureWindow();
+      m_trades_drawn = false;
+      m_exposure_drawn = false;
       ChartRedraw(m_chart_id);
    }
 

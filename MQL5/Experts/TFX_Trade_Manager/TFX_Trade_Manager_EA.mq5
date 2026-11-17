@@ -123,6 +123,9 @@ int OnInit()
    g_visual.Render(g_plan, InpHideMonetaryValues);
    g_gui.RenderMainPanel(g_plan, g_risk_mode, g_risk_input_val);
 
+   if((ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE) == ACCOUNT_MARGIN_MODE_RETAIL_NETTING)
+      Alert("TFX Trade Manager: Netting account detected. Multi-target splitting is disabled - trades will be placed as a single combined position (TP1). Use a Hedging account for multi-target splits.");
+
    Print("TFX Trade Manager EA Initialized successfully on ", _Symbol);
    return(INIT_SUCCEEDED);
 }
@@ -177,22 +180,23 @@ void OnChartEvent(const int id,
 {
    bool plan_changed = false;
 
-   // 1. Handle Hotkeys
+   // 1. Handle Hotkeys (1 = recalc needed, 2 = visibility-only, 0 = not handled)
    if(id == CHARTEVENT_KEYDOWN)
    {
-      if(CHotkeyHandler::ProcessKeyEvent(id, lparam, dparam, sparam, g_plan, g_visual, g_gui, g_exec))
-      {
+      int hotkey_res = CHotkeyHandler::ProcessKeyEvent(id, lparam, dparam, sparam, g_plan, g_visual, g_gui, g_exec);
+      if(hotkey_res == 1)
          plan_changed = true;
-      }
+      else if(hotkey_res == 2)
+         g_gui.RenderMainPanel(g_plan, g_risk_mode, g_risk_input_val); // refresh nav highlight only
    }
 
-   // 2. Handle On-Chart Line Dragging
+   // 2. Handle On-Chart Line Dragging + Movable Panel Header Dragging
    if(id == CHARTEVENT_OBJECT_DRAG)
    {
       if(g_visual.HandleChartEvent(id, lparam, dparam, sparam, g_plan))
-      {
          plan_changed = true;
-      }
+      if(g_gui.HandleChartEvent(id, lparam, dparam, sparam, g_plan, g_risk_mode, g_risk_input_val, g_exec, g_visual))
+         plan_changed = true;
    }
 
    // 3. Handle GUI Button Clicks and Edit Inputs

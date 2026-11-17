@@ -33,18 +33,20 @@ class CHotkeyHandler
 public:
    //+------------------------------------------------------------------+
    //| Process Chart Key Down Event                                     |
+   //| Returns: 0 = not handled, 1 = plan changed (recalc + re-render), |
+   //|          2 = visibility-only change (no recalc, keeps hide state)|
    //+------------------------------------------------------------------+
-   static bool ProcessKeyEvent(const int id,
-                               const long &lparam,
-                               const double &dparam,
-                               const string &sparam,
-                               STradePlan &plan,
-                               CVisualTradeTool &visual,
-                               CTradeManagerGUI &gui,
-                               COrderExecution &exec)
+   static int ProcessKeyEvent(const int id,
+                              const long &lparam,
+                              const double &dparam,
+                              const string &sparam,
+                              STradePlan &plan,
+                              CVisualTradeTool &visual,
+                              CTradeManagerGUI &gui,
+                              COrderExecution &exec)
    {
       if(id != CHARTEVENT_KEYDOWN)
-         return false;
+         return 0;
 
       int key = (int)lparam;
 
@@ -71,15 +73,16 @@ public:
                plan.tp_prices[i] = plan.entry_price - sl_dist * (i + 1) * 1.5;
          }
          Print("TFX Hotkey: Switched direction to ", (plan.direction == TRADE_DIR_BUY ? "BUY" : "SELL"));
-         return true;
+         return 1;
       }
 
-      // 2. Esc: Show/Hide Tool or close popups
+      // 2. Esc: close popups, then show/hide visual lines (no recalc - hiding must stick)
       if(key == VK_KEY_ESC && !is_shift)
       {
+         gui.HidePopups();
          visual.ToggleVisibility(plan);
          Print("TFX Hotkey: Toggled Visual Lines visibility");
-         return true;
+         return 2;
       }
 
       // 3. Ctrl + 1: Set Targets to 1
@@ -87,7 +90,7 @@ public:
       {
          plan.num_targets = 1;
          Print("TFX Hotkey: Set Targets to 1");
-         return true;
+         return 1;
       }
 
       // 4. Ctrl + 2: Set Targets to 2
@@ -95,7 +98,7 @@ public:
       {
          plan.num_targets = 2;
          Print("TFX Hotkey: Set Targets to 2");
-         return true;
+         return 1;
       }
 
       // 5. Ctrl + 3: Set Targets to 3
@@ -103,7 +106,7 @@ public:
       {
          plan.num_targets = 3;
          Print("TFX Hotkey: Set Targets to 3");
-         return true;
+         return 1;
       }
 
       // 6. Shift + E: Execute Order
@@ -111,7 +114,7 @@ public:
       {
          Print("TFX Hotkey: Shift + E pressed -> Executing Order!");
          exec.ExecutePlan(plan);
-         return true;
+         return 1;
       }
 
       // 7. Shift + M: Toggle Manage Trades window
@@ -119,7 +122,7 @@ public:
       {
          gui.ToggleTradesWindow();
          Print("TFX Hotkey: Toggled Manage Trades window");
-         return true;
+         return 1;
       }
 
       // 8. Shift + X: Toggle Account Exposure window
@@ -127,10 +130,9 @@ public:
       {
          gui.ToggleExposureWindow();
          Print("TFX Hotkey: Toggled Account Exposure window");
-         return true;
+         return 1;
       }
 
-      return false;
+      return 0;
    }
 };
-

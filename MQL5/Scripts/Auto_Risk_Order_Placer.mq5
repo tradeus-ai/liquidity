@@ -75,7 +75,7 @@ void OnStart()
    double vol_max = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
    double vol_step = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
 
-   int lot_digits = 2;
+   int lot_digits = 0;
    double s = vol_step;
    while(s < 1.0 && lot_digits < 8) { s *= 10.0; lot_digits++; }
 
@@ -100,11 +100,14 @@ void OnStart()
    ENUM_ORDER_TYPE ot = (InpDirection == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
    double loss_1_lot = 0.0;
 
-   if(!OrderCalcProfit(ot, symbol, 1.0, entry_price, sl_price, loss_1_lot) || loss_1_lot <= 0.000001)
-   {
-      loss_1_lot = (sl_diff / tick_size) * tick_val;
-   }
+   // OrderCalcProfit returns SIGNED profit (negative for a losing exit): take the
+   // absolute value BEFORE testing success, or valid results are wrongly discarded.
+   bool calc_ok = OrderCalcProfit(ot, symbol, 1.0, entry_price, sl_price, loss_1_lot);
    loss_1_lot = MathAbs(loss_1_lot);
+   if(!calc_ok || loss_1_lot <= 0.000001)
+   {
+      loss_1_lot = MathAbs((sl_diff / tick_size) * tick_val);
+   }
 
    if(loss_1_lot <= 0.000001)
    {

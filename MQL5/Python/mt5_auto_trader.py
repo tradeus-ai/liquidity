@@ -50,11 +50,13 @@ class MT5AutoTradeManager:
 
     def get_symbol_specs(self, symbol: str) -> Dict:
         if self.simulation:
-            # High-precision mock specs based on standard broker configurations
-            is_forex = len(symbol) == 6 and symbol.isalpha()
+            # High-precision mock specs based on standard broker configurations.
+            # NOTE: specific classes first - "XAUUSD" is 6 alpha chars and would
+            # otherwise be misclassified as forex.
             is_gold = "XAU" in symbol or "GOLD" in symbol
             is_crypto = "BTC" in symbol or "ETH" in symbol
             is_index = "30" in symbol or "100" in symbol or "500" in symbol
+            is_forex = len(symbol) == 6 and symbol.isalpha() and not (is_gold or is_crypto or is_index)
 
             digits = 5 if is_forex else (2 if (is_gold or is_crypto) else 1)
             point = 10 ** (-digits)
@@ -246,7 +248,7 @@ class MT5AutoTradeManager:
                 results.append({"ticket": fake_ticket, "target": idx, "volume": vol, "status": "SIMULATED_FILLED"})
             else:
                 action_type = mt5.ORDER_TYPE_BUY if direction == "BUY" else mt5.ORDER_TYPE_SELL
-                request = {
+                base_request = {
                     "action": mt5.TRADE_ACTION_DEAL,
                     "symbol": symbol,
                     "volume": vol,
@@ -258,12 +260,23 @@ class MT5AutoTradeManager:
                     "magic": magic_number,
                     "comment": sub_comment,
                     "type_time": mt5.ORDER_TIME_GTC,
-                    "type_filling": mt5.ORDER_FILLING_IOC,
                 }
-                res = mt5.order_send(request)
-                if res.retcode != mt5.TRADE_RETCODE_DONE:
-                    print(f"[ERROR] Target {idx} failed: {res.comment} (code {res.retcode})")
-                    results.append({"ticket": 0, "target": idx, "volume": vol, "status": f"FAILED_{res.retcode}"})
+                # Brokers differ on supported filling modes: retry IOC -> FOK -> RETURN
+                # when the server reports unsupported filling (retcode 10030).
+                res = None
+                for filling in (mt5.ORDER_FILLING_IOC, mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_RETURN):
+                    request = dict(base_request)
+                    request["type_filling"] = filling
+                    res = mt5.order_send(request)
+                    if res is None:
+                        break
+                    if res.retcode == mt5.TRADE_RETCODE_DONE or res.retcode != 10030:
+                        break
+                if res is None or res.retcode != mt5.TRADE_RETCODE_DONE:
+                    code = res.retcode if res is not None else "NO_RESPONSE"
+                    cmt = res.comment if res is not None else "order_send returned None"
+                    print(f"[ERROR] Target {idx} failed: {cmt} (code {code})")
+                    results.append({"ticket": 0, "target": idx, "volume": vol, "status": f"FAILED_{code}"})
                 else:
                     print(f"[LIVE ORDER FILLED] Target {idx}: Order #{res.order} Deal #{res.deal} | {vol} lots @ {res.price}")
                     results.append({"ticket": res.order, "target": idx, "volume": vol, "status": "FILLED"})
